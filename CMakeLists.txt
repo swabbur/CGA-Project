@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(Legacy)
+project(CGA)
 
 # Configure CMake
 set(CMAKE_CXX_STANDARD 20)
@@ -27,9 +27,9 @@ set(PACKAGES
 
 # Create executable
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-add_executable(Legacy ${SOURCES})
-target_include_directories(Legacy PUBLIC include)
-target_link_libraries(Legacy ${PACKAGES})
+add_executable(CGA ${SOURCES})
+target_include_directories(CGA PUBLIC include)
+target_link_libraries(CGA ${PACKAGES})
 
 # Copy resource folders
 file(GLOB MESHES "res/meshes/*.obj")
