@@ -4,7 +4,17 @@ project(Legacy)
 # Configure CMake
 set(CMAKE_CXX_STANDARD 20)
 
-# Load Conan packages
+# Install Conan packages
+if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/cmake/conan.cmake")
+    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+    file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
+            "${CMAKE_CURRENT_LIST_DIR}/cmake/conan.cmake"
+            TLS_VERIFY ON)
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/conan.cmake")
+conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_CURRENT_LIST_DIR})
+
+# Find Conan packages
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 set(PACKAGES
