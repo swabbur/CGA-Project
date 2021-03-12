@@ -11,7 +11,6 @@ Don't forget to run `conan install <root_path>` from the build directory when us
 ```shell
 mkdir build
 cd build
-conan install ..
 cmake ..
 make
 cd bin
