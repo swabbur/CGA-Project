@@ -10,7 +10,7 @@
 #include <stack>
 #include <iostream>
 
-Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<float> const & vertices) {
+Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<float> const & vertices, bool textured) {
 
     GLuint ibo;
     glCreateBuffers(1, &ibo);
@@ -27,7 +27,7 @@ Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<float> 
     glVertexArrayAttribFormat(vao, 0, 2, GL_FLOAT, false, 0);
     glEnableVertexArrayAttrib(vao, 0);
 
-    return Mesh(ibo, vbo, vao, indices.size());
+    return Mesh(ibo, vbo, vao, indices.size(), textured);
 }
 
 Mesh Mesh::create_square() {
@@ -66,7 +66,7 @@ Mesh Mesh::load(const std::string & path) {
 
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
-    bool has_texture_coordinates = false;
+    bool textured = false;
 
     std::stack<std::tuple<aiNode*, glm::mat4>> stack;
     stack.push({ scene->mRootNode, assimpMatrix(scene->mRootNode->mTransformation) });
@@ -109,7 +109,7 @@ Mesh Mesh::load(const std::string & path) {
                 glm::vec2 texCoord { 0 };
                 if (mesh->HasTextureCoords(0)) {
                     texCoord = glm::vec2(assimpVec(mesh->mTextureCoords[0][j]));
-                    has_texture_coordinates = true;
+                    textured = true;
                 }
                 vertices.push_back(Vertex { pos, normal, texCoord });
             }
@@ -152,7 +152,7 @@ Mesh Mesh::load(const std::string & path) {
 
     // TODO: Add option for texture coordinates.
 
-    return Mesh(ibo, vbo, vao, size);
+    return Mesh(ibo, vbo, vao, size, textured);
 }
 
 static glm::mat4 assimpMatrix(const aiMatrix4x4& m) {
@@ -180,10 +180,12 @@ static glm::vec3 assimpVec(const aiVector3D& v) {
     return glm::vec3(v.x, v.y, v.z);
 }
 
-Mesh::Mesh(unsigned int ibo, unsigned int vbo, unsigned int vao, unsigned int size)
-    : ibo(ibo), vbo(vbo), vao(vao), size(size) {}
+Mesh::Mesh(unsigned int ibo, unsigned int vbo, unsigned int vao, unsigned int size, bool textured)
+    : ibo(ibo), vbo(vbo), vao(vao), size(size), textured(textured) {}
 
-Mesh::Mesh(Mesh && mesh) noexcept : ibo(mesh.ibo), vbo(mesh.vbo), vao(mesh.vao), size(mesh.size) {
+Mesh::Mesh(Mesh && mesh) noexcept :
+    ibo(mesh.ibo), vbo(mesh.vbo), vao(mesh.vao), size(mesh.size), textured(mesh.textured)
+{
     mesh.size = 0;
     mesh.vao = 0;
     mesh.vbo = 0;
@@ -203,6 +205,10 @@ Mesh::~Mesh() {
     if (ibo != 0) {
         glDeleteBuffers(1, &ibo);
     }
+}
+
+bool Mesh::is_textured() const {
+    return textured;
 }
 
 void Mesh::draw() const {
