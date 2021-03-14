@@ -154,10 +154,10 @@ Scene::Scene(std::vector<Texture> && textures,
 {}
 
 Scene::Scene(Scene && scene) noexcept :
-        textures(std::move(scene.textures)),
-        materials(std::move(scene.materials)),
-        meshes(std::move(scene.meshes)),
-        shapes(std::move(scene.shapes))
+    textures(std::move(scene.textures)),
+    materials(std::move(scene.materials)),
+    meshes(std::move(scene.meshes)),
+    shapes(std::move(scene.shapes))
 {}
 
 Scene::~Scene() = default;
