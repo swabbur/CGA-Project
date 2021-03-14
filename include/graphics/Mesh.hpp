@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+class Vertex;
+
 class Mesh {
 
     unsigned int ibo;
@@ -15,11 +17,7 @@ class Mesh {
 
 public:
 
-    static Mesh create(std::vector<unsigned int> const & indices, std::vector<float> const & vertices, bool textured);
-
-    static Mesh create_square();
-
-    static Mesh load(std::string const & path);
+    static Mesh create(std::vector<unsigned int> const & indices, std::vector<Vertex> const & vertices, bool textured);
 
     Mesh(Mesh const &) = delete;
 

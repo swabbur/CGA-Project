@@ -3,6 +3,7 @@
 #include <assimp/scene.h>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/Scene.hpp>
+#include <graphics/Vertex.hpp>
 #include <stack>
 
 glm::mat4 parse_matrix(aiMatrix4x4 const & assimp_matrix) {
@@ -24,6 +25,10 @@ glm::mat4 parse_matrix(aiMatrix4x4 const & assimp_matrix) {
     matrix[3][2] = assimp_matrix.c4;
     matrix[3][3] = assimp_matrix.d4;
     return matrix;
+}
+
+glm::vec3 parse_vector(const aiVector3D& v) {
+    return glm::vec3(v.x, v.y, v.z);
 }
 
 Scene Scene::load(std::string const & path) {
@@ -51,6 +56,8 @@ Scene Scene::load(std::string const & path) {
     for (unsigned int index = 0; index < scene->mNumMaterials; index++) {
         aiMaterial const * assimp_material = scene->mMaterials[index];
         // TODO: Parse material
+        Material material;
+        materials.emplace_back(material);
     }
 
     // Parse meshes
@@ -58,8 +65,46 @@ Scene Scene::load(std::string const & path) {
     std::vector<unsigned int> material_indices;
     meshes.reserve(scene->mNumMeshes);
     for (unsigned int index = 0; index < scene->mNumMeshes; index++) {
+
+        // Validate mesh integrity
         aiMesh const * assimp_mesh = scene->mMeshes[index];
-        // TODO: Parse mesh
+        if (assimp_mesh->mNumVertices == 0 || assimp_mesh->mNumFaces == 0) {
+            throw std::runtime_error("Encountered an empty mesh while loading scene");
+        }
+
+        // Parse triangle indices
+        std::vector<unsigned int> indices;
+        indices.reserve(3 * assimp_mesh->mNumFaces);
+        for (unsigned j = 0; j < assimp_mesh->mNumFaces; j++) {
+
+            aiFace const & face = assimp_mesh->mFaces[j];
+            if (face.mNumIndices != 3) {
+                throw std::runtime_error("Encountered a non-triangle face while loading scene");
+            }
+
+            indices.push_back(static_cast<unsigned int>(face.mIndices[0]));
+            indices.push_back(static_cast<unsigned int>(face.mIndices[1]));
+            indices.push_back(static_cast<unsigned int>(face.mIndices[2]));
+        }
+
+        // Parse vertices
+        std::vector<Vertex> vertices;
+        vertices.reserve(assimp_mesh->mNumVertices);
+        bool textured = false;
+        for (unsigned j = 0; j < assimp_mesh->mNumVertices; j++) {
+            const glm::vec3 position = glm::vec4(parse_vector(assimp_mesh->mVertices[j]), 1.0f);
+            const glm::vec3 normal = parse_vector(assimp_mesh->mNormals[j]);
+            glm::vec2 texture_coordinates;
+            if (assimp_mesh->HasTextureCoords(0)) {
+                texture_coordinates = glm::vec2(parse_vector(assimp_mesh->mTextureCoords[0][j]));
+                textured = true;
+            }
+            vertices.push_back({ position, normal, texture_coordinates });
+        }
+
+        // Create mesh
+        Mesh mesh = Mesh::create(indices, vertices, textured);
+        meshes.emplace_back(std::move(mesh));
     }
 
     // Parse lights
@@ -75,7 +120,6 @@ Scene Scene::load(std::string const & path) {
         stack.pop();
 
         transformation *= parse_matrix(node->mTransformation);
-        glm::mat3 const normalMatrix = glm::inverseTranspose(glm::mat3(transformation));
 
         for (unsigned int index = 0; index < node->mNumMeshes; index++) {
             unsigned int mesh_index = node->mMeshes[index];
