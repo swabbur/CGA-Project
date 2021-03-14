@@ -1,7 +1,7 @@
 #include <devices/DeviceManager.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
-#include <graphics/Mesh.hpp>
+#include <graphics/Scene.hpp>
 #include <graphics/Program.hpp>
 #include <graphics/Texture.hpp>
 #include <util/Camera.hpp>
@@ -21,7 +21,7 @@ int main() {
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Texture texture = Texture::load("textures/checkerboard.png");
-    Mesh mesh = Mesh::load("meshes/dragon.obj");
+    Scene scene = Scene::load("scenes/dragon.obj");
 
     Camera camera(window, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec2(0.0f, 0.0f));
     Timer timer;
@@ -101,7 +101,7 @@ int main() {
         program.set_texture(1, 0);
 
         // Render mesh
-        mesh.draw();
+        scene.draw();
 
         // Update window
         window.swap_buffers();

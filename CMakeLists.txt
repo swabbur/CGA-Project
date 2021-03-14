@@ -32,10 +32,10 @@ target_include_directories(CGA PUBLIC include)
 target_link_libraries(CGA ${PACKAGES})
 
 # Copy resource folders
-file(GLOB MESHES "res/meshes/*.obj")
+file(GLOB SCENES "res/scenes/*.obj")
 file(GLOB SHADERS "res/shaders/*.glsl")
 file(GLOB TEXTURES "res/textures/*.png")
 
-file(COPY ${MESHES} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/meshes)
+file(COPY ${SCENES} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/scenes)
 file(COPY ${SHADERS} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
 file(COPY ${TEXTURES} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/textures)

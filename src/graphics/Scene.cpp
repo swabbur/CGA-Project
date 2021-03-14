@@ -60,7 +60,7 @@ Scene Scene::load(std::string const & path) {
         materials.emplace_back(material);
     }
 
-    // Parse meshes
+    // Parse scenes
     std::vector<Mesh> meshes;
     std::vector<unsigned int> material_indices;
     meshes.reserve(scene->mNumMeshes);
@@ -105,6 +105,9 @@ Scene Scene::load(std::string const & path) {
         // Create mesh
         Mesh mesh = Mesh::create(indices, vertices, textured);
         meshes.emplace_back(std::move(mesh));
+
+        // Store material index
+        material_indices.push_back(assimp_mesh->mMaterialIndex);
     }
 
     // Parse lights
@@ -144,10 +147,10 @@ Scene::Scene(std::vector<Texture> && textures,
              std::vector<Material> && materials,
              std::vector<Mesh> && meshes,
              std::vector<Shape> && shapes) :
-    textures(textures),
-    materials(materials),
-    meshes(meshes),
-    shapes(shapes)
+    textures(std::move(textures)),
+    materials(std::move(materials)),
+    meshes(std::move(meshes)),
+    shapes(std::move(shapes))
 {}
 
 Scene::Scene(Scene && scene) noexcept :
@@ -158,3 +161,9 @@ Scene::Scene(Scene && scene) noexcept :
 {}
 
 Scene::~Scene() = default;
+
+void Scene::draw() {
+    for (Mesh const & mesh : meshes) {
+        mesh.draw();
+    }
+}

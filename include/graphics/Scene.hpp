@@ -29,4 +29,6 @@ public:
     Scene(Scene && scene) noexcept;
 
     ~Scene();
+
+    void draw();
 };
