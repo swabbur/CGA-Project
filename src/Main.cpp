@@ -21,7 +21,7 @@ int main() {
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Texture texture = Texture::load("textures/checkerboard.png");
-    Scene scene = Scene::load("scenes/dragon.obj");
+    Scene scene = Scene::load("scenes/Dragon.dae");
 
     Camera camera(window, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec2(0.0f, 0.0f));
     Timer timer;

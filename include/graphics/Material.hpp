@@ -7,12 +7,13 @@ class Texture;
 
 class Material {
 
-    std::variant<std::monostate, glm::vec4, Texture const *> diffuse;
-    std::variant<std::monostate, glm::vec4, Texture const *> specular;
+public:
+
+    std::variant<std::monostate, glm::vec3, Texture const *> ambient;
+    std::variant<std::monostate, glm::vec3, Texture const *> diffuse;
+    std::variant<std::monostate, glm::vec3, Texture const *> specular;
     std::variant<std::monostate, float, Texture const *> roughness;
     std::variant<std::monostate, Texture const *> normal;
-
-public:
 
     Material();
 };

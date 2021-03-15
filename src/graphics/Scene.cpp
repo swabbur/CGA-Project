@@ -5,6 +5,7 @@
 #include <graphics/Scene.hpp>
 #include <graphics/Vertex.hpp>
 #include <stack>
+#include <iostream>
 
 glm::mat4 parse_matrix(aiMatrix4x4 const & assimp_matrix) {
     glm::mat4 matrix;
@@ -27,15 +28,23 @@ glm::mat4 parse_matrix(aiMatrix4x4 const & assimp_matrix) {
     return matrix;
 }
 
-glm::vec3 parse_vector(const aiVector3D& v) {
-    return glm::vec3(v.x, v.y, v.z);
+glm::vec3 parse_vector(aiVector3D const & vector) {
+    return glm::vec3(vector.x, vector.y, vector.z);
+}
+
+glm::vec3 parse_color(aiColor3D const & color) {
+    return glm::vec3(color.r, color.g, color.b);
+}
+
+glm::vec3 parse_color(aiColor4D const & color) {
+    return glm::vec3(color.r, color.g, color.b);
 }
 
 Scene Scene::load(std::string const & path) {
 
     // Load assimp scene
     Assimp::Importer importer;
-    aiScene const * scene = importer.ReadFile(path.c_str(), aiProcess_GenSmoothNormals | aiProcess_Triangulate);
+    aiScene const * scene = importer.ReadFile(path.c_str(), aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_RemoveRedundantMaterials);
     if (scene == nullptr || scene->mRootNode == nullptr || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
         throw std::runtime_error("Could not load scene: " + path);
     }
@@ -47,16 +56,36 @@ Scene Scene::load(std::string const & path) {
         aiTexture const * assimp_texture = scene->mTextures[index];
         std::string const filename = assimp_texture->mFilename.data;
         Texture texture = Texture::load(filename);
-        textures.emplace_back(std::move(texture));
+        std::cout << filename << std::endl;
     }
 
     // Parse materials
     std::vector<Material> materials;
     materials.reserve(scene->mNumMaterials);
     for (unsigned int index = 0; index < scene->mNumMaterials; index++) {
+
         aiMaterial const * assimp_material = scene->mMaterials[index];
-        // TODO: Parse material
+
         Material material;
+
+        aiColor4D ambient_color;
+        assimp_material->Get(AI_MATKEY_COLOR_AMBIENT, ambient_color);
+        material.ambient = parse_color(ambient_color);
+
+        aiColor4D diffuse_color;
+        assimp_material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse_color);
+        material.diffuse = parse_color(diffuse_color);
+
+        aiColor4D specular_color;
+        assimp_material->Get(AI_MATKEY_COLOR_SPECULAR, specular_color);
+        material.specular = parse_color(specular_color);
+
+        aiTexture texture;
+        assimp_material->Get(AI_MATKEY_TEXTURE_DIFFUSE(0), texture);
+        std::cout << texture.mWidth << std::endl;
+
+        // TODO: Material parsing not working
+
         materials.emplace_back(material);
     }
 
