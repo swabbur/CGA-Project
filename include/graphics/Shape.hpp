@@ -1,17 +1,22 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include "Material.hpp"
+#include "Mesh.hpp"
 
-class Material;
-class Mesh;
+#include <glm/glm.hpp>
 
 class Shape {
 
-    Material const & material;
-    Mesh const & mesh;
-    glm::mat4 transformation;
-
 public:
 
-    Shape(Material const & material, Mesh const & mesh, glm::mat4 transformation);
+    Material material;
+    Mesh mesh;
+
+    Shape(Material && material, Mesh && mesh);
+
+    Shape(Shape const &) = delete;
+
+    Shape(Shape && shape) noexcept;
+
+    ~Shape();
 };

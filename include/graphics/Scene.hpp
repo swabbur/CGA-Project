@@ -10,25 +10,17 @@
 
 class Scene {
 
-    std::vector<Texture> textures;
-    std::vector<Material> materials;
-    std::vector<Mesh> meshes;
-    std::vector<Shape> shapes;
-
 public:
+
+    std::vector<Shape> shapes;
 
     static Scene load(std::string const & path);
 
-    Scene(std::vector<Texture> && textures,
-          std::vector<Material> && materials,
-          std::vector<Mesh> && meshes,
-          std::vector<Shape> && shapes);
+    explicit Scene(std::vector<Shape> && shapes);
 
     Scene(Scene const &) = delete;
 
     Scene(Scene && scene) noexcept;
 
     ~Scene();
-
-    void draw();
 };

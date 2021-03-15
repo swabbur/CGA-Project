@@ -2,6 +2,7 @@
 #include <graphics/Texture.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
+#include <iostream>
 
 Texture::Texture(unsigned int handle) : handle(handle) {}
 
@@ -11,6 +12,9 @@ Texture Texture::load(std::string const & path) {
     int height;
     int channels;
     unsigned char * data = stbi_load(path.c_str(), &width, &height, &channels, 4);
+    if (data == nullptr) {
+        throw std::runtime_error("Could not load texture: " + path);
+    }
 
     GLuint handle;
     glCreateTextures(GL_TEXTURE_2D, 1, &handle);

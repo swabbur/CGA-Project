@@ -20,7 +20,6 @@ int main() {
     Context context(window);
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Texture texture = Texture::load("textures/checkerboard.png");
     Scene scene = Scene::load("scenes/Dragon.dae");
 
     Camera camera(window, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec2(0.0f, 0.0f));
@@ -96,12 +95,18 @@ int main() {
         glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix();
         program.set_mat4(0, mvp);
 
-        // Set texture
-        texture.bind(0);
-        program.set_texture(1, 0);
+        // Render scene
+        for (Shape const & shape : scene.shapes) {
 
-        // Render mesh
-        scene.draw();
+            // Bind texture
+            if (auto diffuse_texture = std::get_if<Texture>(&shape.material.diffuse)) {
+                diffuse_texture->bind(0);
+                program.set_texture(1, 0);
+            }
+
+            // Draw mesh
+            shape.mesh.draw();
+        }
 
         // Update window
         window.swap_buffers();
