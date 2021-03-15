@@ -61,6 +61,9 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         material.specular = parse_color(specular_color);
     }
 
+    // TODO: Add shininess/roughness
+    // TODO: Add normal map
+
     return std::move(material);
 }
 
@@ -111,6 +114,8 @@ Scene Scene::load(std::string const & path) {
     if (scene == nullptr || scene->mRootNode == nullptr || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
         throw std::runtime_error("Could not load scene: " + path);
     }
+
+    // TODO: Parse lights
 
     // Parse nodes
     std::vector<Shape> shapes;
