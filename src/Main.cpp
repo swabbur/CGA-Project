@@ -20,7 +20,7 @@ int main() {
     Context context(window);
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Scene scene = Scene::load("scenes/Dragon.dae");
+    Scene scene = Scene::load("scenes/scene.obj");
 
     Camera camera(window, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec2(0.0f, 0.0f));
     Timer timer;

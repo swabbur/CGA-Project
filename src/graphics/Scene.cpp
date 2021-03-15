@@ -128,7 +128,7 @@ Scene Scene::load(std::string const & path) {
         for (unsigned int index = 0; index < node->mNumMeshes; index++) {
 
             // Parse mesh
-            aiMesh const * assimp_mesh = scene->mMeshes[index];
+            aiMesh const * assimp_mesh = scene->mMeshes[node->mMeshes[index]];
             if (assimp_mesh->mNumVertices == 0 || assimp_mesh->mNumFaces == 0) {
                 throw std::runtime_error("Encountered an empty mesh while loading scene");
             }
