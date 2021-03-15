@@ -2,6 +2,10 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <graphics/lights/AmbientLight.hpp>
+#include <graphics/lights/DirectionalLight.hpp>
+#include <graphics/lights/PointLight.hpp>
+#include <graphics/lights/SpotLight.hpp>
 #include <graphics/Scene.hpp>
 #include <graphics/Vertex.hpp>
 #include <iostream>
@@ -18,6 +22,10 @@ std::string extract_directory(std::string const & filepath) {
 
 glm::vec3 parse_vector(aiVector3D const & vector) {
     return glm::vec3(vector.x, vector.y, vector.z);
+}
+
+glm::vec3 parse_color(aiColor3D const & color) {
+    return glm::vec3(color.r, color.g, color.b);
 }
 
 glm::vec3 parse_color(aiColor4D const & color) {
@@ -115,7 +123,70 @@ Scene Scene::load(std::string const & path) {
         throw std::runtime_error("Could not load scene: " + path);
     }
 
-    // TODO: Parse lights
+    // Parse lights
+    struct {
+        std::vector<AmbientLight> ambient;
+        std::vector<DirectionalLight> directional;
+        std::vector<PointLight> point;
+        std::vector<SpotLight> spot;
+    } lights;
+
+    for (unsigned int index = 0; index < scene->mNumLights; index++) {
+        aiLight const * assimp_light = scene->mLights[index];
+        switch (assimp_light->mType) {
+
+            case aiLightSource_AMBIENT: {
+                AmbientLight light;
+                light.ambient = parse_color(assimp_light->mColorAmbient);
+                light.diffuse = parse_color(assimp_light->mColorDiffuse);
+                light.specular = parse_color(assimp_light->mColorSpecular);
+                lights.ambient.push_back(light);
+                break;
+            }
+
+            case aiLightSource_DIRECTIONAL: {
+                DirectionalLight light;
+                light.ambient = parse_color(assimp_light->mColorAmbient);
+                light.diffuse = parse_color(assimp_light->mColorDiffuse);
+                light.specular = parse_color(assimp_light->mColorSpecular);
+                light.direction = parse_vector(assimp_light->mDirection);
+                lights.directional.push_back(light);
+                break;
+            }
+
+            case aiLightSource_POINT: {
+                PointLight light;
+                light.ambient = parse_color(assimp_light->mColorAmbient);
+                light.diffuse = parse_color(assimp_light->mColorDiffuse);
+                light.specular = parse_color(assimp_light->mColorSpecular);
+                light.position = parse_vector(assimp_light->mPosition);
+                light.attenuation.constant = assimp_light->mAttenuationConstant;
+                light.attenuation.linear = assimp_light->mAttenuationLinear;
+                light.attenuation.quadratic = assimp_light->mAttenuationQuadratic;
+                lights.point.push_back(light);
+                break;
+            }
+
+            case aiLightSource_SPOT: {
+                SpotLight light;
+                light.ambient = parse_color(assimp_light->mColorAmbient);
+                light.diffuse = parse_color(assimp_light->mColorDiffuse);
+                light.specular = parse_color(assimp_light->mColorSpecular);
+                light.direction = parse_vector(assimp_light->mDirection);
+                light.position = parse_vector(assimp_light->mPosition);
+                light.attenuation.constant = assimp_light->mAttenuationConstant;
+                light.attenuation.linear = assimp_light->mAttenuationLinear;
+                light.attenuation.quadratic = assimp_light->mAttenuationQuadratic;
+                light.angles.inner = assimp_light->mAngleInnerCone;
+                light.angles.outer = assimp_light->mAngleOuterCone;
+                lights.spot.push_back(light);
+                break;
+            }
+
+            default:
+                throw std::runtime_error("Unsupported lights type encountered");
+        }
+    }
 
     // Parse nodes
     std::vector<Shape> shapes;
@@ -148,6 +219,8 @@ Scene Scene::load(std::string const & path) {
 
     // Unload assimp scene
     importer.FreeScene();
+
+    // TODO: Add lights to scene
 
     return Scene(std::move(shapes));
 }
