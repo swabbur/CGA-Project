@@ -16,9 +16,13 @@ layout(location = 0) out vec3 out_color;
 void main() {
 
     float light_distance = distance(light_position, fragment_position);
-    float light_strength = 1.0 / 4.0 / 3.14 / light_distance / light_distance;
     vec3 light_direction = normalize(light_position - fragment_position) / light_distance;
-    float diffuse_strength = max(dot(normalize(fragment_normal), light_direction), 0.0);
+
+    // Compute light strength based on sphere surface (e.g. how much of the light reaches this fragment)
+    float light_strength = 1.0 / 4.0 / 3.14 / light_distance / light_distance;
+
+    // Compute normalized diffuse factor
+    float diffuse_strength = max(dot(normalize(fragment_normal), light_direction), 0.0) / 3.14;
 
     if (material_diffuse_textured) {
         out_color = light_color_diffuse * light_strength * diffuse_strength * vec3(texture(material_diffuse_sampler, fragment_texture_coord));
