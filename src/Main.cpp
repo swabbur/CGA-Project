@@ -10,8 +10,6 @@
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
 
-#include <glm/gtx/transform.hpp>
-
 int main() {
 
     DeviceManager device_manager;
