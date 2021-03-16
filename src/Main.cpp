@@ -10,6 +10,8 @@
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
 
+#include <glm/gtx/transform.hpp>
+
 int main() {
 
     DeviceManager device_manager;
@@ -20,7 +22,7 @@ int main() {
     Context context(window);
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Scene const & scene = Scene::get("scenes/scene.dae");
+    Scene const & scene = Scene::load("scenes/scene.dae");
 
     Camera camera(window, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec2(0.0f, 0.0f));
     Timer timer;
@@ -93,7 +95,7 @@ int main() {
 
         // Set MVP matrix
         glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix();
-        program.set_mat4(0, mvp);
+        program.set_matrix(0, mvp);
 
         // Render scene
         for (Shape const & shape : scene.shapes) {
@@ -101,7 +103,7 @@ int main() {
             // Bind texture
             if (auto diffuse_texture = std::get_if<Texture>(&shape.material.diffuse)) {
                 diffuse_texture->bind(0);
-                program.set_texture(1, 0);
+                program.set_texture(2, 0);
             }
 
             // Draw mesh

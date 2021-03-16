@@ -9,14 +9,8 @@ class Shape {
 
 public:
 
-    Material material;
-    Mesh mesh;
+    Material const & material;
+    Mesh const & mesh;
 
-    Shape(Material && material, Mesh && mesh);
-
-    Shape(Shape const &) = delete;
-
-    Shape(Shape && shape) noexcept;
-
-    ~Shape();
+    Shape(Material const & material, Mesh const & mesh);
 };

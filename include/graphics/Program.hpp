@@ -26,7 +26,7 @@ public:
 
     void bind() const;
 
-    void set_mat4(unsigned int location, glm::mat4 const & matrix);
+    void set_matrix(unsigned int location, glm::mat4 const & matrix);
 
     void set_texture(unsigned int location, unsigned int index);
 };

@@ -62,7 +62,7 @@ void Program::bind() const {
     glUseProgram(handle);
 }
 
-void Program::set_mat4(unsigned int location, glm::mat4 const & matrix) { // NOLINT(readability-convert-member-functions-to-static)
+void Program::set_matrix(unsigned int location, glm::mat4 const & matrix) { // NOLINT(readability-convert-member-functions-to-static)
     glUniformMatrix4fv(location, 1, false, glm::value_ptr(matrix));
 }
 

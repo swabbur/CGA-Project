@@ -3,13 +3,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include <iostream>
-#include <util/Cache.hpp>
-
-Cache<std::string, Texture> Texture::cache(Texture::load); // NOLINT(cert-err58-cpp)
-
-Texture & Texture::get(std::string const & path) {
-    return cache.get(path);
-}
 
 Texture Texture::load(std::string const & path) {
 

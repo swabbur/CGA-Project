@@ -17,7 +17,7 @@ Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex>
     unsigned int vao;
     glCreateVertexArrays(1, &vao);
     glVertexArrayElementBuffer(vao, ibo);
-    glVertexArrayVertexBuffer(vao, 0, vbo, offsetof(Vertex, pos), sizeof(Vertex));
+    glVertexArrayVertexBuffer(vao, 0, vbo, offsetof(Vertex, position), sizeof(Vertex));
     glVertexArrayVertexBuffer(vao, 1, vbo, offsetof(Vertex, normal), sizeof(Vertex));
     glVertexArrayVertexBuffer(vao, 2, vbo, offsetof(Vertex, texture_coordinates), sizeof(Vertex));
     glEnableVertexArrayAttrib(vao, 0);

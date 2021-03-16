@@ -12,28 +12,28 @@
 #include <string>
 #include <vector>
 
-template<typename, typename>
-class Cache;
-
 class Scene {
-
-    static Cache<std::string, Scene> cache;
 
 public:
 
-    std::vector<Shape> shapes;
     struct Lights {
         std::vector<AmbientLight> ambient;
         std::vector<DirectionalLight> directional;
         std::vector<PointLight> point;
         std::vector<SpotLight> spot;
-    } lights;
+    };
 
     static Scene load(std::string const & path);
 
-    static Scene & get(std::string const & path);
+    std::vector<Material> materials;
+    std::vector<Mesh> meshes;
+    std::vector<Shape> shapes;
+    Lights lights;
 
-    explicit Scene(std::vector<Shape> && shapes, Lights && lights);
+    explicit Scene(std::vector<Material> && materials,
+                   std::vector<Mesh> && meshes,
+                   std::vector<Shape> && shapes,
+                   Lights && lights);
 
     Scene(Scene const &) = delete;
 

@@ -8,12 +8,9 @@
 #include <graphics/lights/SpotLight.hpp>
 #include <graphics/Scene.hpp>
 #include <graphics/Vertex.hpp>
-#include <util/Cache.hpp>
 #include <iostream>
 #include <map>
 #include <queue>
-
-Cache<std::string, Scene> Scene::cache(Scene::load); // NOLINT(cert-err58-cpp)
 
 std::string extract_directory(std::string const & filepath) {
     size_t position = filepath.find_last_of("[\\/]");
@@ -27,11 +24,28 @@ glm::vec3 parse_vector(aiVector3D const & vector) {
     return glm::vec3(vector.x, vector.y, vector.z);
 }
 
-glm::vec3 parse_color(aiColor3D const & color) {
-    return glm::vec3(color.r, color.g, color.b);
+glm::mat4 parse_matrix(aiMatrix4x4 const & assimp_matrix) {
+    glm::mat4 matrix;
+    matrix[0][0] = assimp_matrix.a1;
+    matrix[0][1] = assimp_matrix.b1;
+    matrix[0][2] = assimp_matrix.c1;
+    matrix[0][3] = assimp_matrix.d1;
+    matrix[1][0] = assimp_matrix.a2;
+    matrix[1][1] = assimp_matrix.b2;
+    matrix[1][2] = assimp_matrix.c2;
+    matrix[1][3] = assimp_matrix.d2;
+    matrix[2][0] = assimp_matrix.a3;
+    matrix[2][1] = assimp_matrix.b3;
+    matrix[2][2] = assimp_matrix.c3;
+    matrix[2][3] = assimp_matrix.d3;
+    matrix[3][0] = assimp_matrix.a4;
+    matrix[3][1] = assimp_matrix.b4;
+    matrix[3][2] = assimp_matrix.c4;
+    matrix[3][3] = assimp_matrix.d4;
+    return matrix;
 }
 
-glm::vec3 parse_color(aiColor4D const & color) {
+glm::vec3 parse_color(aiColor3D const & color) {
     return glm::vec3(color.r, color.g, color.b);
 }
 
@@ -39,41 +53,109 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
 
     Material material;
 
+    // PBR (Metallic/Roughness)
+
+//    if (assimp_material->GetTextureCount(aiTextureType_BASE_COLOR) > 0) {
+//        aiString assimp_filename;
+//        assimp_material->GetTexture(aiTextureType_BASE_COLOR, 0, &assimp_filename);
+//        std::string filename = assimp_filename.C_Str();
+//        material.base_color.emplace<Texture>(Texture::load(directory + filename));
+//    }
+//
+//    if (assimp_material->GetTextureCount(aiTextureType_METALNESS) > 0) {
+//        aiString assimp_filename;
+//        assimp_material->GetTexture(aiTextureType_METALNESS, 0, &assimp_filename);
+//        std::string filename = assimp_filename.C_Str();
+//        std::string filepath = directory + filename;
+//        Texture texture = Texture::load(filepath);
+//        material.metalness.emplace<Texture>(std::move(texture));
+//    }
+//
+//    if (assimp_material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) > 0) {
+//        aiString assimp_filename;
+//        assimp_material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &assimp_filename);
+//        std::string filename = assimp_filename.C_Str();
+//        std::string filepath = directory + filename;
+//        Texture texture = Texture::load(filepath);
+//        material.roughness.emplace<Texture>(std::move(texture));
+//    }
+//
+//    if (assimp_material->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) > 0) {
+//        aiString assimp_filename;
+//        assimp_material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &assimp_filename);
+//        std::string filename = assimp_filename.C_Str();
+//        std::string filepath = directory + filename;
+//        Texture texture = Texture::load(filepath);
+//        material.ambient_occlusion.emplace<Texture>(std::move(texture));
+//    }
+
+    // Phong
+
     if (assimp_material->GetTextureCount(aiTextureType_AMBIENT) > 0) {
         aiString assimp_filename;
         assimp_material->GetTexture(aiTextureType_AMBIENT, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
-        material.ambient.emplace<Texture>(Texture::load(directory + filename));
+        std::string filepath = directory + filename;
+        Texture texture = Texture::load(filepath);
+        material.ambient.emplace<Texture>(std::move(texture));
     } else {
-        aiColor4D ambient_color;
-        assimp_material->Get(AI_MATKEY_COLOR_AMBIENT, ambient_color);
-        material.ambient = parse_color(ambient_color);
+        aiColor3D assimp_color;
+        assimp_material->Get(AI_MATKEY_COLOR_AMBIENT, assimp_color);
+        glm::vec3 color = parse_color(assimp_color);
+        material.ambient = color;
     }
 
     if (assimp_material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
         aiString assimp_filename;
         assimp_material->GetTexture(aiTextureType_DIFFUSE, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
-        material.diffuse.emplace<Texture>(Texture::load(directory + filename));
+        std::string filepath = directory + filename;
+        Texture texture = Texture::load(filepath);
+        material.diffuse.emplace<Texture>(std::move(texture));
     } else {
-        aiColor4D diffuse_color;
-        assimp_material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse_color);
-        material.diffuse = parse_color(diffuse_color);
+        aiColor3D assimp_color;
+        assimp_material->Get(AI_MATKEY_COLOR_DIFFUSE, assimp_color);
+        glm::vec3 color = parse_color(assimp_color);
+        material.diffuse = color;
     }
 
     if (assimp_material->GetTextureCount(aiTextureType_SPECULAR) > 0) {
         aiString assimp_filename;
         assimp_material->GetTexture(aiTextureType_SPECULAR, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
-        material.specular.emplace<Texture>(Texture::load(directory + filename));
+        std::string filepath = directory + filename;
+        Texture texture = Texture::load(filepath);
+        material.specular.emplace<Texture>(std::move(texture));
     } else {
-        aiColor4D specular_color;
-        assimp_material->Get(AI_MATKEY_COLOR_SPECULAR, specular_color);
-        material.specular = parse_color(specular_color);
+        aiColor3D assimp_color;
+        assimp_material->Get(AI_MATKEY_COLOR_SPECULAR, assimp_color);
+        glm::vec3 color = parse_color(assimp_color);
+        material.specular = color;
     }
 
-    // TODO: Add shininess/roughness
-    // TODO: Add normal map
+    if (assimp_material->GetTextureCount(aiTextureType_SHININESS) > 0) {
+        aiString assimp_filename;
+        assimp_material->GetTexture(aiTextureType_SHININESS, 0, &assimp_filename);
+        std::string filename = assimp_filename.C_Str();
+        std::string filepath = directory + filename;
+        Texture texture = Texture::load(filepath);
+        material.shininess.emplace<Texture>(std::move(texture));
+    } else {
+        float shininess;
+        assimp_material->Get(AI_MATKEY_SHININESS, shininess);
+        material.shininess = shininess;
+    }
+
+    // Common
+
+    if (assimp_material->GetTextureCount(aiTextureType_NORMALS) > 0) {
+        aiString assimp_filename;
+        assimp_material->GetTexture(aiTextureType_NORMALS, 0, &assimp_filename);
+        std::string filename = assimp_filename.C_Str();
+        std::string filepath = directory + filename;
+        Texture texture = Texture::load(filepath);
+        material.normal.emplace<Texture>(std::move(texture));
+    }
 
     return std::move(material);
 }
@@ -100,14 +182,14 @@ Mesh parse_mesh(aiMesh const * mesh) {
     vertices.reserve(mesh->mNumVertices);
     bool textured = false;
     for (unsigned j = 0; j < mesh->mNumVertices; j++) {
-        const glm::vec3 position = glm::vec4(parse_vector(mesh->mVertices[j]), 1.0f);
-        const glm::vec3 normal = parse_vector(mesh->mNormals[j]);
-        glm::vec2 texture_coordinates;
+        Vertex vertex;
+        vertex.position = glm::vec4(parse_vector(mesh->mVertices[j]), 1.0f);
+        vertex.normal = parse_vector(mesh->mNormals[j]);
         if (mesh->HasTextureCoords(0)) {
-            texture_coordinates = glm::vec2(parse_vector(mesh->mTextureCoords[0][j]));
+            vertex.texture_coordinates = glm::vec2(parse_vector(mesh->mTextureCoords[0][j]));
             textured = true;
         }
-        vertices.push_back({ position, normal, texture_coordinates });
+        vertices.push_back(vertex);
     }
 
     // Create mesh
@@ -128,7 +210,6 @@ Scene Scene::load(std::string const & path) {
 
     // Parse lights
     Lights lights;
-
     for (unsigned int index = 0; index < scene->mNumLights; index++) {
         aiLight const * assimp_light = scene->mLights[index];
         switch (assimp_light->mType) {
@@ -186,6 +267,27 @@ Scene Scene::load(std::string const & path) {
         }
     }
 
+    // Parse materials
+    std::vector<Material> materials;
+    materials.reserve(scene->mNumMaterials);
+    for (unsigned int index = 0; index < scene->mNumMaterials; index++) {
+        aiMaterial const * assimp_material = scene->mMaterials[index];
+        Material material = parse_material(directory, assimp_material);
+        materials.push_back(std::move(material));
+    }
+
+    // Parse meshes
+    std::vector<Mesh> meshes;
+    meshes.reserve(scene->mNumMeshes);
+    std::vector<unsigned int> mesh_material_indices;
+    mesh_material_indices.reserve(scene->mNumMeshes);
+    for (unsigned int index = 0; index < scene->mNumMeshes; index++) {
+        aiMesh const * assimp_mesh = scene->mMeshes[index];
+        Mesh mesh = parse_mesh(assimp_mesh);
+        meshes.push_back(std::move(mesh));
+        mesh_material_indices.push_back(assimp_mesh->mMaterialIndex);
+    }
+
     // Parse nodes
     std::vector<Shape> shapes;
     std::queue<aiNode const *> worklist;
@@ -195,19 +297,11 @@ Scene Scene::load(std::string const & path) {
         worklist.pop();
 
         for (unsigned int index = 0; index < node->mNumMeshes; index++) {
-
-            // Parse mesh
-            aiMesh const * assimp_mesh = scene->mMeshes[node->mMeshes[index]];
-            if (assimp_mesh->mNumVertices == 0 || assimp_mesh->mNumFaces == 0) {
-                throw std::runtime_error("Encountered an empty mesh while loading scene");
-            }
-            Mesh mesh = parse_mesh(assimp_mesh);
-
-            // Parse material
-            aiMaterial const * assimp_material = scene->mMaterials[assimp_mesh->mMaterialIndex];
-            Material material = parse_material(directory, assimp_material);
-
-            shapes.emplace_back(std::move(material), std::move(mesh));
+            unsigned int mesh_index = node->mMeshes[index];
+            unsigned int material_index = mesh_material_indices[mesh_index];
+            Material & material = materials[material_index];
+            Mesh & mesh = meshes[mesh_index];
+            shapes.emplace_back(material, mesh);
         }
 
         for (unsigned index = 0; index < node->mNumChildren; index++) {
@@ -218,15 +312,14 @@ Scene Scene::load(std::string const & path) {
     // Unload assimp scene
     importer.FreeScene();
 
-    return Scene(std::move(shapes), std::move(lights));
+    return Scene(std::move(materials), std::move(meshes), std::move(shapes), std::move(lights));
 }
 
-Scene & Scene::get(std::string const & path) {
-    return cache.get(path);
-}
-
-Scene::Scene(std::vector<Shape> && shapes, Lights && lights) :
-    shapes(std::move(shapes)), lights(std::move(lights))
+Scene::Scene(std::vector<Material> && materials,
+             std::vector<Mesh> && meshes,
+             std::vector<Shape> && shapes,
+             Lights && lights)
+    : materials(std::move(materials)), meshes(std::move(meshes)), shapes(std::move(shapes)), lights(std::move(lights))
 {}
 
 Scene::Scene(Scene && scene) noexcept :

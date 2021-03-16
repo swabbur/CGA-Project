@@ -4,6 +4,12 @@
 
 struct Shader {
 
+    unsigned int handle;
+
+    explicit Shader(unsigned int handle);
+
+public:
+
     enum class Type {
         VERTEX,
         FRAGMENT,
@@ -20,10 +26,4 @@ struct Shader {
     ~Shader();
 
     [[nodiscard]] unsigned int get_handle() const;
-
-private:
-
-    unsigned int handle;
-
-    explicit Shader(unsigned int handle);
 };
