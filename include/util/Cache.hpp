@@ -5,6 +5,12 @@
 #include <mutex>
 #include <string>
 
+/**
+ * A cache for values that are costly to load or store.
+ *
+ * @tparam Key The type of keys used for loading and retrieving values.
+ * @tparam Value The type of values that are stored in the cache.
+ */
 template<typename Key, typename Value>
 class Cache {
 
@@ -14,34 +20,59 @@ class Cache {
 
 public:
 
-    explicit Cache(std::function<Value(Key)> load);
+    /**
+     * Create a cache for values loaded using the provided load function.
+     *
+     * @param load The function used to load values.
+     */
+    explicit Cache(std::function<Value(Key)> load) : mutex(), values(), load(std::move(load)) {}
 
+    /**
+     * A cache should never be moved.
+     */
     Cache(Cache const &) = delete;
 
+    /**
+     * A cache should never be copied.
+     */
     Cache(Cache &&) = delete;
 
-    ~Cache();
+    /**
+     * Destroy the cache and its contained values.
+     */
+    ~Cache() = default;
 
-    Value & get(Key const & key);
-};
+    /**
+     * Either retrieve the value associated with the given key from the cache, or load, store, and return a new value
+     * using the load function passed to the cache's constructor.
+     *
+     * @param key The key used to retrieve or load a value.
+     * @return A reference to the retrieved or loaded value.
+     */
+    Value & get(Key const & key) {
 
-template<typename Key, typename Value>
-Cache<Key, Value>::Cache(std::function<Value(Key)> load) : mutex(), values(), load(std::move(load)) {}
+        // Synchronize such that no values are unnecessarily loaded multiple times
+        std::scoped_lock<std::mutex> lock(mutex);
 
-template<typename Key, typename Value>
-Cache<Key, Value>::~Cache() = default;
+        // Retrieve a cached value
+        auto iterator = values.find(key);
+        if (iterator != values.end()) {
+            return iterator->second;
+        }
 
-template<typename Key, typename Value>
-Value & Cache<Key, Value>::get(Key const & key) {
-    std::scoped_lock<std::mutex> lock(mutex);
-    auto iterator = values.find(key);
-    if (iterator == values.end()) {
+        // Load, store, and return a new value
         Value value = load(key);
         auto [new_iterator, inserted] = values.emplace(key, std::move(value));
         if (!inserted) {
-            throw std::runtime_error("Failed to add loaded value to cache: " + key);
+            throw std::runtime_error("Failed to store loaded value in cache: " + key);
         }
         return new_iterator->second;
     }
-    return iterator->second;
-}
+
+    /**
+     * Clear the cache, destroying its contained values.
+     */
+    void clear() {
+        values.clear();
+    }
+};
