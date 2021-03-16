@@ -13,7 +13,6 @@
 
 int main() {
 
-
     DeviceManager device_manager;
     Window & window = device_manager.get_window();
     Keyboard & keyboard = device_manager.get_keyboard();
