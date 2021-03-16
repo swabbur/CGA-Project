@@ -12,7 +12,12 @@
 #include <string>
 #include <vector>
 
+template<typename, typename>
+class Cache;
+
 class Scene {
+
+    static Cache<std::string, Scene> cache;
 
 public:
 
@@ -25,6 +30,8 @@ public:
     } lights;
 
     static Scene load(std::string const & path);
+
+    static Scene & get(std::string const & path);
 
     explicit Scene(std::vector<Shape> && shapes, Lights && lights);
 

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <util/Cache.hpp>
 
-Cache<std::string, Texture> Texture::cache(Texture::load);
+Cache<std::string, Texture> Texture::cache(Texture::load); // NOLINT(cert-err58-cpp)
 
 Texture & Texture::get(std::string const & path) {
     return cache.get(path);

@@ -4,7 +4,6 @@
 #include <graphics/Scene.hpp>
 #include <graphics/Program.hpp>
 #include <graphics/Texture.hpp>
-#include <util/Cache.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
 
@@ -21,9 +20,7 @@ int main() {
     Context context(window);
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-
-    Cache<std::string, Scene> scenes(Scene::load);
-    Scene const & scene = scenes.get("scenes/scene.dae");
+    Scene const & scene = Scene::get("scenes/scene.dae");
 
     Camera camera(window, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec2(0.0f, 0.0f));
     Timer timer;

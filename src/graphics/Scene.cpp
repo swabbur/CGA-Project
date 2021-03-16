@@ -8,9 +8,12 @@
 #include <graphics/lights/SpotLight.hpp>
 #include <graphics/Scene.hpp>
 #include <graphics/Vertex.hpp>
+#include <util/Cache.hpp>
 #include <iostream>
 #include <map>
 #include <queue>
+
+Cache<std::string, Scene> Scene::cache(Scene::load); // NOLINT(cert-err58-cpp)
 
 std::string extract_directory(std::string const & filepath) {
     size_t position = filepath.find_last_of("[\\/]");
@@ -216,6 +219,10 @@ Scene Scene::load(std::string const & path) {
     importer.FreeScene();
 
     return Scene(std::move(shapes), std::move(lights));
+}
+
+Scene & Scene::get(std::string const & path) {
+    return cache.get(path);
 }
 
 Scene::Scene(std::vector<Shape> && shapes, Lights && lights) :
