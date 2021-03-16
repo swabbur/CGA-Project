@@ -7,6 +7,8 @@ layout(location = 3) uniform vec3 material_diffuse_color;
 layout(location = 4) uniform vec3 light_color_diffuse;
 layout(location = 5) uniform vec3 light_position;
 
+layout(location = 6) uniform vec3 camera_position;
+
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
 layout(location = 2) in vec2 fragment_texture_coord;
@@ -23,6 +25,8 @@ void main() {
 
     // Compute normalized diffuse factor
     float diffuse_strength = max(dot(normalize(fragment_normal), light_direction), 0.0) / 3.14;
+
+    // Compute Blinn-Phong specular factor
 
     if (material_diffuse_textured) {
         out_color = light_color_diffuse * light_strength * diffuse_strength * vec3(texture(material_diffuse_sampler, fragment_texture_coord));

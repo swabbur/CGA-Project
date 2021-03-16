@@ -218,9 +218,6 @@ Scene Scene::load(std::string const & path) {
                 light.diffuse = parse_color(assimp_light->mColorDiffuse);
                 light.specular = parse_color(assimp_light->mColorSpecular);
                 light.position = parse_vector(assimp_light->mPosition);
-                light.attenuation.constant = assimp_light->mAttenuationConstant;
-                light.attenuation.linear = assimp_light->mAttenuationLinear;
-                light.attenuation.quadratic = assimp_light->mAttenuationQuadratic;
                 lights.point.push_back(light);
                 break;
             }
@@ -232,9 +229,6 @@ Scene Scene::load(std::string const & path) {
                 light.specular = parse_color(assimp_light->mColorSpecular);
                 light.direction = parse_vector(assimp_light->mDirection);
                 light.position = parse_vector(assimp_light->mPosition);
-                light.attenuation.constant = assimp_light->mAttenuationConstant;
-                light.attenuation.linear = assimp_light->mAttenuationLinear;
-                light.attenuation.quadratic = assimp_light->mAttenuationQuadratic;
                 light.angles.inner = assimp_light->mAngleInnerCone;
                 light.angles.outer = assimp_light->mAngleOuterCone;
                 lights.spot.push_back(light);

@@ -29,12 +29,6 @@ int main() {
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
 
-    PointLight light = scene.lights.point[0];
-    std::cout << light.diffuse.r << " " << light.diffuse.g << " " << light.diffuse.b << std::endl;
-    std::cout << light.attenuation.constant << std::endl;
-    std::cout << light.attenuation.linear << std::endl;
-    std::cout << light.attenuation.quadratic << std::endl;
-
     while (!window.is_closed()) {
 
         // Poll events
