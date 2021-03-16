@@ -100,15 +100,16 @@ int main() {
         glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix();
         program.set_matrix(0, mvp);
 
+        // Set camera position
+        program.set_vector(1, camera.get_position());
+
         // Set light properties
         for (PointLight const & light : scene.lights.point) {
-            program.set_vector(4, light.diffuse);
-            program.set_vector(8, light.specular);
-            program.set_vector(5, light.position);
+            program.set_vector(2, light.diffuse);
+            program.set_vector(3, light.specular);
+            program.set_vector(4, light.position);
             break;
         }
-
-        program.set_vector(6, camera.get_position());
 
         // Render shapes
         for (Shape const & shape : scene.shapes) {
@@ -116,24 +117,24 @@ int main() {
             // Set material properties
             if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
                 texture->bind(0);
-                program.set_bool(1, true);
-                program.set_texture(2, 0);
+                program.set_bool(5, true);
+                program.set_texture(6, 0);
             } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
-                program.set_bool(1, false);
-                program.set_vector(3, *color);
+                program.set_bool(5, false);
+                program.set_vector(7, *color);
             }
 
             if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
                 texture->bind(0);
-                program.set_bool(9, true);
-                program.set_texture(10, 0);
+                program.set_bool(8, true);
+                program.set_texture(9, 0);
             } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
-                program.set_bool(9, false);
-                program.set_vector(11, *color);
+                program.set_bool(8, false);
+                program.set_vector(10, *color);
             }
 
             if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
-                program.set_float(7, *shininess);
+                program.set_float(11, *shininess);
             }
 
             // Render mesh

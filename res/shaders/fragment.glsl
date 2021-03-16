@@ -1,20 +1,20 @@
 #version 450 core
 
-layout(location = 1) uniform bool material_diffuse_textured;
-layout(location = 2) uniform sampler2D material_diffuse_sampler;
-layout(location = 3) uniform vec3 material_diffuse_color;
+layout(location = 1) uniform vec3 camera_position;
 
-layout(location = 9) uniform bool material_specular_textured;
-layout(location = 10) uniform sampler2D material_specular_sampler;
-layout(location = 11) uniform vec3 material_specular_color;
+layout(location = 2) uniform vec3 light_color_diffuse;
+layout(location = 3) uniform vec3 light_color_specular;
+layout(location = 4) uniform vec3 light_position;
 
-layout(location = 7) uniform float material_shininess;
+layout(location = 5) uniform bool material_diffuse_textured;
+layout(location = 6) uniform sampler2D material_diffuse_sampler;
+layout(location = 7) uniform vec3 material_diffuse_color;
 
-layout(location = 4) uniform vec3 light_color_diffuse;
-layout(location = 8) uniform vec3 light_color_specular;
-layout(location = 5) uniform vec3 light_position;
+layout(location = 8) uniform bool material_specular_textured;
+layout(location = 9) uniform sampler2D material_specular_sampler;
+layout(location = 10) uniform vec3 material_specular_color;
 
-layout(location = 6) uniform vec3 camera_position;
+layout(location = 11) uniform float material_shininess;
 
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
