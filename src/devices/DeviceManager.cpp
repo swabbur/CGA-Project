@@ -33,6 +33,9 @@ DeviceManager::DeviceManager() : handle(nullptr), keyboard(), mouse(), window(),
     // Set OpenGL preferences
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 
+    // Set MSAA preferences
+    glfwWindowHint(GLFW_SAMPLES, 4);
+
     // Compute initial width and height
     GLFWmonitor * monitor = glfwGetPrimaryMonitor();
     GLFWvidmode const * video_mode = glfwGetVideoMode(monitor);

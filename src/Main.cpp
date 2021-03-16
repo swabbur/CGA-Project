@@ -87,6 +87,7 @@ int main() {
         context.clear();
 
         // Set additional context options
+        context.set_multisampling(true);
         context.set_depth_test(true);
         context.set_cull_face(true);
         context.set_alpha_blending(false);

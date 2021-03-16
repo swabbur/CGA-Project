@@ -31,6 +31,14 @@ void Context::clear() { // NOLINT(readability-convert-member-functions-to-static
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void Context::set_multisampling(bool multisampling) {
+    if (multisampling) {
+        glEnable(GL_MULTISAMPLE);
+    } else {
+        glDisable(GL_MULTISAMPLE);
+    }
+}
+
 void Context::set_depth_test(bool depth_test) { // NOLINT(readability-convert-member-functions-to-static)
     if (depth_test) {
         glEnable(GL_DEPTH_TEST);

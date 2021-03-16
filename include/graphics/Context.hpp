@@ -22,6 +22,8 @@ public:
 
     void clear();
 
+    void set_multisampling(bool multisampling);
+
     void set_depth_test(bool depth_test);
 
     void set_cull_face(bool cull_face);
