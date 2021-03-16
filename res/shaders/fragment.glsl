@@ -1,5 +1,9 @@
 #version 450 core
 
+struct Camera {
+    vec3 position;
+};
+
 struct PointLight {
     vec3 diffuse;
     vec3 specular;
@@ -18,7 +22,7 @@ struct Material {
     float shininess;
 };
 
-layout(location = 1) uniform vec3 camera_position;
+layout(location = 1) uniform Camera camera;
 layout(location = 2) uniform PointLight light;
 layout(location = 5) uniform Material material;
 
@@ -47,7 +51,7 @@ vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, float light_streng
 vec3 compute_specular_color(vec3 normal, vec3 light_direction, float light_strength) {
 
     // Compute (normalized Blinn-Phong) specular strength
-    vec3 view_direction = normalize(camera_position - fragment_position);
+    vec3 view_direction = normalize(camera.position - fragment_position);
     vec3 half_vector = normalize(light_direction + view_direction);
     float specular_strength = pow(max(0.0, dot(normal, half_vector)), 4.0 * material.shininess) / 2.0 / PI;
 
