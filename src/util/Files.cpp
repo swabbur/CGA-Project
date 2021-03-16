@@ -7,7 +7,7 @@ std::string Files::read_text(std::string const & path) {
     // Open file
     std::ifstream file(path, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
-        throw std::runtime_error("Could not load_rgb file: " + path);
+        throw std::runtime_error("Could not load file: " + path);
     }
 
     // Read text
