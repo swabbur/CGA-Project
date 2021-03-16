@@ -33,9 +33,10 @@ public:
     Cache(Cache const &) = delete;
 
     /**
-     * A cache should never be copied.
+     * Move the given cache, including its cached values and load function, into a new cache. Beware, the move is not
+     * thread-safe.
      */
-    Cache(Cache &&) = delete;
+    Cache(Cache && cache) noexcept : mutex(), values(std::move(cache.values)), load(std::move(load)) {}
 
     /**
      * Destroy the cache and its contained values.
