@@ -26,6 +26,8 @@ public:
 
     void bind() const;
 
+    void set_vector(unsigned int location, glm::vec3 const & vector);
+
     void set_matrix(unsigned int location, glm::mat4 const & matrix);
 
     void set_texture(unsigned int location, unsigned int index);

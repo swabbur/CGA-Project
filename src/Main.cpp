@@ -95,16 +95,37 @@ int main() {
         glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix();
         program.set_matrix(0, mvp);
 
-        // Render scene
+        // Set light properties
+        for (AmbientLight const & light : scene.lights.ambient) {
+
+        }
+
+        for (DirectionalLight const & light : scene.lights.directional) {
+
+        }
+
+        for (PointLight const & light : scene.lights.point) {
+
+        }
+
+        for (SpotLight const & light : scene.lights.spot) {
+
+        }
+
+        // Render shapes
         for (Shape const & shape : scene.shapes) {
 
-            // Bind texture
-            if (auto diffuse_texture = std::get_if<Texture>(&shape.material.diffuse)) {
-                diffuse_texture->bind(0);
+            // Set material properties
+            if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
+                texture->bind(0);
                 program.set_texture(2, 0);
             }
 
-            // Draw mesh
+            if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
+                program.set_vector(2, *color);
+            }
+
+            // Render mesh
             shape.mesh.draw();
         }
 
