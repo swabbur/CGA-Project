@@ -124,12 +124,7 @@ Scene Scene::load(std::string const & path) {
     }
 
     // Parse lights
-    struct {
-        std::vector<AmbientLight> ambient;
-        std::vector<DirectionalLight> directional;
-        std::vector<PointLight> point;
-        std::vector<SpotLight> spot;
-    } lights;
+    Lights lights;
 
     for (unsigned int index = 0; index < scene->mNumLights; index++) {
         aiLight const * assimp_light = scene->mLights[index];
@@ -220,13 +215,11 @@ Scene Scene::load(std::string const & path) {
     // Unload assimp scene
     importer.FreeScene();
 
-    // TODO: Add lights to scene
-
-    return Scene(std::move(shapes));
+    return Scene(std::move(shapes), std::move(lights));
 }
 
-Scene::Scene(std::vector<Shape> && shapes) :
-    shapes(std::move(shapes))
+Scene::Scene(std::vector<Shape> && shapes, Lights && lights) :
+    shapes(std::move(shapes)), lights(std::move(lights))
 {}
 
 Scene::Scene(Scene && scene) noexcept :
