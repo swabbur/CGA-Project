@@ -6,6 +6,10 @@ Camera::Camera(Window & window, glm::vec3 position, glm::vec2 rotation)
     : window(window), position(position), rotation(rotation)
 {}
 
+glm::vec3 Camera::get_position() const {
+    return position;
+}
+
 glm::mat4 Camera::get_projection_matrix() const {
     return glm::perspective(glm::radians(70.0f), window.get_aspect_ratio(), 0.01f, 100.0f);
 }

@@ -6,10 +6,10 @@
 #include <graphics/Texture.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
-#include <iostream>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 int main() {
 
@@ -101,23 +101,14 @@ int main() {
         program.set_matrix(0, mvp);
 
         // Set light properties
-        for (AmbientLight const & light : scene.lights.ambient) {
-
-        }
-
-        for (DirectionalLight const & light : scene.lights.directional) {
-
-        }
-
         for (PointLight const & light : scene.lights.point) {
             program.set_vector(4, light.diffuse);
+            program.set_vector(8, light.specular);
             program.set_vector(5, light.position);
             break;
         }
 
-        for (SpotLight const & light : scene.lights.spot) {
-
-        }
+        program.set_vector(6, camera.get_position());
 
         // Render shapes
         for (Shape const & shape : scene.shapes) {
@@ -130,6 +121,19 @@ int main() {
             } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
                 program.set_bool(1, false);
                 program.set_vector(3, *color);
+            }
+
+            if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
+                texture->bind(0);
+                program.set_bool(9, true);
+                program.set_texture(10, 0);
+            } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
+                program.set_bool(9, false);
+                program.set_vector(11, *color);
+            }
+
+            if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
+                program.set_float(7, *shininess);
             }
 
             // Render mesh

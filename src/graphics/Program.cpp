@@ -66,6 +66,10 @@ void Program::set_bool(unsigned int location, bool boolean) { // NOLINT(readabil
     glUniform1ui(location, boolean);
 }
 
+void Program::set_float(unsigned int location, float scalar) { // NOLINT(readability-convert-member-functions-to-static)
+    glUniform1f(location, scalar);
+}
+
 void Program::set_vector(unsigned int location, glm::vec3 const & vector) { // NOLINT(readability-convert-member-functions-to-static)
     glUniform3fv(location, 1, glm::value_ptr(vector));
 }

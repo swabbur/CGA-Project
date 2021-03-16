@@ -14,6 +14,8 @@ public:
 
     Camera(Window & window, glm::vec3 position, glm::vec2 rotation);
 
+    [[nodiscard]] glm::vec3 get_position() const;
+
     [[nodiscard]] glm::mat4 get_projection_matrix() const;
 
     [[nodiscard]] glm::mat4 get_view_matrix() const;
