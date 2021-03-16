@@ -3,8 +3,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include <iostream>
+#include <util/Cache.hpp>
 
-Texture::Texture(unsigned int handle) : handle(handle) {}
+Cache<std::string, Texture> Texture::cache(Texture::load);
+
+Texture & Texture::get(std::string const & path) {
+    return cache.get(path);
+}
 
 Texture Texture::load(std::string const & path) {
 
@@ -31,6 +36,8 @@ Texture Texture::load(std::string const & path) {
 
     return Texture(handle);
 }
+
+Texture::Texture(unsigned int handle) : handle(handle) {}
 
 Texture::Texture(Texture && texture) noexcept : handle(texture.handle) {
     texture.handle = 0;
