@@ -22,6 +22,9 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Scene const & scene = Scene::load("scenes/scene.dae");
 
+    Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
+    Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
+
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
 
@@ -118,11 +121,11 @@ int main() {
             // Set material properties
             if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
                 texture->bind(0);
+                program.set_bool(1, true);
                 program.set_texture(2, 0);
-            }
-
-            if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
-                program.set_vector(2, *color);
+            } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
+                program.set_bool(1, false);
+                program.set_vector(3, *color);
             }
 
             // Render mesh

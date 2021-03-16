@@ -62,6 +62,10 @@ void Program::bind() const {
     glUseProgram(handle);
 }
 
+void Program::set_bool(unsigned int location, bool boolean) { // NOLINT(readability-convert-member-functions-to-static)
+    glUniform1ui(location, boolean);
+}
+
 void Program::set_vector(unsigned int location, glm::vec3 const & vector) { // NOLINT(readability-convert-member-functions-to-static)
     glUniform3fv(location, 1, glm::value_ptr(vector));
 }

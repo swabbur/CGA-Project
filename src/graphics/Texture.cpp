@@ -2,18 +2,18 @@
 #include <graphics/Texture.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
-#include <iostream>
+#include <stdexcept>
 
-Texture Texture::load_rgb(std::string const & path) {
+Texture Texture::load(std::string const & path) {
 
     int width;
     int height;
     int channels;
 
     stbi_set_flip_vertically_on_load(true);
-    unsigned char * data = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb);
+    unsigned char * data = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
     if (data == nullptr) {
-        throw std::runtime_error("Could not load_rgb texture: " + path);
+        throw std::runtime_error("Could not load texture: " + path);
     }
 
     GLuint handle;
@@ -25,45 +25,14 @@ Texture Texture::load_rgb(std::string const & path) {
     glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-    glTextureStorage2D(handle, 1, GL_RGB8, width, height);
-    glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTextureStorage2D(handle, 1, GL_RGBA8, width, height);
+    glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     glGenerateTextureMipmap(handle);
 
     stbi_image_free(data);
 
-    return Texture(handle);
-}
-
-Texture Texture::load_grey(std::string const & path) {
-
-    int width;
-    int height;
-    int channels;
-
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char * data = stbi_load(path.c_str(), &width, &height, &channels, STBI_grey);
-    if (data == nullptr) {
-        throw std::runtime_error("Could not load_rgb texture: " + path);
-    }
-
-    GLuint handle;
-    glCreateTextures(GL_TEXTURE_2D, 1, &handle);
-
-    glTextureParameteri(handle, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-    glTextureStorage2D(handle, 1, GL_R8, width, height);
-    glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_R, GL_UNSIGNED_BYTE, data);
-
-    glGenerateTextureMipmap(handle);
-
-    stbi_image_free(data);
-
-    return Texture(handle);
+    return Texture(Type::COLOR, handle);
 }
 
 Texture Texture::create(Type type, unsigned int width, unsigned int height) {
@@ -92,12 +61,12 @@ Texture Texture::create(Type type, unsigned int width, unsigned int height) {
             throw std::runtime_error("Unsupported texture type");
     }
 
-    return Texture(handle);
+    return Texture(type, handle);
 }
 
-Texture::Texture(unsigned int handle) : handle(handle) {}
+Texture::Texture(Type type, unsigned int handle) : type(type), handle(handle) {}
 
-Texture::Texture(Texture && texture) noexcept : handle(texture.handle) {
+Texture::Texture(Texture && texture) noexcept : type(texture.type), handle(texture.handle) {
     texture.handle = 0;
 }
 

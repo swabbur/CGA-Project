@@ -4,10 +4,6 @@
 
 class Texture {
 
-    unsigned int handle;
-
-    explicit Texture(unsigned int handle);
-
 public:
 
     enum class Type {
@@ -15,9 +11,18 @@ public:
         DEPTH,
     };
 
-    static Texture load_rgb(std::string const & path);
+private:
 
-    static Texture load_grey(std::string const & path);
+    friend class Framebuffer;
+
+    Type type;
+    unsigned int handle;
+
+    Texture(Type type, unsigned int handle);
+
+public:
+
+    static Texture load(std::string const & path);
 
     static Texture create(Type type, unsigned int width, unsigned int height);
 

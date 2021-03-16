@@ -26,6 +26,8 @@ public:
 
     void bind() const;
 
+    void set_bool(unsigned int location, bool boolean);
+
     void set_vector(unsigned int location, glm::vec3 const & vector);
 
     void set_matrix(unsigned int location, glm::mat4 const & matrix);
