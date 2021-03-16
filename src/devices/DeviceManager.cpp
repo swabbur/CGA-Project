@@ -106,6 +106,11 @@ DeviceManager::DeviceManager() : handle(nullptr), keyboard(), mouse(), window(),
         device_manager->mouse.move(static_cast<float>(x), static_cast<float>(y));
     });
 
+    // Enable raw mouse input
+    if (glfwRawMouseMotionSupported()) {
+        glfwSetInputMode(static_cast<GLFWwindow *>(handle), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
+
     // Create event-loop
     running = true;
     thread = std::thread([this]() {

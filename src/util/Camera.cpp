@@ -1,6 +1,7 @@
 #include <devices/Window.hpp>
 #include <util/Camera.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <iostream>
 
 Camera::Camera(Window & window, glm::vec3 position, glm::vec2 rotation)
     : window(window), position(position), rotation(rotation)
@@ -37,8 +38,10 @@ void Camera::move(glm::vec3 const & position_delta) {
 
 void Camera::turn(glm::vec2 const & new_rotation) {
     rotation = new_rotation;
+    rotation.x = glm::clamp(rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
 }
 
 void Camera::rotate(glm::vec2 const & rotation_delta) {
     rotation += rotation_delta;
+    rotation.x = glm::clamp(rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
 }
