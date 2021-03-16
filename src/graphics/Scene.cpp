@@ -12,7 +12,7 @@
 #include <map>
 #include <queue>
 
-std::string extract_directory(std::string const & filepath) {
+std::string get_parent_directory(std::string const & filepath) {
     size_t position = filepath.find_last_of("[\\/]");
     if (position == std::string::npos) {
         return "";
@@ -22,27 +22,6 @@ std::string extract_directory(std::string const & filepath) {
 
 glm::vec3 parse_vector(aiVector3D const & vector) {
     return glm::vec3(vector.x, vector.y, vector.z);
-}
-
-glm::mat4 parse_matrix(aiMatrix4x4 const & assimp_matrix) {
-    glm::mat4 matrix;
-    matrix[0][0] = assimp_matrix.a1;
-    matrix[0][1] = assimp_matrix.b1;
-    matrix[0][2] = assimp_matrix.c1;
-    matrix[0][3] = assimp_matrix.d1;
-    matrix[1][0] = assimp_matrix.a2;
-    matrix[1][1] = assimp_matrix.b2;
-    matrix[1][2] = assimp_matrix.c2;
-    matrix[1][3] = assimp_matrix.d2;
-    matrix[2][0] = assimp_matrix.a3;
-    matrix[2][1] = assimp_matrix.b3;
-    matrix[2][2] = assimp_matrix.c3;
-    matrix[2][3] = assimp_matrix.d3;
-    matrix[3][0] = assimp_matrix.a4;
-    matrix[3][1] = assimp_matrix.b4;
-    matrix[3][2] = assimp_matrix.c4;
-    matrix[3][3] = assimp_matrix.d4;
-    return matrix;
 }
 
 glm::vec3 parse_color(aiColor3D const & color) {
@@ -199,7 +178,7 @@ Mesh parse_mesh(aiMesh const * mesh) {
 Scene Scene::load(std::string const & path) {
 
     // Get directory from path
-    std::string directory = extract_directory(path);
+    std::string directory = get_parent_directory(path);
 
     // Load assimp scene
     Assimp::Importer importer;
@@ -318,12 +297,18 @@ Scene Scene::load(std::string const & path) {
 Scene::Scene(std::vector<Material> && materials,
              std::vector<Mesh> && meshes,
              std::vector<Shape> && shapes,
-             Lights && lights)
-    : materials(std::move(materials)), meshes(std::move(meshes)), shapes(std::move(shapes)), lights(std::move(lights))
+             Lights && lights) :
+    materials(std::move(materials)),
+    meshes(std::move(meshes)),
+    shapes(std::move(shapes)),
+    lights(std::move(lights))
 {}
 
 Scene::Scene(Scene && scene) noexcept :
-    shapes(std::move(scene.shapes))
+    materials(std::move(scene.materials)),
+    meshes(std::move(scene.meshes)),
+    shapes(std::move(scene.shapes)),
+    lights(std::move(scene.lights))
 {}
 
 Scene::~Scene() = default;

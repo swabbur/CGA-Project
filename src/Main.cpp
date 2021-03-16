@@ -24,7 +24,7 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Scene const & scene = Scene::load("scenes/scene.dae");
 
-    Camera camera(window, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec2(0.0f, 0.0f));
+    Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
 
     while (!window.is_closed()) {

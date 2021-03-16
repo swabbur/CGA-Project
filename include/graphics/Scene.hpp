@@ -14,6 +14,9 @@
 
 class Scene {
 
+    std::vector<Material> materials;
+    std::vector<Mesh> meshes;
+
 public:
 
     struct Lights {
@@ -25,8 +28,6 @@ public:
 
     static Scene load(std::string const & path);
 
-    std::vector<Material> materials;
-    std::vector<Mesh> meshes;
     std::vector<Shape> shapes;
     Lights lights;
 
