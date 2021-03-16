@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html><head></head><body>
+
+
+  
+  
+  
+  
+  
+  
+  <div style="overflow:auto;">
+  	<p style="float:left;margin:0;"><b>IN4152</b> - Computer Graphics and Animation</p><p style="float:right;margin:0;">Elmar Eisemann</p>
+  </div>
+  
+  <hr/>
+  <br/>
+
+
+<header>
+<h1 class="title">IN4152 - 3D Game Project</h1>
+</header>
+<hr style="margin-top: 3rem;margin-bottom:3rem;"/>
+<img src="javascript://"/>
+<hr style="margin-top: 3rem;margin-bottom:3rem;"/>
+<h2>Introduction</h2>
+<p>In your final project the goal is to create a three-dimensional game. In this game you will use all of the skills that you will acquire during the practical sesssions. Above are some examples of a game you can take inspiration from, but feel free to do something completely different as long as you make some implementation of the requirements outlined below:</p>
+<h2>Requirements</h2>
+<p>Your game should feature a <strong>main character, modeled by you [Blender Practical]</strong>, that can move around in 3D space using some input mechanism like the keyboard or mouse. The rotation and translation of the player should be accomplished using <strong>matrix transformations [OpenGL Intro Practical]</strong>. This (or another) character should be an animated character using skinning, which you should produce by exporting your animated model into individual frames in form of .obj files <strong>[Blender Practical]</strong></p> 
+
+The view the player has on the scene is determined by setting <strong>projection and view matrices</strong>. You might want a first-person or third-person or birds-eye type of game, therefore the position of the camera is up to you.
+
+<p>The environment should consist of a 3D model <strong>modeled by you [Blender Practical]</strong>, including the house that you have built.</p>
+You can enrich your game by 3D models downloaded from the internet. 
+
+<p>The environment and objects inhabiting it should be shaded in ways you have been taught during the course. This means you should implement at least the <strong>(Blinn-)Phong Shading Model [Shading Practical]</strong> with a diffuse and specular term. Advanced shading solutions with more complex material models [see lecture] are welcome. In addition, you should add textures to the scene. These can be downloaded from the internet or made by yourself. Employ these textures also for simple material definitions (control the shininess, or use them as normal map...). To increase realism, you should simulate sunlight by applying <strong>shadow mapping [Shading Mapping Practical]</strong>. The shadows will probably look pretty rough, so add <strong>filtering</strong> (like PCF) <strong>[Shadow Mapping]</strong> to them to make them look better.</p>
+
+<p>The game should contain at least one &quot;monster&quot; (possibly an end-boss) that consists of <strong>several animated components [OpenGL Intro Practical]</strong> (e.g., a robot arm or a snake, or many objects rotating like a solar system). Opt for at least four hierarchy levels. This hierarchy should also include a <strong> light source </strong>, which emits light only inside of a cone using a light falloff [Shadow Mapping]. As an example, imagine a cyclopse that is observing the scene as illustrated by the light from the cone. Integrate a mechanism to determine whether a player is receiving light from this cone (i.e., is seen by the monster) and integrate it in your game.
+<p>Finally, give a special power to this monster, that it can temporarily activate an X-Ray vision. It allows to <strong>[look behind the first occluding layer]</strong>. In this special mode, the shading should switch to the <strong>X-Toon-Shading model [Shading Practical]</strong> with a special effect for the distance.</p> 
+<p>
+Towards the end of the course, you will also learn about some <strong>simple acceleration methods </strong> to accelerate the rendering methods in your game. 
+</p>
+
+<p>For a bonus, add other cool graphics features, such as (but not limited to):</p>
+<ul>
+<li>Particle effects (explosions, magic spells, fire)</li>
+<li>Point-lights (like torches or light bulbs)</li>
+<li>The illusion of an infinite terrain by adding new tiles on the fly</li>
+<li>Post-processing effects</li>
+<li>More complex shading techniques, such as normal mapping</li>
+<li>Terrain based on a 3D height field</li>
+<li>Water surfaces that are procedurally generated (produce a vertex grid and move the vertices according to a combination of several sinus functions that you can evaluate in the vertex shader).</li>
+<li>Animated textures (by switching textures frame to frame)</li>
+<li>Zoom effects / perspective changes</li>
+<li>Changing lighting conditions (like a day-night system)</li>
+<li>A minimap (by rendering from a camera high up in the sky, and displaying it on a quad)</li>
+<li>An interactive user-interface</li>
+<li>Collision between the player and objects</li>
+<li>Generate a maze or dungeon for the player to move through</li>
+<li>Generate environment props like buildings procedurally.</li>
+</ul>
+<p>Feel free to come up with your own extra effects and features, the above list is by far not exhaustive!</p>
+<p>For the project you are not judged on the length, fun, functionality, or quality of the gameplay, but rather on the graphics techniques you used and how well they were applied. In short, a boring game can receive a good grade! Of course, a nice presentation, creativity, or breathtaking visuals are a bonus.</p>
+<p>It is advised to work in <strong>groups of two-three people</strong>, three is the maximal number.</p>
+<p><strong>Please upload your contribution before the start of the last session, which is scheduled on Friday 26th of March (during the practical session)</strong>. The project upload should include: the <strong>source code</strong>, a <strong>short report</strong> (max 150 words) of the <strong>implemented techniques each accompanied by one or multiple screen shots to well illustrate the method</strong> and a <strong>list of the work done by each individual group member with a percentage indication</strong> (not included in the word count). For each project, it is sufficient if ONE group member uploads all components.</p> In case of strong discrepancies in the group, we will opt for an individual grading based on the provided overview. 
+<p>Please also prepare a <strong>5 minute presentation</strong> (including a <strong>live demo</strong>) of your work to present during the last practical session, which will be recorded for internal grading purposes and not diffused online. </p>
+</p>
+
+<script type="text/javascript" src="/d2l/common/math/MathML.js?v=20.21.2.27566-31 "></script><script type="text/javascript">document.addEventListener('DOMContentLoaded', function() { D2LMathML.DesktopInit('https://s.brightspace.com/lib/mathjax/2.7.4/MathJax.js?config=MML_HTMLorMML','https://s.brightspace.com/lib/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML','130'); });</script></body></html>
