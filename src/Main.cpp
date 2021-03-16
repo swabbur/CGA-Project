@@ -85,8 +85,8 @@ int main() {
 
         // Set additional context options
         context.set_depth_test(true);
-        context.set_cull_face(false);
-        context.set_alpha_blending(true);
+        context.set_cull_face(true);
+        context.set_alpha_blending(false);
 
         // Bind shader program
         program.bind();

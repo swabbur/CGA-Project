@@ -38,7 +38,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
 //        aiString assimp_filename;
 //        assimp_material->GetTexture(aiTextureType_BASE_COLOR, 0, &assimp_filename);
 //        std::string filename = assimp_filename.C_Str();
-//        material.base_color.emplace<Texture>(Texture::load(directory + filename));
+//        material.base_color.emplace<Texture>(Texture::load_rgb(directory + filename));
 //    }
 //
 //    if (assimp_material->GetTextureCount(aiTextureType_METALNESS) > 0) {
@@ -46,7 +46,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
 //        assimp_material->GetTexture(aiTextureType_METALNESS, 0, &assimp_filename);
 //        std::string filename = assimp_filename.C_Str();
 //        std::string filepath = directory + filename;
-//        Texture texture = Texture::load(filepath);
+//        Texture texture = Texture::load_rgb(filepath);
 //        material.metalness.emplace<Texture>(std::move(texture));
 //    }
 //
@@ -55,7 +55,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
 //        assimp_material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &assimp_filename);
 //        std::string filename = assimp_filename.C_Str();
 //        std::string filepath = directory + filename;
-//        Texture texture = Texture::load(filepath);
+//        Texture texture = Texture::load_rgb(filepath);
 //        material.roughness.emplace<Texture>(std::move(texture));
 //    }
 //
@@ -64,7 +64,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
 //        assimp_material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &assimp_filename);
 //        std::string filename = assimp_filename.C_Str();
 //        std::string filepath = directory + filename;
-//        Texture texture = Texture::load(filepath);
+//        Texture texture = Texture::load_rgb(filepath);
 //        material.ambient_occlusion.emplace<Texture>(std::move(texture));
 //    }
 
@@ -75,7 +75,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         assimp_material->GetTexture(aiTextureType_AMBIENT, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
         std::string filepath = directory + filename;
-        Texture texture = Texture::load(filepath);
+        Texture texture = Texture::load_rgb(filepath);
         material.ambient.emplace<Texture>(std::move(texture));
     } else {
         aiColor3D assimp_color;
@@ -89,7 +89,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         assimp_material->GetTexture(aiTextureType_DIFFUSE, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
         std::string filepath = directory + filename;
-        Texture texture = Texture::load(filepath);
+        Texture texture = Texture::load_rgb(filepath);
         material.diffuse.emplace<Texture>(std::move(texture));
     } else {
         aiColor3D assimp_color;
@@ -103,7 +103,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         assimp_material->GetTexture(aiTextureType_SPECULAR, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
         std::string filepath = directory + filename;
-        Texture texture = Texture::load(filepath);
+        Texture texture = Texture::load_rgb(filepath);
         material.specular.emplace<Texture>(std::move(texture));
     } else {
         aiColor3D assimp_color;
@@ -117,7 +117,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         assimp_material->GetTexture(aiTextureType_SHININESS, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
         std::string filepath = directory + filename;
-        Texture texture = Texture::load(filepath);
+        Texture texture = Texture::load_grey(filepath);
         material.shininess.emplace<Texture>(std::move(texture));
     } else {
         float shininess;
@@ -132,7 +132,7 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         assimp_material->GetTexture(aiTextureType_NORMALS, 0, &assimp_filename);
         std::string filename = assimp_filename.C_Str();
         std::string filepath = directory + filename;
-        Texture texture = Texture::load(filepath);
+        Texture texture = Texture::load_rgb(filepath);
         material.normal.emplace<Texture>(std::move(texture));
     }
 
@@ -184,7 +184,7 @@ Scene Scene::load(std::string const & path) {
     Assimp::Importer importer;
     aiScene const * scene = importer.ReadFile(path.c_str(), aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_RemoveRedundantMaterials | aiProcess_PreTransformVertices);
     if (scene == nullptr || scene->mRootNode == nullptr || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
-        throw std::runtime_error("Could not load scene: " + path);
+        throw std::runtime_error("Could not load_rgb scene: " + path);
     }
 
     // Parse lights

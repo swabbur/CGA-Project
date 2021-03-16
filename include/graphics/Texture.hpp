@@ -10,7 +10,16 @@ class Texture {
 
 public:
 
-    static Texture load(std::string const & path);
+    enum class Type {
+        COLOR,
+        DEPTH,
+    };
+
+    static Texture load_rgb(std::string const & path);
+
+    static Texture load_grey(std::string const & path);
+
+    static Texture create(Type type, unsigned int width, unsigned int height);
 
     Texture(Texture const &) = delete;
 
