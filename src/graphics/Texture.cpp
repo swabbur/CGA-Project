@@ -1,7 +1,7 @@
 #include <GL/glew.h>
 #include <graphics/Texture.hpp>
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+#include <stb_image.h>
 #include <stdexcept>
 
 Texture Texture::load(std::string const & path) {
