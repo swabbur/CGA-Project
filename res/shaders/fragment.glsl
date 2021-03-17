@@ -50,10 +50,25 @@ vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, float light_streng
 
 vec3 compute_specular_color(vec3 normal, vec3 light_direction, float light_strength) {
 
-    // Compute (normalized Blinn-Phong) specular strength
+    // Early-exit when lit from behind
+    if (dot(normal, light_direction) < 0.0) {
+        return vec3(0.0);
+    }
+
+    // Compute (Blinn-Phong) specular strength
+//    vec3 view_direction = normalize(camera.position - fragment_position);
+//    vec3 half_vector = normalize(light_direction + view_direction);
+//    float specular_strength = pow(dot(normal, half_vector), 4.0 * material.shininess);
+
+    // Compute (normalized Blinn-Phong) specular strength (http://www.farbrausch.de/~fg/stuff/phong.pdf)
     vec3 view_direction = normalize(camera.position - fragment_position);
     vec3 half_vector = normalize(light_direction + view_direction);
-    float specular_strength = pow(max(0.0, dot(normal, half_vector)), 4.0 * material.shininess) / 2.0 / PI;
+    float n = 4.0 * material.shininess;
+    float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * pow(2, -n / 2.0) + n);
+    float specular_strength = normalization_factor * pow(max(0.0, dot(normal, half_vector)), n) * dot(normal, light_direction);
+
+    // Reduce specular strength (stylistic choice)
+//    specular_strength = pow(specular_strength, 0.5);
 
     // Compute specular color
     if (material.specular.textured) {
@@ -70,8 +85,8 @@ void main() {
     vec3 normal = normalize(fragment_normal);
 
     float light_distance = distance(light.position, fragment_position);
-    float light_strength = 1.0 / 4.0 / PI / light_distance / light_distance;
-    vec3 light_direction = (light.position - fragment_position) / light_distance;
+    float light_strength = 1.0 / (4.0 * PI * light_distance * light_distance);
+    vec3 light_direction = normalize(light.position - fragment_position);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light_strength);

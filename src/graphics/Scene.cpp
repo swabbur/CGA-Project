@@ -1,4 +1,5 @@
 #include <assimp/Importer.hpp>
+#include <assimp/pbrmaterial.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/gtc/matrix_inverse.hpp>
