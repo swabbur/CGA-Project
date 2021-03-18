@@ -34,57 +34,73 @@ layout(location = 0) out vec3 out_color;
 
 float PI = 3.14159;
 
-vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, float light_strength) {
+vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
 
-    // Compute normalized (Lambertian) diffuse strength
-    float diffuse_strength = max(0.0, dot(normal, light_direction)) / PI;
+    // Compute (normalized Lambertian) diffuse strength
+    float normalization_factor = 1.0 / PI;
+    float diffuse_strength = normalization_factor * max(0.0, dot(normal, light_direction));
+
+    // Compute material diffuse color
+    vec3 material_color;
+    if (material.diffuse.textured) {
+        material_color = vec3(texture(material.diffuse.sampler, fragment_texture_coord));
+    } else {
+        material_color = material.diffuse.color;
+    }
 
     // Compute diffuse color
-    if (material.diffuse.textured) {
-        vec3 sampled_color = vec3(texture(material.diffuse.sampler, fragment_texture_coord));
-        return light_strength * diffuse_strength * light.diffuse * sampled_color;
-    } else {
-        return light_strength * diffuse_strength * light.diffuse * material.diffuse.color;
-    }
+    return diffuse_strength * light_color * material_color;
 }
 
-vec3 compute_specular_color(vec3 normal, vec3 light_direction, float light_strength) {
+vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color) {
 
     // Early-exit when lit from behind
     if (dot(normal, light_direction) < 0.0) {
         return vec3(0.0);
     }
 
-    // Compute (normalized Blinn-Phong) specular strength (http://www.farbrausch.de/~fg/stuff/phong.pdf)
+    // Compute half vector
     vec3 view_direction = normalize(camera.position - fragment_position);
     vec3 half_vector = normalize(light_direction + view_direction);
+
+    // Compute (normalized Blinn-Phong) specular strength (http://www.farbrausch.de/~fg/stuff/phong.pdf)
     float n = 4.0 * material.shininess;
     float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
-    float specular_strength = normalization_factor * pow(max(0.0, dot(normal, half_vector)), n);
+    float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
+
+    // Compute specular material color
+    vec3 material_color;
+    if (material.specular.textured) {
+        material_color = vec3(texture(material.specular.sampler, fragment_texture_coord));
+    } else {
+        material_color = material.specular.color;
+    }
 
     // Compute specular color
-    if (material.specular.textured) {
-        vec3 sampled_color = vec3(texture(material.specular.sampler, fragment_texture_coord));
-        return light_strength * specular_strength * light.specular * sampled_color;
-    } else {
-        return light_strength * specular_strength * light.specular * material.specular.color;
-    }
+    return specular_strength * light_color * material_color;
+}
+
+vec3 compute_point_light_color(PointLight light, vec3 normal) {
+
+    // Compute light properties
+    vec3 light_direction = normalize(light.position - fragment_position);
+    float light_distance = distance(light.position, fragment_position);
+    float light_strength = 1.0 / (4.0 * PI * light_distance * light_distance);
+
+    // Compute individual colors
+    vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.diffuse);
+    vec3 specular_color = compute_specular_color(normal, light_direction, light.specular);
+
+    // Compute combined color
+    return light_strength * (diffuse_color + specular_color);
 }
 
 void main() {
 
-    // Compute shared variables
+    // Compute normal
     vec3 normal = normalize(fragment_normal);
 
-    float light_distance = distance(light.position, fragment_position);
-    float light_strength = 1.0 / (4.0 * PI * light_distance * light_distance);
-    vec3 light_direction = normalize(light.position - fragment_position);
-
-    // Compute individual colors
-    vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light_strength);
-    vec3 specular_color = compute_specular_color(normal, light_direction, light_strength);
-
-    // Compute final color
-    out_color = diffuse_color + specular_color;
+    // Compute color
+    out_color = compute_point_light_color(light, normal);
     out_color = clamp(out_color, 0.0, 1.0);
 }
