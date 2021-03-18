@@ -23,7 +23,7 @@ Texture Texture::load(std::string const & path) {
     glTextureParameteri(handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glTextureStorage2D(handle, 1, GL_RGBA8, width, height);
     glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
