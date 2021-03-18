@@ -1,5 +1,4 @@
 #include <assimp/Importer.hpp>
-#include <assimp/pbrmaterial.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -32,44 +31,6 @@ glm::vec3 parse_color(aiColor3D const & color) {
 Material parse_material(std::string const & directory, aiMaterial const * assimp_material) {
 
     Material material;
-
-    // PBR (Metallic/Roughness)
-
-//    if (assimp_material->GetTextureCount(aiTextureType_BASE_COLOR) > 0) {
-//        aiString assimp_filename;
-//        assimp_material->GetTexture(aiTextureType_BASE_COLOR, 0, &assimp_filename);
-//        std::string filename = assimp_filename.C_Str();
-//        material.base_color.emplace<Texture>(Texture::load_rgb(directory + filename));
-//    }
-//
-//    if (assimp_material->GetTextureCount(aiTextureType_METALNESS) > 0) {
-//        aiString assimp_filename;
-//        assimp_material->GetTexture(aiTextureType_METALNESS, 0, &assimp_filename);
-//        std::string filename = assimp_filename.C_Str();
-//        std::string filepath = directory + filename;
-//        Texture texture = Texture::load_rgb(filepath);
-//        material.metalness.emplace<Texture>(std::move(texture));
-//    }
-//
-//    if (assimp_material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) > 0) {
-//        aiString assimp_filename;
-//        assimp_material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &assimp_filename);
-//        std::string filename = assimp_filename.C_Str();
-//        std::string filepath = directory + filename;
-//        Texture texture = Texture::load_rgb(filepath);
-//        material.roughness.emplace<Texture>(std::move(texture));
-//    }
-//
-//    if (assimp_material->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) > 0) {
-//        aiString assimp_filename;
-//        assimp_material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &assimp_filename);
-//        std::string filename = assimp_filename.C_Str();
-//        std::string filepath = directory + filename;
-//        Texture texture = Texture::load_rgb(filepath);
-//        material.ambient_occlusion.emplace<Texture>(std::move(texture));
-//    }
-
-    // Phong
 
     if (assimp_material->GetTextureCount(aiTextureType_AMBIENT) > 0) {
         aiString assimp_filename;
@@ -125,8 +86,6 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         assimp_material->Get(AI_MATKEY_SHININESS, shininess);
         material.shininess = shininess;
     }
-
-    // Common
 
     if (assimp_material->GetTextureCount(aiTextureType_NORMALS) > 0) {
         aiString assimp_filename;
