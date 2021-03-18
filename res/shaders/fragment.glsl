@@ -55,20 +55,12 @@ vec3 compute_specular_color(vec3 normal, vec3 light_direction, float light_stren
         return vec3(0.0);
     }
 
-    // Compute (Blinn-Phong) specular strength
-//    vec3 view_direction = normalize(camera.position - fragment_position);
-//    vec3 half_vector = normalize(light_direction + view_direction);
-//    float specular_strength = pow(dot(normal, half_vector), 4.0 * material.shininess);
-
     // Compute (normalized Blinn-Phong) specular strength (http://www.farbrausch.de/~fg/stuff/phong.pdf)
     vec3 view_direction = normalize(camera.position - fragment_position);
     vec3 half_vector = normalize(light_direction + view_direction);
     float n = 4.0 * material.shininess;
-    float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * pow(2, -n / 2.0) + n);
-    float specular_strength = normalization_factor * pow(max(0.0, dot(normal, half_vector)), n) * dot(normal, light_direction);
-
-    // Reduce specular strength (stylistic choice)
-//    specular_strength = pow(specular_strength, 0.5);
+    float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
+    float specular_strength = normalization_factor * pow(max(0.0, dot(normal, half_vector)), n);
 
     // Compute specular color
     if (material.specular.textured) {
