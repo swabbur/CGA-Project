@@ -54,11 +54,6 @@ vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) 
 
 vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color) {
 
-    // Early-exit when lit from behind
-    if (dot(normal, light_direction) < 0.0) {
-        return vec3(0.0);
-    }
-
     // Compute half vector
     vec3 view_direction = normalize(camera.position - fragment_position);
     vec3 half_vector = normalize(light_direction + view_direction);
@@ -86,6 +81,11 @@ vec3 compute_point_light_color(PointLight light, vec3 normal) {
     vec3 light_direction = normalize(light.position - fragment_position);
     float light_distance = distance(light.position, fragment_position);
     float light_strength = 1.0 / (4.0 * PI * light_distance * light_distance);
+
+    // Early-exit when light is behind fragment
+    if (dot(normal, light_direction) < 0.0) {
+        return vec3(0.0);
+    }
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.diffuse);
