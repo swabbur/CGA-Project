@@ -27,7 +27,7 @@ set(PACKAGES
 
 # Create executable
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-add_executable(CGA ${SOURCES})
+add_executable(CGA ${SOURCES} "src/graphics/Entity.cpp" "include/graphics/Entity.hpp")
 target_include_directories(CGA PUBLIC include)
 target_link_libraries(CGA ${PACKAGES})
 
