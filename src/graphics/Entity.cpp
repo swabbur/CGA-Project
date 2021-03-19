@@ -13,3 +13,5 @@ glm::mat4 const Entity::get_model_matrix() {
 	model_matrix = glm::rotate(model_matrix, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
 	return model_matrix;
 }
+
+

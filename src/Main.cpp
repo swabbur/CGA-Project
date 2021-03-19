@@ -24,12 +24,15 @@ int main() {
 
     std::vector<Scene> scenes;
     scenes.push_back(Scene::load("scenes/scene.dae"));
+    scenes.push_back(Scene::load("scenes/pawn.fbx"));
 
     std::vector<Entity> entities;
     entities.emplace_back(scenes[0]);
     entities.emplace_back(scenes[0]);
+    entities.emplace_back(scenes[1]);
 
     entities[1].position = glm::vec3(3.0f, 0.0f, 0.0f);
+    entities[2].position = glm::vec3(0.1f, 0.1f, 0.0f);
 
     Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
     Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
