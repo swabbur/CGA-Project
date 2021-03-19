@@ -7,12 +7,14 @@ struct Camera {
 struct PointLight {
     vec3 color;
     vec3 position;
+    float intensity;
 };
 
 struct SpotLight {
     vec3 color;
     vec3 position;
     vec3 direction;
+    float intensity;
     float angle;
 };
 
@@ -114,7 +116,7 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
     // Compute light properties
     vec3 light_direction = normalize(light.position - fragment_position);
     float light_distance = distance(light.position, fragment_position);
-    float light_strength = 1.0 / (4.0 * PI * light_distance * light_distance);
+    float light_strength = light.intensity / (4.0 * PI * light_distance * light_distance);
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
@@ -134,7 +136,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     // Compute light properties
     vec3 light_direction = normalize(light.position - fragment_position);
     float light_distance = distance(light.position, fragment_position);
-    float light_strength = 100.0 / (4.0 * PI * light_distance * light_distance);
+    float light_strength = light.intensity / (4.0 * PI * light_distance * light_distance);
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {

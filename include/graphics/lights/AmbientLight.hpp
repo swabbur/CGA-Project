@@ -7,6 +7,7 @@ class AmbientLight {
 public:
 
     glm::vec3 color;
+    float intensity;
 
     AmbientLight();
 };

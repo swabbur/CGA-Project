@@ -24,7 +24,7 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
 
     std::vector<Model> models;
-    models.push_back(Model::load("models/model.dae"));
+    models.push_back(Model::load("models/scene.dae"));
 
     std::vector<Instance> instances;
     instances.emplace_back(models[0]);
@@ -33,8 +33,9 @@ int main() {
     Timer timer;
 
     PointLight point_light;
-    point_light.color = glm::vec3(1000.0f);
+    point_light.color = glm::vec3(1.0f);
     point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
+    point_light.intensity = 1000.0f;
 
     while (!window.is_closed()) {
 
@@ -109,6 +110,7 @@ int main() {
         // Set light properties
         program.set_vec3("point_light.color", point_light.color);
         program.set_vec3("point_light.position", point_light.position);
+        program.set_float("point_light.intensity", point_light.intensity);
 
         // Render instances
         for (Instance & instance : instances) {
