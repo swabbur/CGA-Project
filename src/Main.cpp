@@ -1,6 +1,5 @@
 #include <devices/DeviceManager.hpp>
 #include <graphics/lights/PointLight.hpp>
-#include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
 #include <graphics/Model.hpp>
