@@ -9,6 +9,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 int main() {
 
@@ -20,7 +21,7 @@ int main() {
     Context context(window);
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Scene const & scene = Scene::load("scenes/scene.dae");
+    Scene const & scene = Scene::load("scenes/scene_2.dae");
 
     Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
     Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
@@ -28,6 +29,8 @@ int main() {
 
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
+
+    std::cout << scene.lights.spot[0].angles.outer << std::endl;
 
     while (!window.is_closed()) {
 
@@ -112,44 +115,58 @@ int main() {
             break;
         }
 
+        for (SpotLight const & light : scene.lights.spot) {
+            program.set_vector(6, light.ambient);
+            program.set_vector(7, light.diffuse);
+            program.set_vector(8, light.specular);
+            program.set_vector(9, light.position);
+            program.set_vector(10, light.direction);
+            program.set_float(11, light.angles.inner);
+            program.set_float(12, light.angles.outer);
+            break;
+        }
+
         // Render shapes
         for (Shape const & shape : scene.shapes) {
 
             // Set material properties
             if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
                 texture->bind(0);
-                program.set_bool(6, true);
-                program.set_texture(7, 0);
+                program.set_bool(13, true);
+                program.set_texture(14, 0);
             } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
-                program.set_bool(6, false);
-                program.set_vector(8, *color);
+                program.set_bool(13, false);
+                program.set_vector(15, *color);
             }
 
             if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
                 texture->bind(1);
-                program.set_bool(9, true);
-                program.set_texture(10, 1);
+                program.set_bool(16, true);
+                program.set_texture(17, 1);
             } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
-                program.set_bool(9, false);
-                program.set_vector(11, *color);
+                program.set_bool(16, false);
+                program.set_vector(18, *color);
             }
 
             if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
                 texture->bind(2);
-                program.set_bool(12, true);
-                program.set_texture(13, 2);
+                program.set_bool(19, true);
+                program.set_texture(20, 2);
             } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
-                program.set_bool(12, false);
-                program.set_vector(14, *color);
+                program.set_bool(19, false);
+                program.set_vector(21, *color);
             }
 
             if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
-                program.set_float(15, *shininess);
+                program.set_float(22, *shininess);
             }
 
             if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
                 texture->bind(3);
-                program.set_texture(16, 3);
+                program.set_bool(23, true);
+                program.set_texture(24, 3);
+            } else {
+                program.set_bool(23, false);
             }
 
             // Render mesh

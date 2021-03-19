@@ -11,6 +11,16 @@ struct PointLight {
     vec3 position;
 };
 
+struct SpotLight {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    vec3 position;
+    vec3 direction;
+    float inner_angle;
+    float outer_angle;
+};
+
 struct Component {
     bool textured;
     sampler2D sampler;
@@ -22,12 +32,14 @@ struct Material {
     Component diffuse;
     Component specular;
     float shininess;
+    bool normal_textured;
     sampler2D normal_sampler;
 };
 
 layout(location = 1) uniform Camera camera;
 layout(location = 2) uniform PointLight point_light;
-layout(location = 6) uniform Material material;
+layout(location = 6) uniform SpotLight spot_light;
+layout(location = 13) uniform Material material;
 
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
@@ -113,12 +125,55 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
     return light_strength * (ambient_color + diffuse_color + specular_color);
 }
 
+vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
+
+    // Compute light properties
+    vec3 light_direction = normalize(light.position - fragment_position);
+    float light_distance = distance(light.position, fragment_position);
+    float light_strength = 1.0; // / (4.0 * PI * light_distance * light_distance);
+
+    // Early-exit when light is behind fragment
+    if (dot(normal, light_direction) < 0.0) {
+        return vec3(0.0);
+    }
+
+    // Create cone effect
+    float cosine = dot(-light_direction, light.direction);
+    if (cosine < 0.5) {
+        light_strength *= 0.0;
+    }
+
+//    float min = cos(light.inner_angle);
+//    float max = cos(light.outer_angle);
+
+//    if (cosine > min && cosine < max) {
+//        light_strength *= 1.0 - (cosine - min) / (max - min);
+//    } else if (cosine >= max) {
+//        light_strength *= 0.0;
+//    }
+
+    // Compute individual colors
+    vec3 ambient_color = compute_ambient_color(light.ambient);
+    vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.diffuse);
+    vec3 specular_color = compute_specular_color(normal, light_direction, light.specular);
+
+    // Compute combined color
+    return light_strength * (ambient_color + diffuse_color + specular_color);
+}
+
+vec3 compute_light_color(vec3 normal) {
+    vec3 color;
+    color += compute_point_light_color(normal, point_light);
+    color += compute_spot_light_color(normal, spot_light);
+    return color;
+}
+
 void main() {
 
     // Compute normal
     vec3 normal = normalize(fragment_normal);
 
     // Compute color
-    out_color += compute_point_light_color(normal, point_light);
+    out_color += compute_light_color(normal);
     out_color = clamp(out_color, 0.0, 1.0);
 }
