@@ -1,13 +1,15 @@
 #include <devices/DeviceManager.hpp>
+#include <graphics/lights/DirectionalLight.hpp>
 #include <graphics/lights/PointLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
+#include <graphics/Instance.hpp>
 #include <graphics/Model.hpp>
 #include <graphics/Program.hpp>
 #include <graphics/Texture.hpp>
+#include <util/Cache.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
-#include <graphics/Instance.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
@@ -23,11 +25,10 @@ int main() {
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
 
-    std::vector<Model> models;
-    models.push_back(Model::load("models/scene.dae"));
+    Cache<std::string, Model> models(Model::load);
 
     std::vector<Instance> instances;
-    instances.emplace_back(models[0]);
+    instances.emplace_back(models.get("models/scene.dae"));
 
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
@@ -36,6 +37,11 @@ int main() {
     point_light.color = glm::vec3(1.0f);
     point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
     point_light.intensity = 1000.0f;
+
+    DirectionalLight directional_light;
+    directional_light.color = glm::vec3(1.0f);
+    directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
+    directional_light.intensity = 3.0f;
 
     while (!window.is_closed()) {
 
@@ -108,9 +114,13 @@ int main() {
         program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
-        program.set_vec3("point_light.color", point_light.color);
-        program.set_vec3("point_light.position", point_light.position);
-        program.set_float("point_light.intensity", point_light.intensity);
+        program.set_vec3("directional_light.color", directional_light.color);
+        program.set_vec3("directional_light.direction", directional_light.direction);
+        program.set_float("directional_light.intensity", directional_light.intensity);
+
+//        program.set_vec3("point_light.color", point_light.color);
+//        program.set_vec3("point_light.position", point_light.position);
+//        program.set_float("point_light.intensity", point_light.intensity);
 
         // Render instances
         for (Instance & instance : instances) {

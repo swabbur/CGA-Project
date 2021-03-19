@@ -4,6 +4,12 @@ struct Camera {
     vec3 position;
 };
 
+struct DirectionalLight {
+    vec3 color;
+    vec3 direction;
+    float intensity;
+};
+
 struct PointLight {
     vec3 color;
     vec3 position;
@@ -34,6 +40,7 @@ struct Material {
 };
 
 uniform Camera camera;
+uniform DirectionalLight directional_light;
 uniform PointLight point_light;
 uniform SpotLight spot_light;
 uniform Material material;
@@ -111,6 +118,21 @@ vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color)
     return specular_strength * light_color * material_color;
 }
 
+vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
+
+    // Early-exit when light is behind fragment
+    if (dot(normal, light.direction) < 0.0) {
+        return vec3(0.0);
+    }
+
+    // Compute individual colors
+    vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);
+    vec3 specular_color = compute_specular_color(normal, light.direction, light.color);
+
+    // Compute combined color
+    return light.intensity * (diffuse_color + specular_color);
+}
+
 vec3 compute_point_light_color(vec3 normal, PointLight light) {
 
     // Compute light properties
@@ -163,6 +185,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
 vec3 compute_light_color(vec3 normal) {
     vec3 color;
+    color += compute_directional_light_color(normal, directional_light);
     color += compute_point_light_color(normal, point_light);
     color += compute_spot_light_color(normal, spot_light);
     return color;
