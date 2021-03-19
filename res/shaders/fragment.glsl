@@ -5,20 +5,15 @@ struct Camera {
 };
 
 struct PointLight {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    vec3 color;
     vec3 position;
 };
 
 struct SpotLight {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    vec3 color;
     vec3 position;
     vec3 direction;
-    float inner_angle;
-    float outer_angle;
+    float angle;
 };
 
 struct Component {
@@ -50,6 +45,7 @@ layout(location = 0) out vec3 out_color;
 float PI = 3.14159;
 
 vec3 compute_normal() {
+
     vec3 normal = normalize(fragment_normal);
     if (!material.normal_textured) {
         return normal;
@@ -70,20 +66,6 @@ vec3 compute_normal() {
     vec4 normal_map_value = texture(material.normal_sampler, fragment_texture_coord);
 
     return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
-}
-
-vec3 compute_ambient_color(vec3 light_color) {
-
-    // Compute material ambient color
-    vec3 material_color;
-    if (material.diffuse.textured) {
-        material_color = vec3(texture(material.diffuse.sampler, fragment_texture_coord));
-    } else {
-        material_color = material.diffuse.color;
-    }
-
-    // Compute ambient color
-    return light_color * material_color;
 }
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
@@ -140,12 +122,11 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
     }
 
     // Compute individual colors
-    vec3 ambient_color = compute_ambient_color(light.ambient);
-    vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.diffuse);
-    vec3 specular_color = compute_specular_color(normal, light_direction, light.specular);
+    vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
+    vec3 specular_color = compute_specular_color(normal, light_direction, light.color);
 
     // Compute combined color
-    return light_strength * (ambient_color + diffuse_color + specular_color);
+    return light_strength * (diffuse_color + specular_color);
 }
 
 vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
@@ -162,24 +143,20 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
     // Create cone effect
     float light_cosine = max(0.0, dot(-light_direction, light.direction));
-    float inner_cosine = cos(light.inner_angle / 4.0);
-    float outer_cosine = cos(light.outer_angle / 4.0);
+    float inner_cosine = cos(light.angle / 2.0);
 
     if (light_cosine > inner_cosine) {
         light_strength *= 1.0;
-    } else if (light_cosine > outer_cosine) {
-        light_strength *= 1.0 - (inner_cosine - light_cosine) / (inner_cosine - outer_cosine);
     } else {
         light_strength *= 0.0;
     }
 
     // Compute individual colors
-    vec3 ambient_color = compute_ambient_color(light.ambient);
-    vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.diffuse);
-    vec3 specular_color = compute_specular_color(normal, light_direction, light.specular);
+    vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
+    vec3 specular_color = compute_specular_color(normal, light_direction, light.color);
 
     // Compute combined color
-    return light_strength * (ambient_color + diffuse_color + specular_color);
+    return light_strength * (diffuse_color + specular_color);
 }
 
 vec3 compute_light_color(vec3 normal) {

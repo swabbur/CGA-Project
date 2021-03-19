@@ -38,9 +38,7 @@ int main() {
     Timer timer;
 
     PointLight point_light;
-    point_light.ambient = glm::vec3(0.0f);
-    point_light.diffuse = glm::vec3(1000.0f);
-    point_light.specular = glm::vec3(1000.0f);
+    point_light.color = glm::vec3(1000.0f);
     point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
 
     SpotLight spot_light;
@@ -116,18 +114,13 @@ int main() {
         program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
-        program.set_vec3("point_light.ambient", point_light.ambient);
-        program.set_vec3("point_light.diffuse", point_light.diffuse);
-        program.set_vec3("point_light.specular", point_light.specular);
+        program.set_vec3("point_light.color", point_light.color);
         program.set_vec3("point_light.position", point_light.position);
 
-        program.set_vec3("spot_light.ambient", spot_light.ambient);
-        program.set_vec3("spot_light.diffuse", spot_light.diffuse);
-        program.set_vec3("spot_light.specular", spot_light.specular);
+        program.set_vec3("spot_light.color", spot_light.color);
         program.set_vec3("spot_light.position", spot_light.position);
         program.set_vec3("spot_light.direction", spot_light.direction);
-        program.set_float("spot_light.inner_angle", spot_light.angles.inner);
-        program.set_float("spot_light.outer_angle", spot_light.angles.outer);
+        program.set_float("spot_light.angle", spot_light.angle);
 
         // Render entities
         for (Entity & entity : entities) {

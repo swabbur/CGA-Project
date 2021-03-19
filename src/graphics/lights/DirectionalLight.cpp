@@ -1,3 +1,3 @@
 #include <graphics/lights/DirectionalLight.hpp>
 
-DirectionalLight::DirectionalLight() : ambient(), diffuse(), specular(), direction() {}
+DirectionalLight::DirectionalLight() : color(), direction() {}
