@@ -5,6 +5,7 @@ struct Camera {
 };
 
 struct PointLight {
+    vec3 ambient;
     vec3 diffuse;
     vec3 specular;
     vec3 position;
@@ -17,14 +18,16 @@ struct Component {
 };
 
 struct Material {
+    Component ambient;
     Component diffuse;
     Component specular;
     float shininess;
+    sampler2D normal_sampler;
 };
 
 layout(location = 1) uniform Camera camera;
-layout(location = 2) uniform PointLight light;
-layout(location = 5) uniform Material material;
+layout(location = 2) uniform PointLight point_light;
+layout(location = 6) uniform Material material;
 
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
@@ -33,6 +36,20 @@ layout(location = 2) in vec2 fragment_texture_coord;
 layout(location = 0) out vec3 out_color;
 
 float PI = 3.14159;
+
+vec3 compute_ambient_color(vec3 light_color) {
+
+    // Compute material ambient color
+    vec3 material_color;
+    if (material.diffuse.textured) {
+        material_color = vec3(texture(material.diffuse.sampler, fragment_texture_coord));
+    } else {
+        material_color = material.diffuse.color;
+    }
+
+    // Compute ambient color
+    return light_color * material_color;
+}
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
 
@@ -88,11 +105,12 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
     }
 
     // Compute individual colors
+    vec3 ambient_color = compute_ambient_color(light.ambient);
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.diffuse);
     vec3 specular_color = compute_specular_color(normal, light_direction, light.specular);
 
     // Compute combined color
-    return light_strength * (diffuse_color + specular_color);
+    return light_strength * (ambient_color + diffuse_color + specular_color);
 }
 
 void main() {
@@ -101,6 +119,6 @@ void main() {
     vec3 normal = normalize(fragment_normal);
 
     // Compute color
-    out_color += compute_point_light_color(normal, light);
+    out_color += compute_point_light_color(normal, point_light);
     out_color = clamp(out_color, 0.0, 1.0);
 }
