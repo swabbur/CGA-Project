@@ -28,7 +28,7 @@ int main() {
     Cache<std::string, Model> models(Model::load);
 
     std::vector<Instance> instances;
-    instances.emplace_back(models.get("models/scene.dae"));
+    instances.emplace_back(models.get("models/scene.fbx"));
 
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
@@ -114,13 +114,13 @@ int main() {
         program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
-        program.set_vec3("directional_light.color", directional_light.color);
-        program.set_vec3("directional_light.direction", directional_light.direction);
-        program.set_float("directional_light.intensity", directional_light.intensity);
+//        program.set_vec3("directional_light.color", directional_light.color);
+//        program.set_vec3("directional_light.direction", directional_light.direction);
+//        program.set_float("directional_light.intensity", directional_light.intensity);
 
-//        program.set_vec3("point_light.color", point_light.color);
-//        program.set_vec3("point_light.position", point_light.position);
-//        program.set_float("point_light.intensity", point_light.intensity);
+        program.set_vec3("point_light.color", point_light.color);
+        program.set_vec3("point_light.position", point_light.position);
+        program.set_float("point_light.intensity", point_light.intensity);
 
         // Render instances
         for (Instance & instance : instances) {
