@@ -36,10 +36,10 @@ struct Material {
     sampler2D normal_sampler;
 };
 
-layout(location = 1) uniform Camera camera;
-layout(location = 2) uniform PointLight point_light;
-layout(location = 6) uniform SpotLight spot_light;
-layout(location = 13) uniform Material material;
+uniform Camera camera;
+uniform PointLight point_light;
+uniform SpotLight spot_light;
+uniform Material material;
 
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
