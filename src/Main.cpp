@@ -6,6 +6,7 @@
 #include <graphics/Texture.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
+#include <graphics/Entity.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
@@ -21,6 +22,7 @@ int main() {
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Scene const & scene = Scene::load("scenes/scene.dae");
+    Entity entity = Entity(scene);
 
     Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
     Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
@@ -104,7 +106,7 @@ int main() {
         program.set_vector(1, camera.get_position());
 
         // Set light properties
-        for (PointLight const & light : scene.lights.point) {
+        for (PointLight const & light : entity.scene.lights.point) {
             program.set_vector(2, light.ambient);
             program.set_vector(3, light.diffuse);
             program.set_vector(4, light.specular);
@@ -113,7 +115,7 @@ int main() {
         }
 
         // Render shapes
-        for (Shape const & shape : scene.shapes) {
+        for (Shape const & shape : entity.scene.shapes) {
 
             // Set material properties
             if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
