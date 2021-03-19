@@ -10,6 +10,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <objects/Player.hpp>
 
 int main() {
 
@@ -40,6 +41,8 @@ int main() {
 
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
+
+    Player player(entities[2], glm::vec2(0.0f, 0.0f));
 
     while (!window.is_closed()) {
 
@@ -81,7 +84,9 @@ int main() {
         }
 
         if (glm::dot(direction, direction) != 0.0f) {
-            camera.move(timer.get_delta() * glm::normalize(direction));
+            glm::vec3 normalized = timer.get_delta() * glm::normalize(direction);
+            camera.move(normalized);
+            player.movable.move(glm::vec2(normalized.x, normalized.z));
         }
 
         // Update camera rotation based on mouse input
