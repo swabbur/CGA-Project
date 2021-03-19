@@ -41,8 +41,6 @@ int main() {
     point_light.color = glm::vec3(1000.0f);
     point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
 
-    SpotLight spot_light;
-
     while (!window.is_closed()) {
 
         // Poll events
@@ -116,11 +114,6 @@ int main() {
         // Set light properties
         program.set_vec3("point_light.color", point_light.color);
         program.set_vec3("point_light.position", point_light.position);
-
-        program.set_vec3("spot_light.color", spot_light.color);
-        program.set_vec3("spot_light.position", spot_light.position);
-        program.set_vec3("spot_light.direction", spot_light.direction);
-        program.set_float("spot_light.angle", spot_light.angle);
 
         // Render entities
         for (Entity & entity : entities) {
