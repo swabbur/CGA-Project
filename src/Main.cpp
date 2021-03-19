@@ -23,7 +23,7 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
 
     std::vector<Scene> scenes;
-    scenes.push_back(Scene::load("scenes/scene_spot.dae"));
+    scenes.push_back(Scene::load("scenes/scene.dae"));
 
     std::vector<Entity> entities;
     entities.emplace_back(scenes[0]);
@@ -106,23 +106,23 @@ int main() {
         program.bind();
 
         // Set camera position
-        program.set_vector(1, camera.get_position());
+        program.set_vec3(1, camera.get_position());
 
         // Set light properties
         for (PointLight const& light : entities[0].scene.lights.point) {
-            program.set_vector(2, light.ambient);
-            program.set_vector(3, light.diffuse);
-            program.set_vector(4, light.specular);
-            program.set_vector(5, light.position);
+            program.set_vec3(2, light.ambient);
+            program.set_vec3(3, light.diffuse);
+            program.set_vec3(4, light.specular);
+            program.set_vec3(5, light.position);
             break;
         }
 
         for (SpotLight const & light : entities[0].scene.lights.spot) {
-            program.set_vector(6, light.ambient);
-            program.set_vector(7, light.diffuse);
-            program.set_vector(8, light.specular);
-            program.set_vector(9, light.position);
-            program.set_vector(10, light.direction);
+            program.set_vec3(6, light.ambient);
+            program.set_vec3(7, light.diffuse);
+            program.set_vec3(8, light.specular);
+            program.set_vec3(9, light.position);
+            program.set_vec3(10, light.direction);
             program.set_float(11, light.angles.inner);
             program.set_float(12, light.angles.outer);
             break;
@@ -144,28 +144,28 @@ int main() {
                 if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
                     texture->bind(0);
                     program.set_bool(13, true);
-                    program.set_texture(14, 0);
+                    program.set_sampler(14, 0);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
                     program.set_bool(13, false);
-                    program.set_vector(15, *color);
+                    program.set_vec3(15, *color);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
                     texture->bind(1);
                     program.set_bool(16, true);
-                    program.set_texture(17, 1);
+                    program.set_sampler(17, 1);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
                     program.set_bool(16, false);
-                    program.set_vector(18, *color);
+                    program.set_vec3(18, *color);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
                     texture->bind(2);
                     program.set_bool(19, true);
-                    program.set_texture(20, 2);
+                    program.set_sampler(20, 2);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
                     program.set_bool(19, false);
-                    program.set_vector(21, *color);
+                    program.set_vec3(21, *color);
                 }
 
                 if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
@@ -175,7 +175,7 @@ int main() {
                 if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
                     texture->bind(3);
                     program.set_bool(23, true);
-                    program.set_texture(24, 3);
+                    program.set_sampler(24, 3);
                 } else {
                     program.set_bool(23, false);
                 }

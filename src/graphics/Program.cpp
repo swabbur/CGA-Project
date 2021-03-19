@@ -62,6 +62,10 @@ void Program::bind() const {
     glUseProgram(handle);
 }
 
+int Program::get_uniform_location(std::string const & name) const {
+    return glGetUniformLocation(handle, name.c_str());
+}
+
 void Program::set_bool(unsigned int location, bool boolean) { // NOLINT(readability-convert-member-functions-to-static)
     glUniform1ui(location, boolean);
 }
@@ -70,7 +74,7 @@ void Program::set_float(unsigned int location, float scalar) { // NOLINT(readabi
     glUniform1f(location, scalar);
 }
 
-void Program::set_vector(unsigned int location, glm::vec3 const & vector) { // NOLINT(readability-convert-member-functions-to-static)
+void Program::set_vec3(unsigned int location, glm::vec3 const & vector) { // NOLINT(readability-convert-member-functions-to-static)
     glUniform3fv(location, 1, glm::value_ptr(vector));
 }
 
@@ -82,6 +86,36 @@ void Program::set_mat4(unsigned int location, glm::mat4 const & matrix) { // NOL
     glUniformMatrix4fv(location, 1, false, glm::value_ptr(matrix));
 }
 
-void Program::set_texture(unsigned int location, unsigned int index) { // NOLINT(readability-convert-member-functions-to-static)
+void Program::set_sampler(unsigned int location, unsigned int index) { // NOLINT(readability-convert-member-functions-to-static)
     glUniform1i(location, index);
+}
+
+void Program::set_bool(std::string const & name, bool boolean) {
+    int location = get_uniform_location(name);
+    set_bool(location, boolean);
+}
+
+void Program::set_float(std::string const & name, float scalar) {
+    int location = get_uniform_location(name);
+    set_float(location, scalar);
+}
+
+void Program::set_vec3(std::string const & name, glm::vec3 const & vector) {
+    int location = get_uniform_location(name);
+    set_vec3(location, vector);
+}
+
+void Program::set_mat3(std::string const & name, glm::mat3 const & matrix) {
+    int location = get_uniform_location(name);
+    set_mat3(location, matrix);
+}
+
+void Program::set_mat4(std::string const & name, glm::mat4 const & matrix) {
+    int location = get_uniform_location(name);
+    set_mat4(location, matrix);
+}
+
+void Program::set_sampler(std::string const & name, unsigned int index) {
+    int location = get_uniform_location(name);
+    set_sampler(location, index);
 }
