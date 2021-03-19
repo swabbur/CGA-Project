@@ -10,7 +10,6 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 int main() {
 
@@ -35,11 +34,6 @@ int main() {
 
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
-
-    SpotLight & light = scenes[0].lights.spot[0];
-    std::cout << light.diffuse.r << " " << light.diffuse.r << " " << light.diffuse.r << std::endl;
-    std::cout << light.direction.z << " " << light.direction.y << " " << light.direction.z << std::endl;
-    std::cout << light.angles.inner << " " << light.angles.outer << std::endl;
 
     while (!window.is_closed()) {
 
