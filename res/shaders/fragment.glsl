@@ -49,6 +49,27 @@ layout(location = 0) out vec3 out_color;
 
 float PI = 3.14159;
 
+vec3 compute_normal() {
+    vec3 normal = normalize(fragment_normal);
+    if (!material.normal_textured) {
+        return normal;
+    }
+
+    // derivations of the fragment position
+    vec3 pos_dx = dFdx(fragment_position);
+    vec3 pos_dy = dFdy(fragment_position);
+    // derivations of the texture coordinate
+    vec2 texC_dx = dFdx(fragment_texture_coord);
+    vec2 texC_dy = dFdy(fragment_texture_coord);
+    // tangent vector and binormal vector
+    vec3 tangent = normalize(texC_dy.y * pos_dx - texC_dx.y * pos_dy);
+    vec3 bitangent = normalize(texC_dx.x * pos_dy - texC_dy.x * pos_dx);
+
+    vec4 normal_map_value = texture(material.normal_sampler, fragment_texture_coord);
+
+    return normalize(tangent * (normal_map_value.x - .5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
+}
+
 vec3 compute_ambient_color(vec3 light_color) {
 
     // Compute material ambient color
@@ -169,11 +190,7 @@ vec3 compute_light_color(vec3 normal) {
 }
 
 void main() {
-
-    // Compute normal
-    vec3 normal = normalize(fragment_normal);
-
     // Compute color
-    out_color += compute_light_color(normal);
+    out_color += compute_light_color(compute_normal());
     out_color = clamp(out_color, 0.0, 1.0);
 }
