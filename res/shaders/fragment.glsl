@@ -75,7 +75,7 @@ vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color)
     return specular_strength * light_color * material_color;
 }
 
-vec3 compute_point_light_color(PointLight light, vec3 normal) {
+vec3 compute_point_light_color(vec3 normal, PointLight light) {
 
     // Compute light properties
     vec3 light_direction = normalize(light.position - fragment_position);
@@ -101,6 +101,6 @@ void main() {
     vec3 normal = normalize(fragment_normal);
 
     // Compute color
-    out_color = compute_point_light_color(light, normal);
+    out_color += compute_point_light_color(normal, light);
     out_color = clamp(out_color, 0.0, 1.0);
 }
