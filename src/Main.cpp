@@ -10,6 +10,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 int main() {
 
@@ -23,13 +24,10 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
 
     std::vector<Scene> scenes;
-    scenes.push_back(Scene::load("scenes/scene.dae"));
+    scenes.push_back(Scene::load("scenes/scene_spot.dae"));
 
     std::vector<Entity> entities;
     entities.emplace_back(scenes[0]);
-    entities.emplace_back(scenes[0]);
-
-    entities[1].position = glm::vec3(3.0f, 0.0f, 0.0f);
 
     Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
     Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
@@ -37,6 +35,11 @@ int main() {
 
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
+
+    SpotLight & light = scenes[0].lights.spot[0];
+    std::cout << light.diffuse.r << " " << light.diffuse.r << " " << light.diffuse.r << std::endl;
+    std::cout << light.direction.z << " " << light.direction.y << " " << light.direction.z << std::endl;
+    std::cout << light.angles.inner << " " << light.angles.outer << std::endl;
 
     while (!window.is_closed()) {
 
@@ -88,7 +91,7 @@ int main() {
         }
 
         // Update entities
-        entities[1].rotation = glm::vec3(timer.get_time(), timer.get_time(), timer.get_time());
+//        entities[1].rotation = glm::vec3(timer.get_time(), timer.get_time(), timer.get_time());
 
         // Bind framebuffer
         framebuffer.bind();

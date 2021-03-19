@@ -130,7 +130,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     // Compute light properties
     vec3 light_direction = normalize(light.position - fragment_position);
     float light_distance = distance(light.position, fragment_position);
-    float light_strength = 1.0; // / (4.0 * PI * light_distance * light_distance);
+    float light_strength = 100.0 / (4.0 * PI * light_distance * light_distance);
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
@@ -138,19 +138,17 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     }
 
     // Create cone effect
-    float cosine = dot(-light_direction, light.direction);
-    if (cosine < 0.5) {
+    float light_cosine = max(0.0, dot(-light_direction, light.direction));
+    float inner_cosine = cos(light.inner_angle / 4.0);
+    float outer_cosine = cos(light.outer_angle / 4.0);
+
+    if (light_cosine > inner_cosine) {
+        light_strength *= 1.0;
+    } else if (light_cosine > outer_cosine) {
+        light_strength *= 1.0 - (inner_cosine - light_cosine) / (inner_cosine - outer_cosine);
+    } else {
         light_strength *= 0.0;
     }
-
-//    float min = cos(light.inner_angle);
-//    float max = cos(light.outer_angle);
-
-//    if (cosine > min && cosine < max) {
-//        light_strength *= 1.0 - (cosine - min) / (max - min);
-//    } else if (cosine >= max) {
-//        light_strength *= 0.0;
-//    }
 
     // Compute individual colors
     vec3 ambient_color = compute_ambient_color(light.ambient);
