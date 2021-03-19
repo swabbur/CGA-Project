@@ -1,4 +1,6 @@
 #include <devices/DeviceManager.hpp>
+#include <graphics/lights/PointLight.hpp>
+#include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
 #include <graphics/Scene.hpp>
@@ -34,6 +36,14 @@ int main() {
 
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
+
+    PointLight point_light;
+    point_light.ambient = glm::vec3(0.0f);
+    point_light.diffuse = glm::vec3(1000.0f);
+    point_light.specular = glm::vec3(1000.0f);
+    point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
+
+    SpotLight spot_light;
 
     while (!window.is_closed()) {
 
@@ -106,24 +116,18 @@ int main() {
         program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
-        for (PointLight const& light : entities[0].scene.lights.point) {
-            program.set_vec3("point_light.ambient", light.ambient);
-            program.set_vec3("point_light.diffuse", light.diffuse);
-            program.set_vec3("point_light.specular", light.specular);
-            program.set_vec3("point_light.position", light.position);
-            break;
-        }
+        program.set_vec3("point_light.ambient", point_light.ambient);
+        program.set_vec3("point_light.diffuse", point_light.diffuse);
+        program.set_vec3("point_light.specular", point_light.specular);
+        program.set_vec3("point_light.position", point_light.position);
 
-        for (SpotLight const & light : entities[0].scene.lights.spot) {
-            program.set_vec3("spot_light.ambient", light.ambient);
-            program.set_vec3("spot_light.diffuse", light.diffuse);
-            program.set_vec3("spot_light.specular", light.specular);
-            program.set_vec3("spot_light.position", light.position);
-            program.set_vec3("spot_light.direction", light.direction);
-            program.set_float("spot_light.inner_angle", light.angles.inner);
-            program.set_float("spot_light.outer_angle", light.angles.outer);
-            break;
-        }
+        program.set_vec3("spot_light.ambient", spot_light.ambient);
+        program.set_vec3("spot_light.diffuse", spot_light.diffuse);
+        program.set_vec3("spot_light.specular", spot_light.specular);
+        program.set_vec3("spot_light.position", spot_light.position);
+        program.set_vec3("spot_light.direction", spot_light.direction);
+        program.set_float("spot_light.inner_angle", spot_light.angles.inner);
+        program.set_float("spot_light.outer_angle", spot_light.angles.outer);
 
         // Render entities
         for (Entity & entity : entities) {

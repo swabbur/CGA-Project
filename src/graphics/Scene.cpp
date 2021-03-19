@@ -1,11 +1,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <graphics/lights/AmbientLight.hpp>
-#include <graphics/lights/DirectionalLight.hpp>
-#include <graphics/lights/PointLight.hpp>
-#include <graphics/lights/SpotLight.hpp>
 #include <graphics/Scene.hpp>
 #include <graphics/Vertex.hpp>
 #include <iostream>
@@ -153,59 +150,6 @@ Scene Scene::load(std::string const & path) {
         throw std::runtime_error("Could not load_rgb scene: " + path);
     }
 
-    // Parse lights
-    Lights lights;
-    for (unsigned int index = 0; index < scene->mNumLights; index++) {
-        aiLight const * assimp_light = scene->mLights[index];
-        switch (assimp_light->mType) {
-
-            case aiLightSource_AMBIENT: {
-                AmbientLight light;
-                light.ambient = parse_color(assimp_light->mColorAmbient);
-                light.diffuse = parse_color(assimp_light->mColorDiffuse);
-                light.specular = parse_color(assimp_light->mColorSpecular);
-                lights.ambient.push_back(light);
-                break;
-            }
-
-            case aiLightSource_DIRECTIONAL: {
-                DirectionalLight light;
-                light.ambient = parse_color(assimp_light->mColorAmbient);
-                light.diffuse = parse_color(assimp_light->mColorDiffuse);
-                light.specular = parse_color(assimp_light->mColorSpecular);
-                light.direction = parse_vector(assimp_light->mDirection);
-                lights.directional.push_back(light);
-                break;
-            }
-
-            case aiLightSource_POINT: {
-                PointLight light;
-                light.ambient = parse_color(assimp_light->mColorAmbient);
-                light.diffuse = parse_color(assimp_light->mColorDiffuse);
-                light.specular = parse_color(assimp_light->mColorSpecular);
-                light.position = parse_vector(assimp_light->mPosition);
-                lights.point.push_back(light);
-                break;
-            }
-
-            case aiLightSource_SPOT: {
-                SpotLight light;
-                light.ambient = parse_color(assimp_light->mColorAmbient);
-                light.diffuse = parse_color(assimp_light->mColorDiffuse);
-                light.specular = parse_color(assimp_light->mColorSpecular);
-                light.direction = parse_vector(assimp_light->mDirection);
-                light.position = parse_vector(assimp_light->mPosition);
-                light.angles.inner = assimp_light->mAngleInnerCone;
-                light.angles.outer = assimp_light->mAngleOuterCone;
-                lights.spot.push_back(light);
-                break;
-            }
-
-            default:
-                throw std::runtime_error("Unsupported lights type encountered");
-        }
-    }
-
     // Parse materials
     std::vector<Material> materials;
     materials.reserve(scene->mNumMaterials);
@@ -251,24 +195,21 @@ Scene Scene::load(std::string const & path) {
     // Unload assimp scene
     importer.FreeScene();
 
-    return Scene(std::move(materials), std::move(meshes), std::move(shapes), std::move(lights));
+    return Scene(std::move(materials), std::move(meshes), std::move(shapes));
 }
 
 Scene::Scene(std::vector<Material> && materials,
              std::vector<Mesh> && meshes,
-             std::vector<Shape> && shapes,
-             Lights && lights) :
+             std::vector<Shape> && shapes) :
     materials(std::move(materials)),
     meshes(std::move(meshes)),
-    shapes(std::move(shapes)),
-    lights(std::move(lights))
+    shapes(std::move(shapes))
 {}
 
 Scene::Scene(Scene && scene) noexcept :
     materials(std::move(scene.materials)),
     meshes(std::move(scene.meshes)),
-    shapes(std::move(scene.shapes)),
-    lights(std::move(scene.lights))
+    shapes(std::move(scene.shapes))
 {}
 
 Scene::~Scene() = default;
