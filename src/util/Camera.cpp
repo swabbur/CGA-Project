@@ -1,7 +1,6 @@
 #include <devices/Window.hpp>
 #include <util/Camera.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <iostream>
 
 Camera::Camera(Window & window, glm::vec3 position, glm::vec2 rotation)
     : window(window), position(position), rotation(rotation)

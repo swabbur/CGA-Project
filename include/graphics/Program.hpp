@@ -28,18 +28,6 @@ public:
 
     void bind() const;
 
-    void set_bool(unsigned int location, bool boolean);
-
-    void set_float(unsigned int location, float scalar);
-
-    void set_vec3(unsigned int location, glm::vec3 const & vector);
-
-    void set_mat3(unsigned int location, glm::mat3 const& matrix);
-
-    void set_mat4(unsigned int location, glm::mat4 const & matrix);
-
-    void set_sampler(unsigned int location, unsigned int index);
-
     void set_bool(std::string const & name, bool boolean);
 
     void set_float(std::string const & name, float scalar);

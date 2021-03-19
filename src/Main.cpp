@@ -84,9 +84,6 @@ int main() {
             camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
         }
 
-        // Update entities
-//        entities[1].rotation = glm::vec3(timer.get_time(), timer.get_time(), timer.get_time());
-
         // Bind framebuffer
         framebuffer.bind();
 
@@ -106,25 +103,25 @@ int main() {
         program.bind();
 
         // Set camera position
-        program.set_vec3(1, camera.get_position());
+        program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
         for (PointLight const& light : entities[0].scene.lights.point) {
-            program.set_vec3(2, light.ambient);
-            program.set_vec3(3, light.diffuse);
-            program.set_vec3(4, light.specular);
-            program.set_vec3(5, light.position);
+            program.set_vec3("point_light.ambient", light.ambient);
+            program.set_vec3("point_light.diffuse", light.diffuse);
+            program.set_vec3("point_light.specular", light.specular);
+            program.set_vec3("point_light.position", light.position);
             break;
         }
 
         for (SpotLight const & light : entities[0].scene.lights.spot) {
-            program.set_vec3(6, light.ambient);
-            program.set_vec3(7, light.diffuse);
-            program.set_vec3(8, light.specular);
-            program.set_vec3(9, light.position);
-            program.set_vec3(10, light.direction);
-            program.set_float(11, light.angles.inner);
-            program.set_float(12, light.angles.outer);
+            program.set_vec3("spot_light.ambient", light.ambient);
+            program.set_vec3("spot_light.diffuse", light.diffuse);
+            program.set_vec3("spot_light.specular", light.specular);
+            program.set_vec3("spot_light.position", light.position);
+            program.set_vec3("spot_light.direction", light.direction);
+            program.set_float("spot_light.inner_angle", light.angles.inner);
+            program.set_float("spot_light.outer_angle", light.angles.outer);
             break;
         }
 
@@ -133,9 +130,9 @@ int main() {
 
             // Set MVP matrix
             glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * entity.get_model_matrix();
-            program.set_mat4(0, mvp);
-            program.set_mat4(51, entity.get_model_matrix());
-            program.set_mat3(52, glm::transpose(glm::inverse(glm::mat3(entity.get_model_matrix()))));
+            program.set_mat4("mvp", mvp);
+            program.set_mat4("position_transformation", entity.get_model_matrix());
+            program.set_mat3("normal_transformation", glm::transpose(glm::inverse(glm::mat3(entity.get_model_matrix()))));
 
             // Render shapes
             for (Shape const& shape : entity.scene.shapes) {
@@ -143,41 +140,41 @@ int main() {
                 // Set material properties
                 if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
                     texture->bind(0);
-                    program.set_bool(13, true);
-                    program.set_sampler(14, 0);
+                    program.set_bool("material.ambient.textured", true);
+                    program.set_sampler("material.ambient.sampler", 0);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
-                    program.set_bool(13, false);
-                    program.set_vec3(15, *color);
+                    program.set_bool("material.ambient.textured", false);
+                    program.set_vec3("material.ambient.color", *color);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
                     texture->bind(1);
-                    program.set_bool(16, true);
-                    program.set_sampler(17, 1);
+                    program.set_bool("material.diffuse.textured", true);
+                    program.set_sampler("material.diffuse.sampler", 1);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
-                    program.set_bool(16, false);
-                    program.set_vec3(18, *color);
+                    program.set_bool("material.diffuse.textured", false);
+                    program.set_vec3("material.diffuse.color", *color);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
                     texture->bind(2);
-                    program.set_bool(19, true);
-                    program.set_sampler(20, 2);
+                    program.set_bool("material.specular.textured", true);
+                    program.set_sampler("material.specular.sampler", 2);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
-                    program.set_bool(19, false);
-                    program.set_vec3(21, *color);
+                    program.set_bool("material.specular.textured", false);
+                    program.set_vec3("material.specular.color", *color);
                 }
 
                 if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
-                    program.set_float(22, *shininess);
+                    program.set_float("material.shininess", *shininess);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
                     texture->bind(3);
-                    program.set_bool(23, true);
-                    program.set_sampler(24, 3);
+                    program.set_bool("material.normal_textured", true);
+                    program.set_sampler("material.normal_sampler", 3);
                 } else {
-                    program.set_bool(23, false);
+                    program.set_bool("material.normal_textured", false);
                 }
 
                 // Render mesh
