@@ -9,18 +9,9 @@
 #include <map>
 #include <queue>
 
-std::string get_parent_directory(std::string const & filepath) {
-    size_t position = filepath.find_last_of("[\\/]");
-    if (position == std::string::npos) {
-        return "";
-    }
-    return filepath.substr(0, position + 1);
-}
-
-std::string replace_parent_directory(std::string const & directory, std::string const & path) {
-    size_t position = path.find_last_of("[\\/]");
-    std::string filename = path.substr(position + 1);
-    return directory + filename;
+std::string get_filename(std::string const & path) {
+    std::size_t position = path.find_last_of("[\\/]");
+    return path.substr(position + 1);
 }
 
 glm::vec3 parse_vector(aiVector3D const & vector) {
@@ -31,15 +22,15 @@ glm::vec3 parse_color(aiColor3D const & color) {
     return glm::vec3(color.r, color.g, color.b);
 }
 
-Material parse_material(std::string const & directory, aiMaterial const * assimp_material) {
+Material parse_material(aiMaterial const * assimp_material) {
 
     Material material;
 
+    // Parse ambient color (map)
     if (assimp_material->GetTextureCount(aiTextureType_AMBIENT) > 0) {
-        aiString assimp_filename;
-        assimp_material->GetTexture(aiTextureType_AMBIENT, 0, &assimp_filename);
-        std::string filename = assimp_filename.C_Str();
-        std::string filepath = replace_parent_directory(directory, filename);
+        aiString assimp_filepath;
+        assimp_material->GetTexture(aiTextureType_AMBIENT, 0, &assimp_filepath);
+        std::string filepath = "textures/" + get_filename(assimp_filepath.C_Str());
         Texture texture = Texture::load(filepath);
         material.ambient.emplace<Texture>(std::move(texture));
     } else {
@@ -49,11 +40,11 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         material.ambient = color;
     }
 
+    // Parse diffuse color (map)
     if (assimp_material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-        aiString assimp_filename;
-        assimp_material->GetTexture(aiTextureType_DIFFUSE, 0, &assimp_filename);
-        std::string filename = assimp_filename.C_Str();
-        std::string filepath = replace_parent_directory(directory, filename);
+        aiString assimp_filepath;
+        assimp_material->GetTexture(aiTextureType_DIFFUSE, 0, &assimp_filepath);
+        std::string filepath = "textures/" + get_filename(assimp_filepath.C_Str());
         Texture texture = Texture::load(filepath);
         material.diffuse.emplace<Texture>(std::move(texture));
     } else {
@@ -63,11 +54,11 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         material.diffuse = color;
     }
 
+    // Parse specular color (map)
     if (assimp_material->GetTextureCount(aiTextureType_SPECULAR) > 0) {
-        aiString assimp_filename;
-        assimp_material->GetTexture(aiTextureType_SPECULAR, 0, &assimp_filename);
-        std::string filename = assimp_filename.C_Str();
-        std::string filepath = replace_parent_directory(directory, filename);
+        aiString assimp_filepath;
+        assimp_material->GetTexture(aiTextureType_SPECULAR, 0, &assimp_filepath);
+        std::string filepath = "textures/" + get_filename(assimp_filepath.C_Str());
         Texture texture = Texture::load(filepath);
         material.specular.emplace<Texture>(std::move(texture));
     } else {
@@ -77,11 +68,11 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         material.specular = color;
     }
 
+    // Parse shininess (map)
     if (assimp_material->GetTextureCount(aiTextureType_SHININESS) > 0) {
-        aiString assimp_filename;
-        assimp_material->GetTexture(aiTextureType_SHININESS, 0, &assimp_filename);
-        std::string filename = assimp_filename.C_Str();
-        std::string filepath = replace_parent_directory(directory, filename);
+        aiString assimp_filepath;
+        assimp_material->GetTexture(aiTextureType_SHININESS, 0, &assimp_filepath);
+        std::string filepath = "textures/" + get_filename(assimp_filepath.C_Str());
         Texture texture = Texture::load(filepath);
         material.shininess.emplace<Texture>(std::move(texture));
     } else {
@@ -90,11 +81,11 @@ Material parse_material(std::string const & directory, aiMaterial const * assimp
         material.shininess = shininess;
     }
 
+    // Parse normal map
     if (assimp_material->GetTextureCount(aiTextureType_NORMALS) > 0) {
-        aiString assimp_filename;
-        assimp_material->GetTexture(aiTextureType_NORMALS, 0, &assimp_filename);
-        std::string filename = assimp_filename.C_Str();
-        std::string filepath = replace_parent_directory(directory, filename);
+        aiString assimp_filepath;
+        assimp_material->GetTexture(aiTextureType_NORMALS, 0, &assimp_filepath);
+        std::string filepath = "textures/" + get_filename(assimp_filepath.C_Str());
         Texture texture = Texture::load(filepath);
         material.normal.emplace<Texture>(std::move(texture));
     }
@@ -140,9 +131,6 @@ Mesh parse_mesh(aiMesh const * mesh) {
 
 Model Model::load(std::string const & path) {
 
-    // Get directory from path
-    std::string directory = get_parent_directory(path);
-
     // Load assimp scene
     Assimp::Importer importer;
     aiScene const * scene = importer.ReadFile(path.c_str(), aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_RemoveRedundantMaterials | aiProcess_PreTransformVertices);
@@ -155,7 +143,7 @@ Model Model::load(std::string const & path) {
     materials.reserve(scene->mNumMaterials);
     for (unsigned int index = 0; index < scene->mNumMaterials; index++) {
         aiMaterial const * assimp_material = scene->mMaterials[index];
-        Material material = parse_material(directory, assimp_material);
+        Material material = parse_material(assimp_material);
         materials.push_back(std::move(material));
     }
 

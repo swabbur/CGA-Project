@@ -24,7 +24,7 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
 
     std::vector<Model> scenes;
-    scenes.push_back(Model::load("scenes/scene.dae"));
+    scenes.push_back(Model::load("models/scene.dae"));
 
     std::vector<Entity> entities;
     entities.emplace_back(scenes[0]);
