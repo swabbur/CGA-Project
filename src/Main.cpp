@@ -125,9 +125,9 @@ int main() {
             }
 
             if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
-                texture->bind(0);
+                texture->bind(1);
                 program.set_bool(8, true);
-                program.set_texture(9, 0);
+                program.set_texture(9, 1);
             } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
                 program.set_bool(8, false);
                 program.set_vector(10, *color);
