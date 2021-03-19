@@ -29,10 +29,6 @@ int main() {
     std::vector<Instance> instances;
     instances.emplace_back(models[0]);
 
-    Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
-    Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
-    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
-
     Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
 
