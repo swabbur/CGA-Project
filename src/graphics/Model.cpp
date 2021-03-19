@@ -101,7 +101,7 @@ Mesh parse_mesh(aiMesh const * mesh) {
 
         aiFace const & face = mesh->mFaces[j];
         if (face.mNumIndices != 3) {
-            throw std::runtime_error("Encountered a non-triangle face while loading scene");
+            throw std::runtime_error("Encountered a non-triangle face while loading model");
         }
 
         indices.push_back(static_cast<unsigned int>(face.mIndices[0]));
@@ -130,7 +130,7 @@ Mesh parse_mesh(aiMesh const * mesh) {
 
 Model Model::load(std::string const & path) {
 
-    // Load assimp scene
+    // Load assimp model
     Assimp::Importer importer;
     aiScene const * scene = importer.ReadFile(path.c_str(),
                                               aiProcess_GenSmoothNormals
@@ -183,7 +183,7 @@ Model Model::load(std::string const & path) {
         }
     }
 
-    // Unload assimp scene
+    // Unload assimp model
     importer.FreeScene();
 
     return Model(std::move(materials), std::move(meshes), std::move(shapes));

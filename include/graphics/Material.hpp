@@ -9,7 +9,6 @@ class Material {
 
 public:
 
-    // Phong
     std::variant<std::monostate, glm::vec3, Texture> ambient;
     std::variant<std::monostate, glm::vec3, Texture> diffuse;
     std::variant<std::monostate, glm::vec3, Texture> specular;

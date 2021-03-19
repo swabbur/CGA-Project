@@ -7,7 +7,7 @@
 #include <graphics/Texture.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
-#include <graphics/Entity.hpp>
+#include <graphics/Instance.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
@@ -23,11 +23,11 @@ int main() {
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
 
-    std::vector<Model> scenes;
-    scenes.push_back(Model::load("models/scene.dae"));
+    std::vector<Model> models;
+    models.push_back(Model::load("models/model.dae"));
 
-    std::vector<Entity> entities;
-    entities.emplace_back(scenes[0]);
+    std::vector<Instance> instances;
+    instances.emplace_back(models[0]);
 
     Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
     Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
@@ -107,24 +107,25 @@ int main() {
         // Bind shader program
         program.bind();
 
-        // Set camera position
+        // Set camera properties
         program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
         program.set_vec3("point_light.color", point_light.color);
         program.set_vec3("point_light.position", point_light.position);
 
-        // Render entities
-        for (Entity & entity : entities) {
+        // Render instances
+        for (Instance & instance : instances) {
 
             // Set MVP matrix
-            glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * entity.get_model_matrix();
+            glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
             program.set_mat4("mvp", mvp);
-            program.set_mat4("position_transformation", entity.get_model_matrix());
-            program.set_mat3("normal_transformation", glm::transpose(glm::inverse(glm::mat3(entity.get_model_matrix()))));
+            program.set_mat4("position_transformation", instance.get_transformation());
+            program.set_mat3("normal_transformation",
+                             glm::transpose(glm::inverse(glm::mat3(instance.get_transformation()))));
 
             // Render shapes
-            for (Shape const& shape : entity.scene.shapes) {
+            for (Shape const & shape : instance.model.shapes) {
 
                 // Set material properties
                 if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
