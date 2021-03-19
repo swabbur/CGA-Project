@@ -1,17 +1,17 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "Scene.hpp"
+#include "Model.hpp"
 
 class Entity{
 
 public:
 
-	Scene const & scene;
+	Model const & scene;
 	glm::vec3 position = glm::vec3(0.0f);
 	glm::vec3 rotation = glm::vec3(0.0f);
 
-	Entity(Scene const & scene);
+	Entity(Model const & scene);
 
 	~Entity();
 

@@ -8,24 +8,24 @@
 #include <string>
 #include <vector>
 
-class Scene {
+class Model {
 
     std::vector<Material> materials;
     std::vector<Mesh> meshes;
 
 public:
 
-    static Scene load(std::string const & path);
+    static Model load(std::string const & path);
 
     std::vector<Shape> shapes;
 
-    explicit Scene(std::vector<Material> && materials,
+    explicit Model(std::vector<Material> && materials,
                    std::vector<Mesh> && meshes,
                    std::vector<Shape> && shapes);
 
-    Scene(Scene const &) = delete;
+    Model(Model const &) = delete;
 
-    Scene(Scene && scene) noexcept;
+    Model(Model && scene) noexcept;
 
-    ~Scene();
+    ~Model();
 };

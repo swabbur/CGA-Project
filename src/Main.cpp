@@ -3,7 +3,7 @@
 #include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
-#include <graphics/Scene.hpp>
+#include <graphics/Model.hpp>
 #include <graphics/Program.hpp>
 #include <graphics/Texture.hpp>
 #include <util/Camera.hpp>
@@ -24,8 +24,8 @@ int main() {
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
 
-    std::vector<Scene> scenes;
-    scenes.push_back(Scene::load("scenes/scene.dae"));
+    std::vector<Model> scenes;
+    scenes.push_back(Model::load("scenes/scene.dae"));
 
     std::vector<Entity> entities;
     entities.emplace_back(scenes[0]);

@@ -1,7 +1,7 @@
 #include <graphics/Entity.hpp>
 #include <glm/gtx/transform.hpp>
 
-Entity::Entity(Scene const & scene) : scene(scene) {}
+Entity::Entity(Model const & scene) : scene(scene) {}
 
 Entity::~Entity() = default;
 

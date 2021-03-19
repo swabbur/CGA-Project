@@ -3,7 +3,7 @@
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <graphics/Scene.hpp>
+#include <graphics/Model.hpp>
 #include <graphics/Vertex.hpp>
 #include <iostream>
 #include <map>
@@ -138,7 +138,7 @@ Mesh parse_mesh(aiMesh const * mesh) {
     return Mesh::create(indices, vertices, textured);
 }
 
-Scene Scene::load(std::string const & path) {
+Model Model::load(std::string const & path) {
 
     // Get directory from path
     std::string directory = get_parent_directory(path);
@@ -195,10 +195,10 @@ Scene Scene::load(std::string const & path) {
     // Unload assimp scene
     importer.FreeScene();
 
-    return Scene(std::move(materials), std::move(meshes), std::move(shapes));
+    return Model(std::move(materials), std::move(meshes), std::move(shapes));
 }
 
-Scene::Scene(std::vector<Material> && materials,
+Model::Model(std::vector<Material> && materials,
              std::vector<Mesh> && meshes,
              std::vector<Shape> && shapes) :
     materials(std::move(materials)),
@@ -206,10 +206,10 @@ Scene::Scene(std::vector<Material> && materials,
     shapes(std::move(shapes))
 {}
 
-Scene::Scene(Scene && scene) noexcept :
+Model::Model(Model && scene) noexcept :
     materials(std::move(scene.materials)),
     meshes(std::move(scene.meshes)),
     shapes(std::move(scene.shapes))
 {}
 
-Scene::~Scene() = default;
+Model::~Model() = default;
