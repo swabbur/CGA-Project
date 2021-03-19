@@ -2,7 +2,6 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/Model.hpp>
 #include <graphics/Vertex.hpp>
 #include <iostream>
@@ -133,9 +132,13 @@ Model Model::load(std::string const & path) {
 
     // Load assimp scene
     Assimp::Importer importer;
-    aiScene const * scene = importer.ReadFile(path.c_str(), aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_RemoveRedundantMaterials | aiProcess_PreTransformVertices);
+    aiScene const * scene = importer.ReadFile(path.c_str(),
+                                              aiProcess_GenSmoothNormals
+                                              | aiProcess_Triangulate
+                                              | aiProcess_RemoveRedundantMaterials
+                                              | aiProcess_PreTransformVertices);
     if (scene == nullptr || scene->mRootNode == nullptr || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
-        throw std::runtime_error("Could not load_rgb scene: " + path);
+        throw std::runtime_error("Could not load model: " + path);
     }
 
     // Parse materials
