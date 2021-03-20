@@ -170,12 +170,12 @@ int main() {
                 glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
                                        * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
                                        * instance.get_transformation();
-                glm::mat4 bias(0.5, 0.0, 0.0, 0.0,
-                               0.0, 0.5, 0.0, 0.0,
-                               0.0, 0.0, 0.5, 0.0,
-                               0.5, 0.5, 0.5, 1.0);
-                glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
-                program.set_mat4("directional_light.shadow.mvp", biased_shadow_mvp);
+                glm::mat4 sampling_adjustment(0.5, 0.0, 0.0, 0.0,
+                                              0.0, 0.5, 0.0, 0.0,
+                                              0.0, 0.0, 0.5, 0.0,
+                                              0.5, 0.5, 0.5, 1.0);
+                glm::mat4 adjusted_shadow_mvp = sampling_adjustment * shadow_mvp;
+                program.set_mat4("directional_light.shadow.mvp", adjusted_shadow_mvp);
 
                 // Render shapes
                 for (Shape const & shape : instance.model.shapes) {
