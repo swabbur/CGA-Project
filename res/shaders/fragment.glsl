@@ -46,19 +46,30 @@ struct Material {
     sampler2D normal_sampler;
 };
 
+// Constants
+float PI = 3.14159;
+
+vec2 poisson_disk[4] = vec2[](
+    vec2(-0.94201624, -0.39906216),
+    vec2(0.94558609, -0.76890725),
+    vec2(-0.094184101, -0.92938870),
+    vec2(0.34495938, 0.29387760)
+);
+
+// Uniforms
 uniform Camera camera;
 uniform DirectionalLight directional_light;
 uniform PointLight point_light;
 uniform SpotLight spot_light;
 uniform Material material;
 
+// Inputs
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
 layout(location = 2) in vec2 fragment_texture_coord;
 
+// Outputs
 layout(location = 0) out vec3 out_color;
-
-float PI = 3.14159;
 
 vec3 compute_normal() {
 
@@ -82,6 +93,16 @@ vec3 compute_normal() {
     vec4 normal_map_value = texture(material.normal_sampler, fragment_texture_coord);
 
     return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
+}
+
+float compute_visibility(Shadow shadow, float bias) {
+    float visibility = 0.0;
+    vec3 texture_coord = vec3(shadow.mvp * vec4(fragment_position, 1.0));
+    for (int i = 0; i < 4; i++){
+        vec2 sample_location = texture_coord.xy + poisson_disk[i] / shadow.size;
+        visibility += 0.25 * texture(shadow.sampler, vec3(sample_location, texture_coord.z - bias));
+    }
+    return visibility;
 }
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
@@ -125,13 +146,6 @@ vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color)
     return specular_strength * light_color * material_color;
 }
 
-vec2 poisson_disk[4] = vec2[](
-    vec2(-0.94201624, -0.39906216),
-    vec2(0.94558609, -0.76890725),
-    vec2(-0.094184101, -0.92938870),
-    vec2(0.34495938, 0.29387760)
-);
-
 vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
 
     // Early-exit when light is behind fragment
@@ -140,13 +154,8 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
     }
 
     // Shadow
-    vec3 texture_coord = vec3(light.shadow.mvp * vec4(fragment_position, 1.0));
-    float bias = clamp(0.001 * tan(acos(max(0.0, dot(normal, light.direction)))), 0.0, 0.01);
-    float visibility = 0.0;
-    for (int i = 0; i < 4; i++){
-        vec2 sample_location = texture_coord.xy + poisson_disk[i] / light.shadow.size;
-        visibility += 0.25 * texture(light.shadow.sampler, vec3(sample_location, texture_coord.z - bias));
-    }
+    float bias = clamp(0.001 * tan(acos(max(0.0, dot(fragment_normal, light.direction)))), 0.0, 0.01);
+    float visibility = compute_visibility(light.shadow, bias);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);
