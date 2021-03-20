@@ -10,7 +10,7 @@ glm::mat4 SpotLight::get_projection(float near, float far) const {
 
 glm::mat4 SpotLight::get_view() const {
     glm::mat4 view_matrix;
-    view_matrix = glm::lookAt(direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
+    view_matrix = glm::lookAt(-direction, glm::vec3(), glm::vec3(1.0f, 0.0f, 0.0f));
     view_matrix = glm::translate(view_matrix, -position);
     return view_matrix;
 }

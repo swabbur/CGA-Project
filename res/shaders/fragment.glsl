@@ -14,7 +14,7 @@ struct DirectionalLight {
     vec3 direction;
     float intensity;
     Shadow shadow;
-    mat4 mvp;
+    mat4 vp;
 };
 
 struct PointLight {
@@ -30,7 +30,7 @@ struct SpotLight {
     float angle;
     float intensity;
     Shadow shadow;
-    mat4 mvp;
+    mat4 vp;
 };
 
 struct Component {
@@ -97,7 +97,7 @@ vec3 compute_normal() {
     return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
 }
 
-float compute_visibility(Shadow shadow, mat4 mvp, vec3 light_direction) {
+float compute_visibility(Shadow shadow, mat4 vp, vec3 light_direction) {
 
     // Compute (slope-based) bias
     float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
@@ -105,7 +105,7 @@ float compute_visibility(Shadow shadow, mat4 mvp, vec3 light_direction) {
 
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
-    vec3 sample_location = vec3(mvp * vec4(fragment_position, 1.0));
+    vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
     for (int i = 0; i < 4; i++){
         vec2 texture_coord = sample_location.xy + poisson_disk[i] / shadow.size;
         visibility += 0.25 * texture(shadow.sampler, vec3(texture_coord, sample_location.z - bias));
@@ -162,7 +162,7 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
     }
 
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.mvp, light.direction);
+    float visibility = compute_visibility(light.shadow, light.vp, light.direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);
@@ -202,23 +202,23 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
         return vec3(0.0);
     }
 
-    // Normalize light strength
+    // Normalize light strength to adhere to cone surface
     float light_distance = distance(light.position, fragment_position);
-    float light_strength = light.intensity / (2.0 * PI * light_distance * light_distance) / (1.0 - cos(light.angle / 2.0));
+    light_distance += 1.0; // Adjust for distance to unit sphere
+    float light_strength = light.intensity / (2.0 * PI * light_distance * light_distance) / (1.0 - cos(light.angle));
 
     // Create cone effect
     vec3 vector = fragment_position - light.position;
     vec3 projection = vector * dot(normalize(vector), light.direction);
     float distance = distance(vector, projection);
-    float radius = length(projection) * tan(light.angle / 4.0f);
-
+    float radius = length(projection) * tan(light.angle / 2.0f);
     light_strength *= 1.0 - distance / radius;
 
-    // Clamp light strength to never exceed light intensity (equal to distance of 1.0 from light position)
-//    light_strength = min(light_strength, light.intensity);
+    // Additional normalization to deal with
+    light_strength *= 3.0;
 
     // Shadow
-//    float visibility = compute_visibility(light.shadow, light.mvp, light_direction);
+    float visibility = compute_visibility(light.shadow, light.vp, light_direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);

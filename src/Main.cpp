@@ -52,8 +52,8 @@ int main() {
     spot_light.color = glm::vec3(1.0f);
     spot_light.position = glm::vec3(0.25f, 2.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
-    spot_light.angle = glm::quarter_pi<float>();
-    spot_light.intensity = 4.0f;
+    spot_light.angle = glm::quarter_pi<float>() / 2.0;
+    spot_light.intensity = 5.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
@@ -117,6 +117,8 @@ int main() {
         if (keyboard.is_down(GLFW_KEY_DOWN)) {
             spot_light.position.y -= timer.get_delta();
         }
+
+//        instances[0].rotation.y = timer.get_time();
 
         // Render shadow maps
         {
@@ -195,6 +197,13 @@ int main() {
             program.set_int("directional_light.shadow.size", shadow_map_1.size);
             shadow_map_1.texture.bind(4);
             program.set_sampler("directional_light.shadow.sampler", 4);
+            {
+                glm::mat4 light_vp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
+                                     * directional_light.get_view();
+                glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
+                glm::mat4 adjusted_light_vp = sampling_adjustment * light_vp;
+                program.set_mat4("directional_light.vp", adjusted_light_vp);
+            }
 
             program.set_vec3("spot_light.color", spot_light.color);
             program.set_vec3("spot_light.position", spot_light.position);
@@ -204,6 +213,13 @@ int main() {
             program.set_int("spot_light.shadow.size", shadow_map_2.size);
             shadow_map_2.texture.bind(5);
             program.set_sampler("spot_light.shadow.sampler", 5);
+            {
+                glm::mat4 light_vp = spot_light.get_projection(0.01f, 10.0f)
+                                     * spot_light.get_view();
+                glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
+                glm::mat4 adjusted_light_vp = sampling_adjustment * light_vp;
+                program.set_mat4("spot_light.vp", adjusted_light_vp);
+            }
 
             // Render instances
             for (Instance & instance : instances) {
@@ -221,12 +237,6 @@ int main() {
                 program.set_mat4("mvp", mvp);
 
                 // Set shadow map MVP
-                glm::mat4 light_mvp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
-                                      * directional_light.get_view()
-                                      * instance.get_transformation();
-                glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
-                glm::mat4 adjusted_light_mvp = sampling_adjustment * light_mvp;
-                program.set_mat4("directional_light.mvp", adjusted_light_mvp);
 
                 // Render shapes
                 for (Shape const & shape : instance.model.shapes) {
