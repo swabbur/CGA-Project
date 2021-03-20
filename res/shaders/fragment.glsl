@@ -95,12 +95,18 @@ vec3 compute_normal() {
     return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
 }
 
-float compute_visibility(Shadow shadow, float bias) {
+float compute_visibility(Shadow shadow, vec3 light_direction) {
+
+    // Compute (slope-based) bias
+    float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
+    float bias = clamp(0.001 * tan(light_angle), 0.0, 0.01);
+
+    // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
-    vec3 texture_coord = vec3(shadow.mvp * vec4(fragment_position, 1.0));
+    vec3 sample_location = vec3(shadow.mvp * vec4(fragment_position, 1.0));
     for (int i = 0; i < 4; i++){
-        vec2 sample_location = texture_coord.xy + poisson_disk[i] / shadow.size;
-        visibility += 0.25 * texture(shadow.sampler, vec3(sample_location, texture_coord.z - bias));
+        vec2 texture_coord = sample_location.xy + poisson_disk[i] / shadow.size;
+        visibility += 0.25 * texture(shadow.sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
 }
@@ -129,7 +135,7 @@ vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color)
     vec3 view_direction = normalize(camera.position - fragment_position);
     vec3 half_vector = normalize(light_direction + view_direction);
 
-    // Compute (normalized Blinn-Phong) specular strength (http://www.farbrausch.de/~fg/stuff/phong.pdf)
+    // Compute (normalized Blinn-Phong) specular strength
     float n = 4.0 * material.shininess;
     float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
     float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
@@ -154,8 +160,7 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
     }
 
     // Shadow
-    float bias = clamp(0.001 * tan(acos(max(0.0, dot(fragment_normal, light.direction)))), 0.0, 0.01);
-    float visibility = compute_visibility(light.shadow, bias);
+    float visibility = compute_visibility(light.shadow, light.direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);

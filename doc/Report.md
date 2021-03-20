@@ -4,17 +4,17 @@
 
 - Graphics
     - Material
-        - Diffuse/Specular textures
-        - Normal/bump map
+        - Diffuse/specular textures
+        - Normal/bump mapping
     - Shading
         - Normalized Blinn-Phong shading
     - Lighting
-        - Ambient
         - Directional
         - Point (without shadows)
         - Spot
     - Shadows
-        - Percentage Closer Filtering (PCF)
+        - Slope-based bias
+        - Percentage Closer Filtering
         - Poisson sampling
 - Other
     - AABB collision detection
