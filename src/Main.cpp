@@ -47,8 +47,8 @@ int main() {
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
     directional_light.intensity = 4.0f;
 
-    ShadowMap shadow_map = ShadowMap::create(2048);
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
+    ShadowMap shadow_map = ShadowMap::create(2048);
 
     while (!window.is_closed()) {
 
@@ -127,101 +127,102 @@ int main() {
             }
         }
 
-        // Bind framebuffer
-        framebuffer.bind();
+        // Render scene
+        {
+            // Set context options
+            context.set_multisampling(true);
 
-        // Clear framebuffer
-        context.set_view_port(0, 0, window.get_width(), window.get_height());
-        context.set_clear_color(0.5f, 0.5f, 0.5f);
-        context.set_clear_depth(1.0f);
-        context.clear();
+            // Prepare framebuffer
+            framebuffer.bind();
+            context.set_view_port(0, 0, window.get_width(), window.get_height());
+            context.clear();
 
-        // Set additional context options
-        context.set_multisampling(true);
-        context.set_depth_test(true);
-        context.set_cull_face(true);
-        context.set_alpha_blending(false);
+            // Bind shader program
+            program.bind();
 
-        // Bind shader program
-        program.bind();
+            // Set camera properties
+            program.set_vec3("camera.position", camera.get_position());
 
-        // Set camera properties
-        program.set_vec3("camera.position", camera.get_position());
-
-        // Set light properties
-        program.set_vec3("directional_light.color", directional_light.color);
-        program.set_vec3("directional_light.direction", directional_light.direction);
-        program.set_float("directional_light.intensity", directional_light.intensity);
-
-        // Render instances
-        for (Instance & instance : instances) {
-
-            // Set MVP matrices
-            glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
-            program.set_mat4("mvp", mvp);
-            program.set_mat4("position_transformation", instance.get_transformation());
-            program.set_mat3("normal_transformation",
-                             glm::transpose(glm::inverse(glm::mat3(instance.get_transformation()))));
+            // Set light properties
+            program.set_vec3("directional_light.color", directional_light.color);
+            program.set_vec3("directional_light.direction", directional_light.direction);
+            program.set_float("directional_light.intensity", directional_light.intensity);
 
             // Set shadow map properties
+            program.set_int("directional_light.shadow.size", shadow_map.size);
             shadow_map.texture.bind(4);
             program.set_sampler("directional_light.shadow.sampler", 4);
-            glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
-                                   * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
-                                   * instance.get_transformation();
-            glm::mat4 bias(0.5, 0.0, 0.0, 0.0,
-                           0.0, 0.5, 0.0, 0.0,
-                           0.0, 0.0, 0.5, 0.0,
-                           0.5, 0.5, 0.5, 1.0);
-            glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
-            program.set_mat4("directional_light.shadow.mvp", biased_shadow_mvp);
-            program.set_int("directional_light.shadow.size", shadow_map.size);
 
-            // Render shapes
-            for (Shape const & shape : instance.model.shapes) {
+            // Render instances
+            for (Instance & instance : instances) {
 
-                // Set material properties
-                if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
-                    texture->bind(0);
-                    program.set_bool("material.ambient.textured", true);
-                    program.set_sampler("material.ambient.sampler", 0);
-                } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
-                    program.set_bool("material.ambient.textured", false);
-                    program.set_vec3("material.ambient.color", *color);
+                // Set transformation matrices
+                glm::mat4 position_transformation = instance.get_transformation();
+                glm::mat3 normal_transformation = glm::transpose(glm::inverse(glm::mat3(position_transformation)));
+                program.set_mat4("position_transformation", position_transformation);
+                program.set_mat3("normal_transformation", normal_transformation);
+
+                // Set camera MVP
+                glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
+                program.set_mat4("mvp", mvp);
+
+                // Set shadow map MVP
+                glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
+                                       * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
+                                       * instance.get_transformation();
+                glm::mat4 bias(0.5, 0.0, 0.0, 0.0,
+                               0.0, 0.5, 0.0, 0.0,
+                               0.0, 0.0, 0.5, 0.0,
+                               0.5, 0.5, 0.5, 1.0);
+                glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
+                program.set_mat4("directional_light.shadow.mvp", biased_shadow_mvp);
+
+                // Render shapes
+                for (Shape const & shape : instance.model.shapes) {
+
+                    // Set material properties
+                    if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
+                        texture->bind(0);
+                        program.set_bool("material.ambient.textured", true);
+                        program.set_sampler("material.ambient.sampler", 0);
+                    } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
+                        program.set_bool("material.ambient.textured", false);
+                        program.set_vec3("material.ambient.color", *color);
+                    }
+
+                    if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
+                        texture->bind(1);
+                        program.set_bool("material.diffuse.textured", true);
+                        program.set_sampler("material.diffuse.sampler", 1);
+                    } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
+                        program.set_bool("material.diffuse.textured", false);
+                        program.set_vec3("material.diffuse.color", *color);
+                    }
+
+                    if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
+                        texture->bind(2);
+                        program.set_bool("material.specular.textured", true);
+                        program.set_sampler("material.specular.sampler", 2);
+                    } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
+                        program.set_bool("material.specular.textured", false);
+                        program.set_vec3("material.specular.color", *color);
+                    }
+
+                    if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
+                        program.set_float("material.shininess", *shininess);
+                    }
+
+                    if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
+                        texture->bind(3);
+                        program.set_bool("material.normal_textured", true);
+                        program.set_sampler("material.normal_sampler", 3);
+                    } else {
+                        program.set_bool("material.normal_textured", false);
+                    }
+
+                    // Render mesh
+                    shape.mesh.draw();
                 }
-
-                if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
-                    texture->bind(1);
-                    program.set_bool("material.diffuse.textured", true);
-                    program.set_sampler("material.diffuse.sampler", 1);
-                } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
-                    program.set_bool("material.diffuse.textured", false);
-                    program.set_vec3("material.diffuse.color", *color);
-                }
-
-                if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
-                    texture->bind(2);
-                    program.set_bool("material.specular.textured", true);
-                    program.set_sampler("material.specular.sampler", 2);
-                } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
-                    program.set_bool("material.specular.textured", false);
-                    program.set_vec3("material.specular.color", *color);
-                }
-
-                if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
-                    program.set_float("material.shininess", *shininess);
-                }
-
-                if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
-                    texture->bind(3);
-                    program.set_bool("material.normal_textured", true);
-                    program.set_sampler("material.normal_sampler", 3);
-                } else {
-                    program.set_bool("material.normal_textured", false);
-                }
-
-                // Render mesh
-                shape.mesh.draw();
             }
         }
 
