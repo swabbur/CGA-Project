@@ -1,6 +1,9 @@
 #include <devices/DeviceManager.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/transform.hpp>
 #include <graphics/lights/DirectionalLight.hpp>
-#include <graphics/lights/PointLight.hpp>
+//#include <graphics/lights/PointLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
 #include <graphics/Instance.hpp>
@@ -24,24 +27,28 @@ int main() {
     Context context(window);
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
+    Camera camera;
+    camera.place(glm::vec3(0.0f, 0.75f, 1.5f));
 
     Cache<std::string, Model> models(Model::load);
-
     std::vector<Instance> instances;
     instances.emplace_back(models.get("models/scene.fbx"));
 
-    Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
 
-    PointLight point_light;
-    point_light.color = glm::vec3(1.0f);
-    point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
-    point_light.intensity = 1000.0f;
+//    PointLight point_light;
+//    point_light.color = glm::vec3(1.0f);
+//    point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
+//    point_light.intensity = 1000.0f;
 
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
-    directional_light.intensity = 3.0f;
+    directional_light.intensity = 4.0f;
+
+    Texture shadow_texture = Texture::create(Texture::Type::DEPTH, 2048, 2048);
+    Framebuffer shadow_framebuffer = Framebuffer::create({shadow_texture });
+    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
 
     while (!window.is_closed()) {
 
@@ -55,7 +62,9 @@ int main() {
             break;
         }
 
-        // Update camera position based on keyboard input
+        // Update camera
+        camera.set_aspect_ratio(window.get_aspect_ratio());
+
         glm::vec3 direction(0.0f);
 
         if (keyboard.is_down(GLFW_KEY_W)) {
@@ -86,10 +95,44 @@ int main() {
             camera.move(timer.get_delta() * glm::normalize(direction));
         }
 
-        // Update camera rotation based on mouse input
         if (mouse.is_down(GLFW_MOUSE_BUTTON_LEFT)) {
             float scale = std::min(window.get_width(), window.get_height()) / 2.0f;
             camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
+        }
+
+        // Render shadow map
+        {
+            // Bind framebuffer
+            shadow_framebuffer.bind();
+
+            // Clear framebuffer
+            context.set_view_port(0, 0, 2048, 2048);
+            context.set_clear_depth(1.0f);
+            context.clear();
+
+            // Set additional context options
+            context.set_multisampling(false);
+            context.set_depth_test(true);
+            context.set_cull_face(true);
+            context.set_alpha_blending(false);
+
+            // Bind shader program
+            shadow_program.bind();
+
+            // Render instances
+            for (Instance & instance : instances) {
+
+                // Set MVP matrix
+                glm::mat4 projection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f);
+                glm::mat4 view = glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
+                glm::mat4 mvp = projection * view * instance.get_transformation();
+                shadow_program.set_mat4("mvp", mvp);
+
+                // Render shapes
+                for (Shape const & shape : instance.model.shapes) {
+                    shape.mesh.draw();
+                }
+            }
         }
 
         // Bind framebuffer
@@ -114,23 +157,38 @@ int main() {
         program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
-//        program.set_vec3("directional_light.color", directional_light.color);
-//        program.set_vec3("directional_light.direction", directional_light.direction);
-//        program.set_float("directional_light.intensity", directional_light.intensity);
+        program.set_vec3("directional_light.color", directional_light.color);
+        program.set_vec3("directional_light.direction", directional_light.direction);
+        program.set_float("directional_light.intensity", directional_light.intensity);
 
-        program.set_vec3("point_light.color", point_light.color);
-        program.set_vec3("point_light.position", point_light.position);
-        program.set_float("point_light.intensity", point_light.intensity);
+
+//        program.set_vec3("point_light.color", point_light.color);
+//        program.set_vec3("point_light.position", point_light.position);
+//        program.set_float("point_light.intensity", point_light.intensity);
 
         // Render instances
         for (Instance & instance : instances) {
 
-            // Set MVP matrix
+            // Set MVP matrices
             glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
             program.set_mat4("mvp", mvp);
             program.set_mat4("position_transformation", instance.get_transformation());
             program.set_mat3("normal_transformation",
                              glm::transpose(glm::inverse(glm::mat3(instance.get_transformation()))));
+
+            // Set shadow map properties
+            shadow_texture.bind(4);
+            program.set_sampler("shadow_sampler", 4);
+            glm::mat4 bias(0.5, 0.0, 0.0, 0.0,
+                           0.0, 0.5, 0.0, 0.0,
+                           0.0, 0.0, 0.5, 0.0,
+                           0.5, 0.5, 0.5, 1.0);
+            glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
+                                   * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
+                                   * instance.get_transformation();
+            glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
+            program.set_mat4("biased_shadow_mvp", biased_shadow_mvp);
+
 
             // Render shapes
             for (Shape const & shape : instance.model.shapes) {

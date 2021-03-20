@@ -44,10 +44,12 @@ uniform DirectionalLight directional_light;
 uniform PointLight point_light;
 uniform SpotLight spot_light;
 uniform Material material;
+uniform sampler2DShadow shadow_sampler;
 
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
 layout(location = 2) in vec2 fragment_texture_coord;
+layout(location = 3) in vec3 fragment_shadow_coord;
 
 layout(location = 0) out vec3 out_color;
 
@@ -118,6 +120,13 @@ vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color)
     return specular_strength * light_color * material_color;
 }
 
+vec2 poisson_disk[4] = vec2[](
+    vec2(-0.94201624, -0.39906216),
+    vec2(0.94558609, -0.76890725),
+    vec2(-0.094184101, -0.92938870),
+    vec2(0.34495938, 0.29387760)
+);
+
 vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
 
     // Early-exit when light is behind fragment
@@ -129,8 +138,16 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);
     vec3 specular_color = compute_specular_color(normal, light.direction, light.color);
 
+    // Shadow
+    float bias = clamp(0.001 * tan(acos(max(0.0, dot(normal, light.direction)))), 0.0, 0.01);
+
+    float visibility = 0.0;
+    for (int i = 0; i < 4; i++){
+        visibility += 0.25 * texture(shadow_sampler, vec3(fragment_shadow_coord.xy + poisson_disk[i] / 2048.0, fragment_shadow_coord.z - bias));
+    }
+
     // Compute combined color
-    return light.intensity * (diffuse_color + specular_color);
+    return visibility * light.intensity * (diffuse_color + specular_color);
 }
 
 vec3 compute_point_light_color(vec3 normal, PointLight light) {
