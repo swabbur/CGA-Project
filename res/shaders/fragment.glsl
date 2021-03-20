@@ -194,35 +194,38 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
 
 vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
-    // Compute light properties
+    // Compute fragment-to-light direction
     vec3 light_direction = normalize(light.position - fragment_position);
-    float light_distance = distance(light.position, fragment_position);
-    float light_strength = light.intensity / (4.0 * PI * light_distance * light_distance);
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
         return vec3(0.0);
     }
 
-    // Create cone effect
-    float light_cosine = max(0.0, dot(-light_direction, light.direction));
-    float inner_cosine = cos(light.angle / 2.0);
+    // Normalize light strength
+    float light_distance = distance(light.position, fragment_position);
+    float light_strength = light.intensity / (2.0 * PI * light_distance * light_distance) / (1.0 - cos(light.angle / 2.0));
 
-    if (light_cosine > inner_cosine) {
-        light_strength *= 1.0;
-    } else {
-        light_strength *= 0.0;
-    }
+    // Create cone effect
+    vec3 vector = fragment_position - light.position;
+    vec3 projection = vector * dot(normalize(vector), light.direction);
+    float distance = distance(vector, projection);
+    float radius = length(projection) * tan(light.angle / 4.0f);
+
+    light_strength *= 1.0 - distance / radius;
+
+    // Clamp light strength to never exceed light intensity (equal to distance of 1.0 from light position)
+//    light_strength = min(light_strength, light.intensity);
 
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.mvp, light_direction);
+//    float visibility = compute_visibility(light.shadow, light.mvp, light_direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
     vec3 specular_color = compute_specular_color(normal, light_direction, light.color);
 
     // Compute combined color
-    return light_strength * visibility * (diffuse_color + specular_color);
+    return light_strength /** visibility */ * (diffuse_color + specular_color);
 }
 
 vec3 compute_light_color(vec3 normal) {
