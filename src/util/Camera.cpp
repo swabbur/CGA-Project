@@ -45,6 +45,10 @@ void Camera::move(glm::vec3 const & position_delta) {
     position += glm::vec3(glm::vec4(position_delta, 1.0f) * y_rotation_matrix);
 }
 
+void Camera::move_orthogonal(glm::vec3 const& position_delta) {
+    position += position_delta;
+}
+
 void Camera::set_forward(glm::vec3 const & direction) {
     glm::vec3 forward(0.0f, 0.0f, -1.0f);
     glm::vec3 opposite = -direction;

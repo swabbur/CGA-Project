@@ -39,7 +39,7 @@ int main() {
     instances.emplace_back(models.get("models/scene.fbx"));
     instances.emplace_back(models.get("models/pawn.fbx"));
 
-    instances[1].position = glm::vec3(0.1f, 0.1f, 0.0f);
+    instances[1].position = glm::vec3(-0.2f, 0.1f, -0.4f);
 
     Timer timer;
 
@@ -59,7 +59,9 @@ int main() {
     Framebuffer shadow_framebuffer = Framebuffer::create({shadow_texture });
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
 
-    Player player(instances[1], glm::vec2(0.1f, 0.0f));
+    Player player(instances[1], glm::vec2(-0.2f, -0.4f));
+
+    bool move_player = false;
 
     while (!window.is_closed()) {
 
@@ -71,6 +73,11 @@ int main() {
         // Exit on ESC
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
             break;
+        }
+
+        // Toggle camera/player movement
+        if (keyboard.is_pressed(GLFW_KEY_C)) {
+            move_player = !move_player;
         }
 
         // Update camera
@@ -107,16 +114,20 @@ int main() {
             glm::vec3 normalized = timer.get_delta() * glm::normalize(direction);
 
             // Check collision
-            for (int i = 0; i < instances[0].model.shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
-                if (i == 0) { continue; } // We don't want to collide with the floor
-                Shape const& shape = instances[0].model.shapes[i];
-                glm::vec2 collided_direction = Collision::resolve_collision(player.movable.instance.model.shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
-                normalized.x = collided_direction.x;
-                normalized.z = collided_direction.y;
+            if (move_player) {
+                for (int i = 0; i < instances[0].model.shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
+                    if (i == 0) { continue; } // We don't want to collide with the floor
+                    Shape const& shape = instances[0].model.shapes[i];
+                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.instance.model.shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
+                    normalized.x = collided_direction.x;
+                    normalized.z = collided_direction.y;
+                }
+                camera.move_orthogonal(normalized);
+                player.movable.move(glm::vec2(normalized.x, normalized.z));
             }
-
-            camera.move(normalized);
-            player.movable.move(glm::vec2(normalized.x, normalized.z));
+            else {
+                camera.move(normalized);
+            }
         }
 
         if (mouse.is_down(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -211,8 +222,7 @@ int main() {
                            0.0, 0.0, 0.5, 0.0,
                            0.5, 0.5, 0.5, 1.0);
             glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
-                                   * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
-                                   * instance.get_transformation();
+                                   * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
             glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
             program.set_mat4("biased_shadow_mvp", biased_shadow_mvp);
             program.set_float("shadow_map_size", static_cast<float>(shadow_resolution));
