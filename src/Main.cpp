@@ -190,7 +190,6 @@ int main() {
             program.set_mat4("biased_shadow_mvp", biased_shadow_mvp);
             program.set_float("shadow_map_size", static_cast<float>(shadow_resolution));
 
-
             // Render shapes
             for (Shape const & shape : instance.model.shapes) {
 
