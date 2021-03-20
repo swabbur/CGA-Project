@@ -45,6 +45,7 @@ uniform PointLight point_light;
 uniform SpotLight spot_light;
 uniform Material material;
 uniform sampler2DShadow shadow_sampler;
+uniform float shadow_map_size;
 
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
@@ -143,7 +144,7 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
 
     float visibility = 0.0;
     for (int i = 0; i < 4; i++){
-        visibility += 0.25 * texture(shadow_sampler, vec3(fragment_shadow_coord.xy + poisson_disk[i] / 2048.0, fragment_shadow_coord.z - bias));
+        visibility += 0.25 * texture(shadow_sampler, vec3(fragment_shadow_coord.xy + poisson_disk[i] / shadow_map_size, fragment_shadow_coord.z - bias));
     }
 
     // Compute combined color

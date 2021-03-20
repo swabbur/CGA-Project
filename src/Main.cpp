@@ -46,7 +46,8 @@ int main() {
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
     directional_light.intensity = 4.0f;
 
-    Texture shadow_texture = Texture::create(Texture::Type::DEPTH, 2048, 2048);
+    unsigned int shadow_resolution = 2048;
+    Texture shadow_texture = Texture::create(Texture::Type::DEPTH, shadow_resolution, shadow_resolution);
     Framebuffer shadow_framebuffer = Framebuffer::create({shadow_texture });
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
 
@@ -106,7 +107,7 @@ int main() {
             shadow_framebuffer.bind();
 
             // Clear framebuffer
-            context.set_view_port(0, 0, 2048, 2048);
+            context.set_view_port(0, 0, shadow_resolution, shadow_resolution);
             context.set_clear_depth(1.0f);
             context.clear();
 
@@ -161,7 +162,6 @@ int main() {
         program.set_vec3("directional_light.direction", directional_light.direction);
         program.set_float("directional_light.intensity", directional_light.intensity);
 
-
 //        program.set_vec3("point_light.color", point_light.color);
 //        program.set_vec3("point_light.position", point_light.position);
 //        program.set_float("point_light.intensity", point_light.intensity);
@@ -188,6 +188,7 @@ int main() {
                                    * instance.get_transformation();
             glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
             program.set_mat4("biased_shadow_mvp", biased_shadow_mvp);
+            program.set_float("shadow_map_size", static_cast<float>(shadow_resolution));
 
 
             // Render shapes
