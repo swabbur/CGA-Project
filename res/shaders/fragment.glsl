@@ -4,10 +4,17 @@ struct Camera {
     vec3 position;
 };
 
+struct Shadow {
+    mat4 mvp;
+    sampler2DShadow sampler;
+    int size;
+};
+
 struct DirectionalLight {
     vec3 color;
     vec3 direction;
     float intensity;
+    Shadow shadow;
 };
 
 struct PointLight {
@@ -44,13 +51,10 @@ uniform DirectionalLight directional_light;
 uniform PointLight point_light;
 uniform SpotLight spot_light;
 uniform Material material;
-uniform sampler2DShadow shadow_sampler;
-uniform float shadow_map_size;
 
 layout(location = 0) in vec3 fragment_position;
 layout(location = 1) in vec3 fragment_normal;
 layout(location = 2) in vec2 fragment_texture_coord;
-layout(location = 3) in vec3 fragment_shadow_coord;
 
 layout(location = 0) out vec3 out_color;
 
@@ -135,20 +139,21 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
         return vec3(0.0);
     }
 
+    // Shadow
+    vec3 texture_coord = vec3(light.shadow.mvp * vec4(fragment_position, 1.0));
+    float bias = clamp(0.001 * tan(acos(max(0.0, dot(normal, light.direction)))), 0.0, 0.01);
+    float visibility = 0.0;
+    for (int i = 0; i < 4; i++){
+        vec2 sample_location = texture_coord.xy + poisson_disk[i] / light.shadow.size;
+        visibility += 0.25 * texture(light.shadow.sampler, vec3(sample_location, texture_coord.z - bias));
+    }
+
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);
     vec3 specular_color = compute_specular_color(normal, light.direction, light.color);
 
-    // Shadow
-    float bias = clamp(0.001 * tan(acos(max(0.0, dot(normal, light.direction)))), 0.0, 0.01);
-
-    float visibility = 0.0;
-    for (int i = 0; i < 4; i++){
-        visibility += 0.25 * texture(shadow_sampler, vec3(fragment_shadow_coord.xy + poisson_disk[i] / shadow_map_size, fragment_shadow_coord.z - bias));
-    }
-
     // Compute combined color
-    return visibility * light.intensity * (diffuse_color + specular_color);
+    return light.intensity * visibility * (diffuse_color + specular_color);
 }
 
 vec3 compute_point_light_color(vec3 normal, PointLight light) {

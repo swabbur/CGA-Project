@@ -71,6 +71,11 @@ void Program::set_bool(std::string const & name, bool boolean) {
     glUniform1ui(location, boolean);
 }
 
+void Program::set_int(std::string const & name, int integer) {
+    int location = get_uniform_location(name);
+    glUniform1i(location, integer);
+}
+
 void Program::set_float(std::string const & name, float scalar) {
     int location = get_uniform_location(name);
     glUniform1f(location, scalar);

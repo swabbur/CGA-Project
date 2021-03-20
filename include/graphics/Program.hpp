@@ -30,6 +30,8 @@ public:
 
     void set_bool(std::string const & name, bool boolean);
 
+    void set_int(std::string const & name, int integer);
+
     void set_float(std::string const & name, float scalar);
 
     void set_vec3(std::string const & name, glm::vec3 const & vector);

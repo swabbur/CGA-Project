@@ -4,8 +4,7 @@
 
 - Graphics
     - Material
-        - Diffuse texture
-        - Specular texture
+        - Diffuse/Specular textures
         - Normal/bump map
     - Shading
         - Normalized Blinn-Phong shading
@@ -19,4 +18,4 @@
         - Poisson sampling
 - Other
     - AABB collision detection
-    - ...
+    - 3D models
