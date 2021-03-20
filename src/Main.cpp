@@ -7,6 +7,7 @@
 #include <graphics/Instance.hpp>
 #include <graphics/Model.hpp>
 #include <graphics/Program.hpp>
+#include <graphics/ShadowMap.hpp>
 #include <graphics/Texture.hpp>
 #include <util/Cache.hpp>
 #include <util/Camera.hpp>
@@ -23,6 +24,12 @@ int main() {
     Mouse & mouse = device_manager.get_mouse();
 
     Context context(window);
+    context.set_clear_color(0.5f, 0.5f, 0.5f);
+    context.set_clear_depth(1.0f);
+    context.set_depth_test(true);
+    context.set_alpha_blending(false);
+    context.set_cull_face(true);
+
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Camera camera;
@@ -40,9 +47,7 @@ int main() {
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
     directional_light.intensity = 4.0f;
 
-    int shadow_size = 2048;
-    Texture shadow_texture = Texture::create(Texture::Type::DEPTH, shadow_size, shadow_size);
-    Framebuffer shadow_framebuffer = Framebuffer::create({shadow_texture });
+    ShadowMap shadow_map = ShadowMap::create(2048);
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
 
     while (!window.is_closed()) {
@@ -52,7 +57,7 @@ int main() {
         mouse.poll();
         window.poll();
 
-        // Exit on ESC
+        // Exit on ESC press
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
             break;
         }
@@ -97,24 +102,16 @@ int main() {
 
         // Render shadow map
         {
-            // Bind framebuffer
-            shadow_framebuffer.bind();
+            // Set context options
+            context.set_multisampling(false);
 
-            // Clear framebuffer
-            context.set_view_port(0, 0, shadow_size, shadow_size);
-            context.set_clear_depth(1.0f);
+            // Prepare framebuffer
+            shadow_map.framebuffer.bind();
+            context.set_view_port(0, 0, shadow_map.size, shadow_map.size);
             context.clear();
 
-            // Set additional context options
-            context.set_multisampling(false);
-            context.set_depth_test(true);
-            context.set_cull_face(true);
-            context.set_alpha_blending(false);
-
-            // Bind shader program
-            shadow_program.bind();
-
             // Render instances
+            shadow_program.bind();
             for (Instance & instance : instances) {
 
                 // Set MVP matrix
@@ -167,7 +164,7 @@ int main() {
                              glm::transpose(glm::inverse(glm::mat3(instance.get_transformation()))));
 
             // Set shadow map properties
-            shadow_texture.bind(4);
+            shadow_map.texture.bind(4);
             program.set_sampler("directional_light.shadow.sampler", 4);
             glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
                                    * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
@@ -178,7 +175,7 @@ int main() {
                            0.5, 0.5, 0.5, 1.0);
             glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
             program.set_mat4("directional_light.shadow.mvp", biased_shadow_mvp);
-            program.set_int("directional_light.shadow.size", shadow_size);
+            program.set_int("directional_light.shadow.size", shadow_map.size);
 
             // Render shapes
             for (Shape const & shape : instance.model.shapes) {
