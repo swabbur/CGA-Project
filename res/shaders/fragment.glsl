@@ -27,8 +27,10 @@ struct SpotLight {
     vec3 color;
     vec3 position;
     vec3 direction;
-    float intensity;
     float angle;
+    float intensity;
+    Shadow shadow;
+    mat4 mvp;
 };
 
 struct Component {
@@ -212,12 +214,15 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
         light_strength *= 0.0;
     }
 
+    // Shadow
+    float visibility = compute_visibility(light.shadow, light.mvp, light_direction);
+
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
     vec3 specular_color = compute_specular_color(normal, light_direction, light.color);
 
     // Compute combined color
-    return light_strength * (diffuse_color + specular_color);
+    return light_strength * visibility * (diffuse_color + specular_color);
 }
 
 vec3 compute_light_color(vec3 normal) {

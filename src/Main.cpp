@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <graphics/lights/DirectionalLight.hpp>
+#include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
 #include <graphics/Instance.hpp>
@@ -34,7 +35,7 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Camera camera;
     camera.turn(glm::vec2(0.407407, -1.42222));
-    camera.place(glm::vec3(1.53824, 0.761792, 0.354391));
+    camera.place(glm::vec3(1.5, 0.75, 0.5));
 
     Cache<std::string, Model> models(Model::load);
     std::vector<Instance> instances;
@@ -45,10 +46,18 @@ int main() {
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
-    directional_light.intensity = 4.0f;
+    directional_light.intensity = 1.0f;
+
+    SpotLight spot_light;
+    spot_light.color = glm::vec3(1.0f);
+    spot_light.position = glm::vec3(0.0, 2.0, 0.0);
+    spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
+    spot_light.angle = glm::quarter_pi<float>();
+    spot_light.intensity = 100.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
-    ShadowMap shadow_map = ShadowMap::create(2048);
+    ShadowMap shadow_map_1 = ShadowMap::create(2048);
+    ShadowMap shadow_map_2 = ShadowMap::create(2048);
 
     while (!window.is_closed()) {
 
@@ -100,29 +109,56 @@ int main() {
             camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
         }
 
-        // Render shadow map
+        // Render shadow maps
         {
             // Set context options
             context.set_multisampling(false);
 
-            // Prepare framebuffer
-            shadow_map.framebuffer.bind();
-            context.set_view_port(0, 0, shadow_map.size, shadow_map.size);
-            context.clear();
+            // Render directional light's shadow map
+            {
+                // Prepare framebuffer
+                shadow_map_1.framebuffer.bind();
+                context.set_view_port(0, 0, shadow_map_1.size, shadow_map_1.size);
+                context.clear();
 
-            // Render instances
-            shadow_program.bind();
-            for (Instance & instance : instances) {
+                // Render instances
+                shadow_program.bind();
+                for (Instance & instance : instances) {
 
-                // Set MVP matrix
-                glm::mat4 light_mvp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
-                                      * directional_light.get_view()
-                                      * instance.get_transformation();
-                shadow_program.set_mat4("mvp", light_mvp);
+                    // Set MVP matrix
+                    glm::mat4 light_mvp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
+                                          * directional_light.get_view()
+                                          * instance.get_transformation();
+                    shadow_program.set_mat4("mvp", light_mvp);
 
-                // Render shapes
-                for (Shape const & shape : instance.model.shapes) {
-                    shape.mesh.draw();
+                    // Render shapes
+                    for (Shape const & shape : instance.model.shapes) {
+                        shape.mesh.draw();
+                    }
+                }
+            }
+
+            // Render spot light's shadow map
+            {
+                // Prepare framebuffer
+                shadow_map_2.framebuffer.bind();
+                context.set_view_port(0, 0, shadow_map_2.size, shadow_map_2.size);
+                context.clear();
+
+                // Render instances
+                shadow_program.bind();
+                for (Instance & instance : instances) {
+
+                    // Set MVP matrix
+                    glm::mat4 light_mvp = spot_light.get_projection(0.01f, 10.0f)
+                                          * spot_light.get_view()
+                                          * instance.get_transformation();
+                    shadow_program.set_mat4("mvp", light_mvp);
+
+                    // Render shapes
+                    for (Shape const & shape : instance.model.shapes) {
+                        shape.mesh.draw();
+                    }
                 }
             }
         }
@@ -147,11 +183,18 @@ int main() {
             program.set_vec3("directional_light.color", directional_light.color);
             program.set_vec3("directional_light.direction", directional_light.direction);
             program.set_float("directional_light.intensity", directional_light.intensity);
-
-            // Set shadow map properties
-            program.set_int("directional_light.shadow.size", shadow_map.size);
-            shadow_map.texture.bind(4);
+            program.set_int("directional_light.shadow.size", shadow_map_1.size);
+            shadow_map_1.texture.bind(4);
             program.set_sampler("directional_light.shadow.sampler", 4);
+
+            program.set_vec3("spot_light.color", spot_light.color);
+            program.set_vec3("spot_light.position", spot_light.position);
+            program.set_vec3("spot_light.direction", spot_light.direction);
+            program.set_float("spot_light.angle", spot_light.angle);
+            program.set_float("spot_light.intensity", spot_light.intensity);
+            program.set_int("spot_light.shadow.size", shadow_map_2.size);
+            shadow_map_2.texture.bind(5);
+            program.set_sampler("spot_light.shadow.sampler", 5);
 
             // Render instances
             for (Instance & instance : instances) {
