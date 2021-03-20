@@ -5,7 +5,6 @@ struct Camera {
 };
 
 struct Shadow {
-    mat4 mvp;
     sampler2DShadow sampler;
     int size;
 };
@@ -15,6 +14,7 @@ struct DirectionalLight {
     vec3 direction;
     float intensity;
     Shadow shadow;
+    mat4 mvp;
 };
 
 struct PointLight {
@@ -95,7 +95,7 @@ vec3 compute_normal() {
     return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
 }
 
-float compute_visibility(Shadow shadow, vec3 light_direction) {
+float compute_visibility(Shadow shadow, mat4 mvp, vec3 light_direction) {
 
     // Compute (slope-based) bias
     float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
@@ -103,7 +103,7 @@ float compute_visibility(Shadow shadow, vec3 light_direction) {
 
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
-    vec3 sample_location = vec3(shadow.mvp * vec4(fragment_position, 1.0));
+    vec3 sample_location = vec3(mvp * vec4(fragment_position, 1.0));
     for (int i = 0; i < 4; i++){
         vec2 texture_coord = sample_location.xy + poisson_disk[i] / shadow.size;
         visibility += 0.25 * texture(shadow.sampler, vec3(texture_coord, sample_location.z - bias));
@@ -160,7 +160,7 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
     }
 
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.direction);
+    float visibility = compute_visibility(light.shadow, light.mvp, light.direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);

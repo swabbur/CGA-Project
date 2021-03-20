@@ -115,10 +115,10 @@ int main() {
             for (Instance & instance : instances) {
 
                 // Set MVP matrix
-                glm::mat4 projection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f);
-                glm::mat4 view = glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
-                glm::mat4 mvp = projection * view * instance.get_transformation();
-                shadow_program.set_mat4("mvp", mvp);
+                glm::mat4 light_mvp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
+                                      * directional_light.get_view()
+                                      * instance.get_transformation();
+                shadow_program.set_mat4("mvp", light_mvp);
 
                 // Render shapes
                 for (Shape const & shape : instance.model.shapes) {
@@ -163,19 +163,18 @@ int main() {
                 program.set_mat3("normal_transformation", normal_transformation);
 
                 // Set camera MVP
-                glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
+                glm::mat4 mvp = camera.get_projection_matrix()
+                                * camera.get_view_matrix()
+                                * instance.get_transformation();
                 program.set_mat4("mvp", mvp);
 
                 // Set shadow map MVP
-                glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
-                                       * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
-                                       * instance.get_transformation();
-                glm::mat4 sampling_adjustment(0.5, 0.0, 0.0, 0.0,
-                                              0.0, 0.5, 0.0, 0.0,
-                                              0.0, 0.0, 0.5, 0.0,
-                                              0.5, 0.5, 0.5, 1.0);
-                glm::mat4 adjusted_shadow_mvp = sampling_adjustment * shadow_mvp;
-                program.set_mat4("directional_light.shadow.mvp", adjusted_shadow_mvp);
+                glm::mat4 light_mvp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
+                                      * directional_light.get_view()
+                                      * instance.get_transformation();
+                glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
+                glm::mat4 adjusted_light_mvp = sampling_adjustment * light_mvp;
+                program.set_mat4("directional_light.mvp", adjusted_light_mvp);
 
                 // Render shapes
                 for (Shape const & shape : instance.model.shapes) {
