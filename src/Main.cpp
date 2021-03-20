@@ -28,7 +28,8 @@ int main() {
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Camera camera;
-    camera.place(glm::vec3(0.0f, 0.75f, 1.5f));
+    camera.turn(glm::vec2(0.407407, -1.42222));
+    camera.place(glm::vec3(1.53824, 0.761792, 0.354391));
 
     Cache<std::string, Model> models(Model::load);
     std::vector<Instance> instances;
@@ -41,9 +42,11 @@ int main() {
 //    point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
 //    point_light.intensity = 1000.0f;
 
+
+    glm::vec3 starting_light_direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
-    directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
+    directional_light.direction = starting_light_direction;
     directional_light.intensity = 4.0f;
 
     unsigned int shadow_resolution = 2048;
@@ -100,6 +103,10 @@ int main() {
             float scale = std::min(window.get_width(), window.get_height()) / 2.0f;
             camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
         }
+
+        // Update light direction
+        glm::mat4 light_rotation_matrix = glm::rotate(timer.get_time(), glm::vec3(0.0f, 1.0f, 0.0f));
+        directional_light.direction = glm::vec3(light_rotation_matrix * glm::vec4(starting_light_direction, 1.0f));
 
         // Render shadow map
         {
