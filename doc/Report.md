@@ -2,9 +2,21 @@
 
 ## Features
 
-- Normalized Blinn-Phong shading
-- PCF filtered shadows
-- Directional, point, and spot lights
-- Ambient, diffuse, and specular material color textures
-- Normal maps
-- (AABB collision detection)
+- Graphics
+    - Material
+        - Diffuse texture
+        - Specular texture
+        - Normal/bump map
+    - Shading
+        - Normalized Blinn-Phong shading
+    - Lighting
+        - Ambient
+        - Directional
+        - Point (without shadows)
+        - Spot
+    - Shadows
+        - Percentage Closer Filtering (PCF)
+        - Poisson sampling
+- Other
+    - AABB collision detection
+    - ...

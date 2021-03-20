@@ -9,6 +9,6 @@ public:
 
 	Movable movable;
 
-	Player(Entity & entity, glm::vec2 position);
+	Player(Instance& entity, glm::vec2 position);
 };
 

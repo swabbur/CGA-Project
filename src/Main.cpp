@@ -1,12 +1,18 @@
 #include <devices/DeviceManager.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/transform.hpp>
+#include <graphics/lights/DirectionalLight.hpp>
+//#include <graphics/lights/PointLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
-#include <graphics/Scene.hpp>
+#include <graphics/Instance.hpp>
+#include <graphics/Model.hpp>
 #include <graphics/Program.hpp>
 #include <graphics/Texture.hpp>
+#include <util/Cache.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
-#include <graphics/Entity.hpp>
 #include <physics/Collision.hpp>
 
 // Replace this include using Key/Button enum classes
@@ -24,27 +30,36 @@ int main() {
     Context context(window);
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
+    Camera camera;
+    camera.turn(glm::vec2(0.407407, -1.42222));
+    camera.place(glm::vec3(1.53824, 0.761792, 0.354391));
 
-    std::vector<Scene> scenes;
-    scenes.push_back(Scene::load("scenes/scene.dae"));
-    scenes.push_back(Scene::load("scenes/pawn.fbx"));
+    Cache<std::string, Model> models(Model::load);
+    std::vector<Instance> instances;
+    instances.emplace_back(models.get("models/scene.fbx"));
+    instances.emplace_back(models.get("models/pawn.fbx"));
 
-    std::vector<Entity> entities;
-    entities.emplace_back(scenes[0]);
-    entities.emplace_back(scenes[0]);
-    entities.emplace_back(scenes[1]);
+    instances[1].position = glm::vec3(0.1f, 0.1f, 0.0f);
 
-    entities[1].position = glm::vec3(3.0f, 0.0f, 0.0f);
-    entities[2].position = glm::vec3(0.1f, 0.1f, 0.0f);
-
-    Texture shadow_map = Texture::create(Texture::Type::DEPTH, 1024, 1024);
-    Framebuffer shadow_framebuffer = Framebuffer::create({ shadow_map });
-    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
-
-    Camera camera(window, glm::vec3(0.0f, 0.75f, 1.5f), glm::vec2(0.0f, 0.0f));
     Timer timer;
 
-    Player player(entities[2], glm::vec2(0.0f, 0.0f));
+//    PointLight point_light;
+//    point_light.color = glm::vec3(1.0f);
+//    point_light.position = glm::vec3(2.0f, 2.5f, -1.0f);
+//    point_light.intensity = 1000.0f;
+
+    glm::vec3 starting_light_direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
+    DirectionalLight directional_light;
+    directional_light.color = glm::vec3(1.0f);
+    directional_light.direction = starting_light_direction;
+    directional_light.intensity = 4.0f;
+
+    unsigned int shadow_resolution = 2048;
+    Texture shadow_texture = Texture::create(Texture::Type::DEPTH, shadow_resolution, shadow_resolution);
+    Framebuffer shadow_framebuffer = Framebuffer::create({shadow_texture });
+    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
+
+    Player player(instances[1], glm::vec2(0.1f, 0.0f));
 
     while (!window.is_closed()) {
 
@@ -58,7 +73,9 @@ int main() {
             break;
         }
 
-        // Update camera position based on keyboard input
+        // Update camera
+        camera.set_aspect_ratio(window.get_aspect_ratio());
+
         glm::vec3 direction(0.0f);
 
         if (keyboard.is_down(GLFW_KEY_W)) {
@@ -90,10 +107,10 @@ int main() {
             glm::vec3 normalized = timer.get_delta() * glm::normalize(direction);
 
             // Check collision
-            for (int i = 0; i < entities[0].scene.shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
-                if (i == 2) { continue; } // We don't want to collide with the floor
-                Shape const& shape = entities[0].scene.shapes[i];
-                glm::vec2 collided_direction = Collision::resolve_collision(player.movable.entity.scene.shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
+            for (int i = 0; i < instances[0].model.shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
+                if (i == 0) { continue; } // We don't want to collide with the floor
+                Shape const& shape = instances[0].model.shapes[i];
+                glm::vec2 collided_direction = Collision::resolve_collision(player.movable.instance.model.shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
                 normalized.x = collided_direction.x;
                 normalized.z = collided_direction.y;
             }
@@ -102,14 +119,49 @@ int main() {
             player.movable.move(glm::vec2(normalized.x, normalized.z));
         }
 
-        // Update camera rotation based on mouse input
         if (mouse.is_down(GLFW_MOUSE_BUTTON_LEFT)) {
             float scale = std::min(window.get_width(), window.get_height()) / 2.0f;
             camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
         }
 
-        // Update entities
-        entities[1].rotation = glm::vec3(timer.get_time(), timer.get_time(), timer.get_time());
+        // Update light direction
+        glm::mat4 light_rotation_matrix = glm::rotate(timer.get_time(), glm::vec3(0.0f, 1.0f, 0.0f));
+        directional_light.direction = glm::vec3(light_rotation_matrix * glm::vec4(starting_light_direction, 1.0f));
+
+        // Render shadow map
+        {
+            // Bind framebuffer
+            shadow_framebuffer.bind();
+
+            // Clear framebuffer
+            context.set_view_port(0, 0, shadow_resolution, shadow_resolution);
+            context.set_clear_depth(1.0f);
+            context.clear();
+
+            // Set additional context options
+            context.set_multisampling(false);
+            context.set_depth_test(true);
+            context.set_cull_face(true);
+            context.set_alpha_blending(false);
+
+            // Bind shader program
+            shadow_program.bind();
+
+            // Render instances
+            for (Instance & instance : instances) {
+
+                // Set MVP matrix
+                glm::mat4 projection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f);
+                glm::mat4 view = glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
+                glm::mat4 mvp = projection * view * instance.get_transformation();
+                shadow_program.set_mat4("mvp", mvp);
+
+                // Render shapes
+                for (Shape const & shape : instance.model.shapes) {
+                    shape.mesh.draw();
+                }
+            }
+        }
 
         // Bind framebuffer
         framebuffer.bind();
@@ -129,79 +181,83 @@ int main() {
         // Bind shader program
         program.bind();
 
-        // Set camera position
-        program.set_vector(1, camera.get_position());
+        // Set camera properties
+        program.set_vec3("camera.position", camera.get_position());
 
         // Set light properties
-        for (PointLight const& light : entities[0].scene.lights.point) {
-            program.set_vector(2, light.ambient);
-            program.set_vector(3, light.diffuse);
-            program.set_vector(4, light.specular);
-            program.set_vector(5, light.position);
-            break;
-        }
+        program.set_vec3("directional_light.color", directional_light.color);
+        program.set_vec3("directional_light.direction", directional_light.direction);
+        program.set_float("directional_light.intensity", directional_light.intensity);
 
-        for (SpotLight const & light : entities[0].scene.lights.spot) {
-            program.set_vector(6, light.ambient);
-            program.set_vector(7, light.diffuse);
-            program.set_vector(8, light.specular);
-            program.set_vector(9, light.position);
-            program.set_vector(10, light.direction);
-            program.set_float(11, light.angles.inner);
-            program.set_float(12, light.angles.outer);
-            break;
-        }
+//        program.set_vec3("point_light.color", point_light.color);
+//        program.set_vec3("point_light.position", point_light.position);
+//        program.set_float("point_light.intensity", point_light.intensity);
 
-        // Render entities
-        for (Entity & entity : entities) {
+        // Render instances
+        for (Instance & instance : instances) {
 
-            // Set MVP matrix
-            glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * entity.get_model_matrix();
-            program.set_mat4(0, mvp);
-            program.set_mat4(51, entity.get_model_matrix());
-            program.set_mat3(52, glm::transpose(glm::inverse(glm::mat3(entity.get_model_matrix()))));
+            // Set MVP matrices
+            glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
+            program.set_mat4("mvp", mvp);
+            program.set_mat4("position_transformation", instance.get_transformation());
+            program.set_mat3("normal_transformation",
+                             glm::transpose(glm::inverse(glm::mat3(instance.get_transformation()))));
+
+            // Set shadow map properties
+            shadow_texture.bind(4);
+            program.set_sampler("shadow_sampler", 4);
+            glm::mat4 bias(0.5, 0.0, 0.0, 0.0,
+                           0.0, 0.5, 0.0, 0.0,
+                           0.0, 0.0, 0.5, 0.0,
+                           0.5, 0.5, 0.5, 1.0);
+            glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
+                                   * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f))
+                                   * instance.get_transformation();
+            glm::mat4 biased_shadow_mvp = bias * shadow_mvp;
+            program.set_mat4("biased_shadow_mvp", biased_shadow_mvp);
+            program.set_float("shadow_map_size", static_cast<float>(shadow_resolution));
 
             // Render shapes
-            for (Shape const& shape : entity.scene.shapes) {
+            for (Shape const & shape : instance.model.shapes) {
 
                 // Set material properties
                 if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
                     texture->bind(0);
-                    program.set_bool(13, true);
-                    program.set_texture(14, 0);
+                    program.set_bool("material.ambient.textured", true);
+                    program.set_sampler("material.ambient.sampler", 0);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
-                    program.set_bool(13, false);
-                    program.set_vector(15, *color);
+                    program.set_bool("material.ambient.textured", false);
+                    program.set_vec3("material.ambient.color", *color);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
                     texture->bind(1);
-                    program.set_bool(16, true);
-                    program.set_texture(17, 1);
+                    program.set_bool("material.diffuse.textured", true);
+                    program.set_sampler("material.diffuse.sampler", 1);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
-                    program.set_bool(16, false);
-                    program.set_vector(18, *color);
+                    program.set_bool("material.diffuse.textured", false);
+                    program.set_vec3("material.diffuse.color", *color);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
                     texture->bind(2);
-                    program.set_bool(19, true);
-                    program.set_texture(20, 2);
+                    program.set_bool("material.specular.textured", true);
+                    program.set_sampler("material.specular.sampler", 2);
                 } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
-                    program.set_bool(19, false);
-                    program.set_vector(21, *color);
+                    program.set_bool("material.specular.textured", false);
+                    program.set_vec3("material.specular.color", *color);
                 }
 
                 if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
-                    program.set_float(22, *shininess);
+                    program.set_float("material.shininess", *shininess);
                 }
 
                 if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
                     texture->bind(3);
-                    program.set_bool(23, true);
-                    program.set_texture(24, 3);
+                    program.set_bool("material.normal_textured", true);
+                    program.set_sampler("material.normal_sampler", 3);
                 } else {
-                    program.set_bool(23, false);
+                    program.set_bool("material.normal_textured", false);
                 }
 
                 // Render mesh

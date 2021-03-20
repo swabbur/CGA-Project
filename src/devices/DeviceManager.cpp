@@ -4,6 +4,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <future>
+#include <iostream>
 
 std::mutex mutex;
 DeviceManager * device_manager = nullptr;
@@ -62,6 +63,10 @@ DeviceManager::DeviceManager() : handle(nullptr), keyboard(), mouse(), window(),
             throw std::runtime_error("Could not create GLFW window");
         }
         window.resize(width, height);
+
+        int x = (video_mode->width - width) / 2;
+        int y = (video_mode->height - height) / 2;
+        glfwSetWindowPos(static_cast<GLFWwindow *>(handle), x, y);
 
         // Pass handle to devices
         keyboard.set_handle(handle);

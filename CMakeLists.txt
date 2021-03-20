@@ -27,15 +27,15 @@ set(PACKAGES
 
 # Create executable
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-add_executable(CGA ${SOURCES} "src/graphics/Entity.cpp" "include/graphics/Entity.hpp" "include/objects/Player.hpp" "include/objects/Movable.hpp" "src/objects/Movable.cpp" "src/objects/Player.cpp" "include/physics/AABB.hpp" "src/physics/AABB.cpp"   "include/physics/Collision.hpp" "src/physics/Collision.cpp")
+add_executable(CGA ${SOURCES} "src/graphics/Instance.cpp" "include/graphics/Instance.hpp" "include/objects/Player.hpp" "include/objects/Movable.hpp" "src/objects/Movable.cpp" "src/objects/Player.cpp" "include/physics/AABB.hpp" "src/physics/AABB.cpp"   "include/physics/Collision.hpp" "src/physics/Collision.cpp")
 target_include_directories(CGA PUBLIC include)
 target_link_libraries(CGA ${PACKAGES})
 
 # Copy resource folders
-file(GLOB SCENES "res/scenes/*.*")
-file(GLOB SHADERS "res/shaders/*.glsl")
-file(GLOB TEXTURES "res/textures/*.png")
+file(GLOB MODELS "res/models/*.*")
+file(GLOB SHADERS "res/shaders/*.*")
+file(GLOB TEXTURES "res/textures/*.*")
 
-file(COPY ${SCENES} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/scenes)
+file(COPY ${MODELS} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/models)
 file(COPY ${SHADERS} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
 file(COPY ${TEXTURES} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/textures)

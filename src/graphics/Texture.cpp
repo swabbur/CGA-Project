@@ -23,12 +23,12 @@ Texture Texture::load(std::string const & path) {
     glTextureParameteri(handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glGenerateTextureMipmap(handle);
 
     glTextureStorage2D(handle, 1, GL_RGBA8, width, height);
     glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    glGenerateTextureMipmap(handle);
 
     stbi_image_free(data);
 
@@ -42,18 +42,17 @@ Texture Texture::create(Type type, unsigned int width, unsigned int height) {
 
     glTextureParameteri(handle, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTextureParameteri(handle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     switch (type) {
 
         case Type::COLOR:
-            glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTextureStorage2D(handle, 1, GL_RGBA8, width, height);
             break;
 
         case Type::DEPTH:
-            glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameterf(handle, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
             glTextureStorage2D(handle, 1, GL_DEPTH_COMPONENT32F, width, height);
             break;
 

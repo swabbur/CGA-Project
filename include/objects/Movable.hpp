@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "../graphics/Entity.hpp"
+#include "../graphics/Instance.hpp"
 
 class Movable {
 
@@ -9,9 +9,9 @@ class Movable {
 
 public:
 
-	Entity& entity;
+	Instance& instance;
 
-	Movable(Entity & entity, glm::vec2 position);
+	Movable(Instance& instance, glm::vec2 position);
 
 	void move(glm::vec2 position_delta);
 

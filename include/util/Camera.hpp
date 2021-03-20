@@ -6,13 +6,13 @@ class Window;
 
 class Camera {
 
-    Window const & window;
+    float aspect_ratio;
     glm::vec3 position;
     glm::vec2 rotation;
 
 public:
 
-    Camera(Window & window, glm::vec3 position, glm::vec2 rotation);
+    Camera();
 
     [[nodiscard]] glm::vec3 get_position() const;
 
@@ -20,9 +20,13 @@ public:
 
     [[nodiscard]] glm::mat4 get_view_matrix() const;
 
+    void set_aspect_ratio(float new_aspect_ratio);
+
     void place(glm::vec3 const & new_position);
 
     void move(glm::vec3 const & position_delta);
+
+    void set_forward(glm::vec3 const & direction);
 
     void turn(glm::vec2 const & rotation);
 
