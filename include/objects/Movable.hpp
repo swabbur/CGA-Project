@@ -6,11 +6,14 @@
 class Movable {
 
 	glm::vec2 position;
-	Entity& entity;
 
 public:
+
+	Entity& entity;
 
 	Movable(Entity & entity, glm::vec2 position);
 
 	void move(glm::vec2 position_delta);
+
+	glm::vec2 get_position();
 };

@@ -7,10 +7,12 @@
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
 #include <graphics/Entity.hpp>
+#include <physics/Collision.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
 #include <objects/Player.hpp>
+#include <iostream>
 
 int main() {
 
@@ -83,8 +85,19 @@ int main() {
             direction.y -= 1.0f;
         }
 
+
         if (glm::dot(direction, direction) != 0.0f) {
             glm::vec3 normalized = timer.get_delta() * glm::normalize(direction);
+
+            // Check collision
+            for (int i = 0; i < entities[0].scene.shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
+                if (i == 2) { continue; } // We don't want to collide with the floor
+                Shape const& shape = entities[0].scene.shapes[i];
+                glm::vec2 collided_direction = Collision::resolve_collision(player.movable.entity.scene.shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
+                normalized.x = collided_direction.x;
+                normalized.z = collided_direction.y;
+            }
+
             camera.move(normalized);
             player.movable.move(glm::vec2(normalized.x, normalized.z));
         }

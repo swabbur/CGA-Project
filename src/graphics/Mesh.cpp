@@ -4,7 +4,7 @@
 #include <graphics/Mesh.hpp>
 #include <graphics/Vertex.hpp>
 
-Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex> const & vertices, bool textured) {
+Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex> const & vertices, bool textured, AABB const& aabb) {
 
     GLuint ibo;
     glCreateBuffers(1, &ibo);
@@ -26,14 +26,14 @@ Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex>
 
     unsigned int size = indices.size();
 
-    return Mesh(ibo, vbo, vao, size, textured);
+    return Mesh(ibo, vbo, vao, size, textured, aabb);
 }
 
-Mesh::Mesh(unsigned int ibo, unsigned int vbo, unsigned int vao, unsigned int size, bool textured)
-    : ibo(ibo), vbo(vbo), vao(vao), size(size), textured(textured) {}
+Mesh::Mesh(unsigned int ibo, unsigned int vbo, unsigned int vao, unsigned int size, bool textured, AABB const & aabb)
+    : ibo(ibo), vbo(vbo), vao(vao), size(size), textured(textured), aabb(aabb) {}
 
 Mesh::Mesh(Mesh && mesh) noexcept :
-    ibo(mesh.ibo), vbo(mesh.vbo), vao(mesh.vao), size(mesh.size), textured(mesh.textured)
+    ibo(mesh.ibo), vbo(mesh.vbo), vao(mesh.vao), size(mesh.size), textured(mesh.textured), aabb(mesh.aabb)
 {
     mesh.size = 0;
     mesh.vao = 0;
@@ -63,4 +63,8 @@ bool Mesh::is_textured() const {
 void Mesh::draw() const {
     glBindVertexArray(vao);
     glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, nullptr);
+}
+
+AABB const& Mesh::get_AABB() const {
+    return aabb;
 }

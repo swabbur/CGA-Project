@@ -137,8 +137,11 @@ Mesh parse_mesh(aiMesh const * mesh) {
         vertices.push_back(vertex);
     }
 
+    // Parse AABB
+    AABB const & aabb = AABB(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z));
+
     // Create mesh
-    return Mesh::create(indices, vertices, textured);
+    return Mesh::create(indices, vertices, textured, aabb);
 }
 
 Scene Scene::load(std::string const & path) {
@@ -148,7 +151,7 @@ Scene Scene::load(std::string const & path) {
 
     // Load assimp scene
     Assimp::Importer importer;
-    aiScene const * scene = importer.ReadFile(path.c_str(), aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_RemoveRedundantMaterials | aiProcess_PreTransformVertices);
+    aiScene const * scene = importer.ReadFile(path.c_str(), aiProcess_GenSmoothNormals | aiProcess_Triangulate | aiProcess_RemoveRedundantMaterials | aiProcess_PreTransformVertices | aiProcess_GenBoundingBoxes);
     if (scene == nullptr || scene->mRootNode == nullptr || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
         throw std::runtime_error("Could not load_rgb scene: " + path);
     }
