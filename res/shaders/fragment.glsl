@@ -6,7 +6,6 @@ struct Camera {
 
 struct Shadow {
     sampler2DShadow sampler;
-    int size;
 };
 
 struct DirectionalLight {
@@ -106,8 +105,9 @@ float compute_visibility(Shadow shadow, mat4 vp, vec3 light_direction) {
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
     vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
+    ivec2 texture_size = textureSize(shadow.sampler, 0);
     for (int i = 0; i < 4; i++){
-        vec2 texture_coord = sample_location.xy + poisson_disk[i] / shadow.size;
+        vec2 texture_coord = sample_location.xy + poisson_disk[i] / texture_size;
         visibility += 0.25 * texture(shadow.sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
