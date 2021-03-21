@@ -194,8 +194,10 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
 
 vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
-    // Compute fragment-to-light direction
+    // Compute fragment-to-light vectors
     vec3 light_direction = normalize(light.position - fragment_position);
+    float light_distance = distance(light.position, fragment_position);
+    light_distance += 1.0; // Adjust for distance to unit sphere
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
@@ -203,8 +205,6 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     }
 
     // Normalize light strength to adhere to cone surface
-    float light_distance = distance(light.position, fragment_position);
-    light_distance += 1.0; // Adjust for distance to unit sphere
     float light_strength = light.intensity / (2.0 * PI * light_distance * light_distance) / (1.0 - cos(light.angle));
 
     // Create cone effect
@@ -214,11 +214,14 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     float radius = length(projection) * tan(light.angle / 2.0f);
     light_strength *= 1.0 - distance / radius;
 
-    // Additional normalization to deal with linear fall off towards edge of spot light
+    // Compensate for light loss due to linear fall-off
     light_strength *= 3.0;
 
+//    // Clamp to prevent clipping
+//    light_strength = min(light_strength, light.intensity);
+
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.vp, light_direction);
+    float visibility = 1.0; // compute_visibility(light.shadow, light.vp, light_direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
