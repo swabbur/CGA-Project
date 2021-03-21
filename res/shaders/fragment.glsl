@@ -214,11 +214,11 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     float radius = length(projection) * tan(light.angle / 2.0f);
     light_strength *= 1.0 - distance / radius;
 
-    // Additional normalization to deal with
+    // Additional normalization to deal with linear fall off towards edge of spot light
     light_strength *= 3.0;
 
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.vp, light_direction);
+    float visibility = compute_visibility(light.shadow, light.vp, -light_direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
