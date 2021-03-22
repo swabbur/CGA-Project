@@ -156,19 +156,17 @@ int main() {
             // Render instances
             shadow_program.bind();
             for (Instance & instance : instances) {
-                if (!instance.visible) {
-                    continue;
-                }
+                if (instance.visible) {
+                    // Set MVP matrix
+                    glm::mat4 projection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f);
+                    glm::mat4 view = glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
+                    glm::mat4 mvp = projection * view * instance.get_transformation();
+                    shadow_program.set_mat4("mvp", mvp);
 
-                // Set MVP matrix
-                glm::mat4 projection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f);
-                glm::mat4 view = glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
-                glm::mat4 mvp = projection * view * instance.get_transformation();
-                shadow_program.set_mat4("mvp", mvp);
-
-                // Render shapes
-                for (Shape const & shape : instance.get_model(animation_trame).shapes) {
-                    shape.mesh.draw();
+                    // Render shapes
+                    for (Shape const & shape : instance.get_model(animation_trame).shapes) {
+                        shape.mesh.draw();
+                    }
                 }
             }
         }
@@ -201,75 +199,74 @@ int main() {
 
             // Render instances
             for (Instance & instance : instances) {
-                if (!instance.visible) {
-                    continue;
-                }
+                if (instance.visible) {
 
-                // Set transformation matrices
-                glm::mat4 position_transformation = instance.get_transformation();
-                glm::mat3 normal_transformation = glm::transpose(glm::inverse(glm::mat3(position_transformation)));
-                program.set_mat4("position_transformation", position_transformation);
-                program.set_mat3("normal_transformation", normal_transformation);
+                    // Set transformation matrices
+                    glm::mat4 position_transformation = instance.get_transformation();
+                    glm::mat3 normal_transformation = glm::transpose(glm::inverse(glm::mat3(position_transformation)));
+                    program.set_mat4("position_transformation", position_transformation);
+                    program.set_mat3("normal_transformation", normal_transformation);
 
-                // Set camera MVP
-                glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
-                program.set_mat4("mvp", mvp);
+                    // Set camera MVP
+                    glm::mat4 mvp = camera.get_projection_matrix() * camera.get_view_matrix() * instance.get_transformation();
+                    program.set_mat4("mvp", mvp);
 
-                // Set shadow map MVP
-                glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
-                                       * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
-                glm::mat4 sampling_adjustment(0.5, 0.0, 0.0, 0.0,
-                                              0.0, 0.5, 0.0, 0.0,
-                                              0.0, 0.0, 0.5, 0.0,
-                                              0.5, 0.5, 0.5, 1.0);
-                glm::mat4 adjusted_shadow_mvp = sampling_adjustment * shadow_mvp;
-                program.set_mat4("directional_light.shadow.mvp", adjusted_shadow_mvp);
+                    // Set shadow map MVP
+                    glm::mat4 shadow_mvp = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f)
+                                           * glm::lookAt(directional_light.direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
+                    glm::mat4 sampling_adjustment(0.5, 0.0, 0.0, 0.0,
+                                                  0.0, 0.5, 0.0, 0.0,
+                                                  0.0, 0.0, 0.5, 0.0,
+                                                  0.5, 0.5, 0.5, 1.0);
+                    glm::mat4 adjusted_shadow_mvp = sampling_adjustment * shadow_mvp;
+                    program.set_mat4("directional_light.shadow.mvp", adjusted_shadow_mvp);
 
-                // Render shapes
-                for (Shape const & shape : instance.get_model(animation_trame).shapes) {
+                    // Render shapes
+                    for (Shape const & shape : instance.get_model(animation_trame).shapes) {
 
-                    // Set material properties
-                    if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
-                        texture->bind(0);
-                        program.set_bool("material.ambient.textured", true);
-                        program.set_sampler("material.ambient.sampler", 0);
-                    } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
-                        program.set_bool("material.ambient.textured", false);
-                        program.set_vec3("material.ambient.color", *color);
+                        // Set material properties
+                        if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
+                            texture->bind(0);
+                            program.set_bool("material.ambient.textured", true);
+                            program.set_sampler("material.ambient.sampler", 0);
+                        } else if (auto color = std::get_if<glm::vec3>(&shape.material.ambient)) {
+                            program.set_bool("material.ambient.textured", false);
+                            program.set_vec3("material.ambient.color", *color);
+                        }
+
+                        if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
+                            texture->bind(1);
+                            program.set_bool("material.diffuse.textured", true);
+                            program.set_sampler("material.diffuse.sampler", 1);
+                        } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
+                            program.set_bool("material.diffuse.textured", false);
+                            program.set_vec3("material.diffuse.color", *color);
+                        }
+
+                        if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
+                            texture->bind(2);
+                            program.set_bool("material.specular.textured", true);
+                            program.set_sampler("material.specular.sampler", 2);
+                        } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
+                            program.set_bool("material.specular.textured", false);
+                            program.set_vec3("material.specular.color", *color);
+                        }
+
+                        if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
+                            program.set_float("material.shininess", *shininess);
+                        }
+
+                        if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
+                            texture->bind(3);
+                            program.set_bool("material.normal_textured", true);
+                            program.set_sampler("material.normal_sampler", 3);
+                        } else {
+                            program.set_bool("material.normal_textured", false);
+                        }
+
+                        // Render mesh
+                        shape.mesh.draw();
                     }
-
-                    if (auto texture = std::get_if<Texture>(&shape.material.diffuse)) {
-                        texture->bind(1);
-                        program.set_bool("material.diffuse.textured", true);
-                        program.set_sampler("material.diffuse.sampler", 1);
-                    } else if (auto color = std::get_if<glm::vec3>(&shape.material.diffuse)) {
-                        program.set_bool("material.diffuse.textured", false);
-                        program.set_vec3("material.diffuse.color", *color);
-                    }
-
-                    if (auto texture = std::get_if<Texture>(&shape.material.specular)) {
-                        texture->bind(2);
-                        program.set_bool("material.specular.textured", true);
-                        program.set_sampler("material.specular.sampler", 2);
-                    } else if (auto color = std::get_if<glm::vec3>(&shape.material.specular)) {
-                        program.set_bool("material.specular.textured", false);
-                        program.set_vec3("material.specular.color", *color);
-                    }
-
-                    if (auto shininess = std::get_if<float>(&shape.material.shininess)) {
-                        program.set_float("material.shininess", *shininess);
-                    }
-
-                    if (auto texture = std::get_if<Texture>(&shape.material.normal)) {
-                        texture->bind(3);
-                        program.set_bool("material.normal_textured", true);
-                        program.set_sampler("material.normal_sampler", 3);
-                    } else {
-                        program.set_bool("material.normal_textured", false);
-                    }
-
-                    // Render mesh
-                    shape.mesh.draw();
                 }
             }
         }
