@@ -4,15 +4,11 @@ struct Camera {
     vec3 position;
 };
 
-struct Shadow {
-    sampler2DShadow sampler;
-};
-
 struct DirectionalLight {
     vec3 color;
     vec3 direction;
     float intensity;
-    Shadow shadow;
+    sampler2DShadow shadow_sampler;
     mat4 vp;
 };
 
@@ -28,7 +24,7 @@ struct SpotLight {
     vec3 direction;
     float angle;
     float intensity;
-    Shadow shadow;
+    sampler2D shadow_sampler;
     mat4 vp;
 };
 
@@ -96,7 +92,7 @@ vec3 compute_normal() {
     return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
 }
 
-float compute_visibility(Shadow shadow, mat4 vp, vec3 light_direction) {
+float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
 
     // Compute (slope-based) bias
     float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
@@ -105,12 +101,42 @@ float compute_visibility(Shadow shadow, mat4 vp, vec3 light_direction) {
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
     vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
-    ivec2 texture_size = textureSize(shadow.sampler, 0);
+    ivec2 texture_size = textureSize(sampler, 0);
     for (int i = 0; i < 4; i++){
         vec2 texture_coord = sample_location.xy + poisson_disk[i] / texture_size;
-        visibility += 0.25 * texture(shadow.sampler, vec3(texture_coord, sample_location.z - bias));
+        visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
+}
+
+float compute_visibility_perspective(sampler2D sampler, mat4 vp, vec3 light_direction) {
+
+    // Compute (slope-based) bias
+    float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
+    float bias = clamp(0.001 * tan(light_angle), 0.0, 0.01);
+
+    // Compute visibility
+    vec4 sample_location = vp * vec4(fragment_position, 1.0);
+    sample_location.xyz /= sample_location.w;
+    sample_location.xyz = sample_location.xyz * 0.5 + 0.5;
+    vec2 texture_coord = sample_location.xy;
+    float depth = sample_location.z;
+
+    // Early-exit outside of shadow map
+    if (sample_location.x < 0.0
+        || sample_location.x > 1.0
+        || sample_location.y < 0.0
+        || sample_location.y > 1.0
+    ) {
+        return 0.5;
+    }
+
+    float texture_depth = texture(sampler, texture_coord).x;
+    if ((depth - bias) > texture_depth) {
+        return 0.0;
+    }
+
+    return 1.0;
 }
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
@@ -162,7 +188,7 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
     }
 
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.vp, light.direction);
+    float visibility = compute_visibility_ortho(light.shadow_sampler, light.vp, light.direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);
@@ -221,14 +247,14 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 //    light_strength = min(light_strength, light.intensity);
 
     // Shadow
-    float visibility = 1.0; // compute_visibility(light.shadow, light.vp, light_direction);
+    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
     vec3 specular_color = compute_specular_color(normal, light_direction, light.color);
 
     // Compute combined color
-    return light_strength * visibility * (diffuse_color + specular_color);
+    return max(light_strength * visibility, visibility * 2.0) * (diffuse_color + specular_color);
 }
 
 vec3 compute_light_color(vec3 normal) {

@@ -50,7 +50,7 @@ int main() {
 
     SpotLight spot_light;
     spot_light.color = glm::vec3(1.0f);
-    spot_light.position = glm::vec3(0.25f, 2.0f, 0.0f);
+    spot_light.position = glm::vec3(0.1f, 2.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0;
     spot_light.intensity = 5.0f;
@@ -135,8 +135,8 @@ int main() {
                 for (Instance & instance : instances) {
 
                     // Set MVP matrix
-                    glm::mat4 light_mvp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
-                                          * directional_light.get_view()
+                    glm::mat4 light_mvp = directional_light.get_projection_matrix(5.0f, 5.0f, -5.0f, 10.0f)
+                                          * directional_light.get_view_matrix()
                                           * instance.get_transformation();
                     shadow_program.set_mat4("mvp", light_mvp);
 
@@ -193,10 +193,10 @@ int main() {
             program.set_vec3("directional_light.direction", directional_light.direction);
             program.set_float("directional_light.intensity", directional_light.intensity);
             shadow_map_1.texture.bind(4);
-            program.set_sampler("directional_light.shadow.sampler", 4);
+            program.set_sampler("directional_light.shadow_sampler", 4);
             {
-                glm::mat4 light_vp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
-                                     * directional_light.get_view();
+                glm::mat4 light_vp = directional_light.get_projection_matrix(5.0f, 5.0f, -5.0f, 10.0f)
+                                     * directional_light.get_view_matrix();
                 glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
                 glm::mat4 adjusted_light_vp = sampling_adjustment * light_vp;
                 program.set_mat4("directional_light.vp", adjusted_light_vp);
@@ -208,13 +208,11 @@ int main() {
             program.set_float("spot_light.angle", spot_light.angle);
             program.set_float("spot_light.intensity", spot_light.intensity);
             shadow_map_2.texture.bind(5);
-            program.set_sampler("spot_light.shadow.sampler", 5);
+            program.set_sampler("spot_light.shadow_sampler", 5);
             {
                 glm::mat4 light_vp = spot_light.get_projection(1.0f, 10.0f)
                                      * spot_light.get_view();
-                glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
-                glm::mat4 adjusted_light_vp = sampling_adjustment * light_vp;
-                program.set_mat4("spot_light.vp", adjusted_light_vp);
+                program.set_mat4("spot_light.vp", light_vp);
             }
 
             // Render instances
