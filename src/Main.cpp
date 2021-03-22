@@ -42,12 +42,11 @@ int main() {
     Cache<std::string, Model> models(Model::load);
     std::vector<Instance> instances;
     instances.emplace_back("models/scene.fbx", models);
-    //std::vector<std::string> walking_animation = { "models/player/Human_walking_1.fbx", "models/player/Human_walking_10.fbx" };
-    //instances.emplace_back(walking_animation, models);
+    instances.emplace_back("models/player/Human_standing.fbx", models);
     instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
-    //instances.emplace_back("models/player/Human_walking_0.fbx", models);
 
     instances[1].position = glm::vec3(-0.2f, 0.1f, -0.4f);
+    instances[2].position = glm::vec3(-0.2f, 0.1f, -0.4f);
 
     Timer timer;
 
@@ -59,7 +58,8 @@ int main() {
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map = ShadowMap::create(2048);
 
-    Player player(instances[1], glm::vec2(-0.2f, -0.4f));
+    std::vector<Instance*> player_instances = { &instances[1],  &instances[2] };
+    Player player(player_instances, glm::vec2(-0.2f, -0.4f));
 
     bool move_player = false;
 
@@ -115,19 +115,24 @@ int main() {
 
             // Check collision
             if (move_player) {
+                player.movable.update_active_instance(1);
                 for (int i = 0; i < instances[0].get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
                     if (i == 0) { continue; } // We don't want to collide with the floor
                     Shape const& shape = instances[0].get_model(0).shapes[i];
-                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.instance.get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
+                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.get_instance().get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
                     normalized.x = collided_direction.x;
                     normalized.z = collided_direction.y;
                 }
                 camera.move_orthogonal(normalized);
                 player.movable.move(glm::vec2(normalized.x, normalized.z));
+                player.movable.set_direction(glm::vec2(direction.x, direction.z));
             }
             else {
                 camera.move(normalized);
             }
+        }
+        else if (move_player) {
+            player.movable.update_active_instance(0);
         }
 
         if (mouse.is_down(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -135,8 +140,8 @@ int main() {
             camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
         }
 
+
         int animation_trame = timer.get_time() * 30; // Animation plays at 30 frames per second
-        std::cout << animation_trame << std::endl;
 
         // Render shadow map
         {
@@ -151,6 +156,9 @@ int main() {
             // Render instances
             shadow_program.bind();
             for (Instance & instance : instances) {
+                if (!instance.visible) {
+                    continue;
+                }
 
                 // Set MVP matrix
                 glm::mat4 projection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 10.0f);
@@ -193,6 +201,9 @@ int main() {
 
             // Render instances
             for (Instance & instance : instances) {
+                if (!instance.visible) {
+                    continue;
+                }
 
                 // Set transformation matrices
                 glm::mat4 position_transformation = instance.get_transformation();

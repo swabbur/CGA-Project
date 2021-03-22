@@ -14,6 +14,7 @@ public:
 	glm::vec3 position;
 	glm::vec2 rotation;
 	bool animated;
+	bool visible = true;
 
 	explicit Instance(std::string const path, int start, int end, std::string suffix, Cache<std::string, Model>& model_cache);
 

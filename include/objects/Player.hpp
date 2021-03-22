@@ -9,6 +9,8 @@ public:
 
 	Movable movable;
 
-	Player(Instance& entity, glm::vec2 position);
+	Player(Instance& instance, glm::vec2 position);
+
+	Player(std::vector<Instance*> instances, glm::vec2 position);
 };
 
