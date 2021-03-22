@@ -1,7 +1,16 @@
 #include <graphics/Instance.hpp>
 #include <glm/gtx/transform.hpp>
 
-Instance::Instance(Model const & scene) : model(scene), position(0.0f), rotation(0.0f) {}
+Instance::Instance(std::string const path, int start, int end, std::string suffix, Cache<std::string, Model>& model_cache) : position(0.0f), rotation(0.0f), animated(true) {
+	for (int i = start; i < end; i++) {
+		std::string final_path = path + std::to_string(i) + suffix;
+		models.push_back(std::move(model_cache.get(final_path)));
+	}
+}
+
+Instance::Instance(std::string path, Cache<std::string, Model> & model_cache) : position(0.0f), rotation(0.0f), animated(false) {
+	models.push_back(std::move(model_cache.get(path)));
+}
 
 Instance::~Instance() = default;
 
@@ -13,4 +22,11 @@ glm::mat4 Instance::get_transformation() const {
 	return model_matrix;
 }
 
-
+Model& Instance::get_model(int index) {
+	if (animated) {
+		return models[index % models.size()];
+	}
+	else {
+		return models[0];
+	}
+}

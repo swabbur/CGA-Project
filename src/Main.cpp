@@ -41,8 +41,11 @@ int main() {
 
     Cache<std::string, Model> models(Model::load);
     std::vector<Instance> instances;
-    instances.emplace_back(models.get("models/scene.fbx"));
-    instances.emplace_back(models.get("models/pawn.fbx"));
+    instances.emplace_back("models/scene.fbx", models);
+    //std::vector<std::string> walking_animation = { "models/player/Human_walking_1.fbx", "models/player/Human_walking_10.fbx" };
+    //instances.emplace_back(walking_animation, models);
+    instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
+    //instances.emplace_back("models/player/Human_walking_0.fbx", models);
 
     instances[1].position = glm::vec3(-0.2f, 0.1f, -0.4f);
 
@@ -112,10 +115,10 @@ int main() {
 
             // Check collision
             if (move_player) {
-                for (int i = 0; i < instances[0].model.shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
+                for (int i = 0; i < instances[0].get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
                     if (i == 0) { continue; } // We don't want to collide with the floor
-                    Shape const& shape = instances[0].model.shapes[i];
-                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.instance.model.shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
+                    Shape const& shape = instances[0].get_model(0).shapes[i];
+                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.instance.get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
                     normalized.x = collided_direction.x;
                     normalized.z = collided_direction.y;
                 }
@@ -131,6 +134,9 @@ int main() {
             float scale = std::min(window.get_width(), window.get_height()) / 2.0f;
             camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
         }
+
+        int animation_trame = timer.get_time() * 30; // Animation plays at 30 frames per second
+        std::cout << animation_trame << std::endl;
 
         // Render shadow map
         {
@@ -153,7 +159,7 @@ int main() {
                 shadow_program.set_mat4("mvp", mvp);
 
                 // Render shapes
-                for (Shape const & shape : instance.model.shapes) {
+                for (Shape const & shape : instance.get_model(animation_trame).shapes) {
                     shape.mesh.draw();
                 }
             }
@@ -209,7 +215,7 @@ int main() {
                 program.set_mat4("directional_light.shadow.mvp", adjusted_shadow_mvp);
 
                 // Render shapes
-                for (Shape const & shape : instance.model.shapes) {
+                for (Shape const & shape : instance.get_model(animation_trame).shapes) {
 
                     // Set material properties
                     if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
