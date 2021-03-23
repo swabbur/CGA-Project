@@ -20,13 +20,13 @@ public:
 
     [[nodiscard]] glm::mat4 get_view_matrix() const;
 
+    [[nodiscard]] glm::mat4 get_rotation_matrix() const;
+
     void set_aspect_ratio(float new_aspect_ratio);
 
     void place(glm::vec3 const & new_position);
 
     void move(glm::vec3 const & position_delta);
-
-    void set_forward(glm::vec3 const & direction);
 
     void turn(glm::vec2 const & rotation);
 

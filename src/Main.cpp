@@ -119,6 +119,13 @@ int main() {
             spot_light.position.y -= timer.get_delta();
         }
 
+        if (keyboard.is_pressed(GLFW_KEY_L)) {
+            glm::mat4 rotation_matrix = camera.get_rotation_matrix();
+            glm::vec3 camera_direction = rotation_matrix * glm::vec4(0.0f, 0.0f, -1.0f, 1.0f);
+            spot_light.position = camera.get_position();
+            spot_light.direction = camera_direction;
+        }
+
         // Render shadow maps
         {
             // Set context options
