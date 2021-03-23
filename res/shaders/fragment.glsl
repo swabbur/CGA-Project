@@ -230,14 +230,19 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
         return vec3(0.0);
     }
 
+    // Exit when fragment is behind light
+    if (dot(fragment_position - light.position, light.direction) < 0.0) {
+        return vec3(0.0);
+    }
+
     // Normalize light strength to adhere to cone surface
     float light_strength = light.intensity / (2.0 * PI * light_distance * light_distance) / (1.0 - cos(light.angle));
 
     // Create cone effect
     vec3 vector = fragment_position - light.position;
-    vec3 projection = vector * dot(normalize(vector), light.direction);
+    vec3 projection = light.direction * dot(vector, light.direction);
     float distance = distance(vector, projection);
-    float radius = length(projection) * tan(light.angle / 2.0f);
+    float radius = length(projection) * tan(light.angle);
     light_strength *= 1.0 - distance / radius;
 
     // Compensate for light loss due to linear fall-off
@@ -254,7 +259,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     vec3 specular_color = compute_specular_color(normal, light_direction, light.color);
 
     // Compute combined color
-    return max(light_strength * visibility, visibility * 2.0) * (diffuse_color + specular_color);
+    return max(light_strength * visibility, visibility) * (diffuse_color + specular_color);
 }
 
 vec3 compute_light_color(vec3 normal) {

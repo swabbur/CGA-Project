@@ -52,7 +52,7 @@ int main() {
     spot_light.color = glm::vec3(1.0f);
     spot_light.position = glm::vec3(0.1f, 2.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
-    spot_light.angle = glm::quarter_pi<float>() / 2.0;
+    spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
     spot_light.intensity = 5.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl", "shaders/debug_fragment.glsl" });
