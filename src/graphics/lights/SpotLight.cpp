@@ -15,12 +15,5 @@ glm::mat4 SpotLight::get_view() const {
 
     // TODO: Properly compute up vector.
 
-    // Compute ration matrix
-    glm::mat4 rotation_matrix = glm::lookAt(position, position + direction, glm::vec3(1.0f, 0.0f, 0.0f));
-
-    // Compute view matrix
-    glm::mat4 view_matrix(1.0f);
-    view_matrix = view_matrix * rotation_matrix;
-    view_matrix = glm::translate(view_matrix, -position);
-    return view_matrix;
+    return glm::lookAt(position, position + direction, glm::vec3(1.0f, 0.0f, 0.0f));
 }

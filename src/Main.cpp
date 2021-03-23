@@ -16,6 +16,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_inverse.hpp>
 
 int main() {
 
@@ -50,7 +51,7 @@ int main() {
 
     SpotLight spot_light;
     spot_light.color = glm::vec3(1.0f);
-    spot_light.position = glm::vec3(0.1f, 2.0f, 0.0f);
+    spot_light.position = glm::vec3(0.25f, 2.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
     spot_light.intensity = 5.0f;
@@ -220,7 +221,7 @@ int main() {
 
                 // Set transformation matrices
                 glm::mat4 position_transformation = instance.get_transformation();
-                glm::mat3 normal_transformation = glm::transpose(glm::inverse(glm::mat3(position_transformation)));
+                glm::mat3 normal_transformation = glm::inverseTranspose(glm::mat3(position_transformation));
                 program.set_mat4("position_transformation", position_transformation);
                 program.set_mat3("normal_transformation", normal_transformation);
 

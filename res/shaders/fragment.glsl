@@ -248,11 +248,8 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     // Compensate for light loss due to linear fall-off
     light_strength *= 3.0;
 
-//    // Clamp to prevent clipping
-//    light_strength = min(light_strength, light.intensity);
-
     // Shadow
-    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction);
+    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light.direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
