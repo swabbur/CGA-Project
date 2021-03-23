@@ -14,7 +14,8 @@ layout(location = 2) out vec2 vertex_texture_coord;
 
 void main() {
 
-    vertex_position = vec3(position_transformation * vec4(position, 1.0));
+    vec4 transformed_position = position_transformation * vec4(position, 1.0);
+    vertex_position = transformed_position.xyz / transformed_position.w;
     vertex_normal = normal_transformation * normal;
     vertex_texture_coord = texture_coord;
 

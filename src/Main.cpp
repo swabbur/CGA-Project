@@ -16,6 +16,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_inverse.hpp>
 
 int main() {
 
@@ -52,10 +53,10 @@ int main() {
     spot_light.color = glm::vec3(1.0f);
     spot_light.position = glm::vec3(0.25f, 2.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
-    spot_light.angle = glm::quarter_pi<float>() / 2.0;
-    spot_light.intensity = 5.0f;
+    spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
+    spot_light.intensity = 8.0f;
 
-    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
+    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl", "shaders/debug_fragment.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
 
@@ -118,8 +119,6 @@ int main() {
             spot_light.position.y -= timer.get_delta();
         }
 
-//        instances[0].rotation.y = timer.get_time();
-
         // Render shadow maps
         {
             // Set context options
@@ -137,8 +136,8 @@ int main() {
                 for (Instance & instance : instances) {
 
                     // Set MVP matrix
-                    glm::mat4 light_mvp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
-                                          * directional_light.get_view()
+                    glm::mat4 light_mvp = directional_light.get_projection_matrix(5.0f, 5.0f, -5.0f, 10.0f)
+                                          * directional_light.get_view_matrix()
                                           * instance.get_transformation();
                     shadow_program.set_mat4("mvp", light_mvp);
 
@@ -161,7 +160,7 @@ int main() {
                 for (Instance & instance : instances) {
 
                     // Set MVP matrix
-                    glm::mat4 light_mvp = spot_light.get_projection(0.01f, 10.0f)
+                    glm::mat4 light_mvp = spot_light.get_projection(0.1f, 10.0f)
                                           * spot_light.get_view()
                                           * instance.get_transformation();
                     shadow_program.set_mat4("mvp", light_mvp);
@@ -194,12 +193,11 @@ int main() {
             program.set_vec3("directional_light.color", directional_light.color);
             program.set_vec3("directional_light.direction", directional_light.direction);
             program.set_float("directional_light.intensity", directional_light.intensity);
-            program.set_int("directional_light.shadow.size", shadow_map_1.size);
             shadow_map_1.texture.bind(4);
-            program.set_sampler("directional_light.shadow.sampler", 4);
+            program.set_sampler("directional_light.shadow_sampler", 4);
             {
-                glm::mat4 light_vp = directional_light.get_projection(5.0f, 5.0f, -5.0f, 10.0f)
-                                     * directional_light.get_view();
+                glm::mat4 light_vp = directional_light.get_projection_matrix(5.0f, 5.0f, -5.0f, 10.0f)
+                                     * directional_light.get_view_matrix();
                 glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
                 glm::mat4 adjusted_light_vp = sampling_adjustment * light_vp;
                 program.set_mat4("directional_light.vp", adjusted_light_vp);
@@ -210,15 +208,12 @@ int main() {
             program.set_vec3("spot_light.direction", spot_light.direction);
             program.set_float("spot_light.angle", spot_light.angle);
             program.set_float("spot_light.intensity", spot_light.intensity);
-            program.set_int("spot_light.shadow.size", shadow_map_2.size);
             shadow_map_2.texture.bind(5);
-            program.set_sampler("spot_light.shadow.sampler", 5);
+            program.set_sampler("spot_light.shadow_sampler", 5);
             {
-                glm::mat4 light_vp = spot_light.get_projection(0.01f, 10.0f)
+                glm::mat4 light_vp = spot_light.get_projection(0.1f, 10.0f)
                                      * spot_light.get_view();
-                glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
-                glm::mat4 adjusted_light_vp = sampling_adjustment * light_vp;
-                program.set_mat4("spot_light.vp", adjusted_light_vp);
+                program.set_mat4("spot_light.vp", light_vp);
             }
 
             // Render instances
@@ -226,7 +221,7 @@ int main() {
 
                 // Set transformation matrices
                 glm::mat4 position_transformation = instance.get_transformation();
-                glm::mat3 normal_transformation = glm::transpose(glm::inverse(glm::mat3(position_transformation)));
+                glm::mat3 normal_transformation = glm::inverseTranspose(glm::mat3(position_transformation));
                 program.set_mat4("position_transformation", position_transformation);
                 program.set_mat3("normal_transformation", normal_transformation);
 
@@ -235,8 +230,6 @@ int main() {
                                 * camera.get_view_matrix()
                                 * instance.get_transformation();
                 program.set_mat4("mvp", mvp);
-
-                // Set shadow map MVP
 
                 // Render shapes
                 for (Shape const & shape : instance.model.shapes) {

@@ -3,6 +3,7 @@
 #include <graphics/Program.hpp>
 #include <graphics/Shader.hpp>
 #include <stdexcept>
+#include <iostream>
 
 Program Program::link(std::vector<Shader> const & shaders) {
 

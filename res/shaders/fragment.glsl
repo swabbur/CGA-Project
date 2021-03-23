@@ -4,16 +4,11 @@ struct Camera {
     vec3 position;
 };
 
-struct Shadow {
-    sampler2DShadow sampler;
-    int size;
-};
-
 struct DirectionalLight {
     vec3 color;
     vec3 direction;
     float intensity;
-    Shadow shadow;
+    sampler2DShadow shadow_sampler;
     mat4 vp;
 };
 
@@ -29,7 +24,7 @@ struct SpotLight {
     vec3 direction;
     float angle;
     float intensity;
-    Shadow shadow;
+    sampler2DShadow shadow_sampler;
     mat4 vp;
 };
 
@@ -97,7 +92,7 @@ vec3 compute_normal() {
     return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
 }
 
-float compute_visibility(Shadow shadow, mat4 vp, vec3 light_direction) {
+float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
 
     // Compute (slope-based) bias
     float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
@@ -106,9 +101,40 @@ float compute_visibility(Shadow shadow, mat4 vp, vec3 light_direction) {
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
     vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
+    ivec2 texture_size = textureSize(sampler, 0);
     for (int i = 0; i < 4; i++){
-        vec2 texture_coord = sample_location.xy + poisson_disk[i] / shadow.size;
-        visibility += 0.25 * texture(shadow.sampler, vec3(texture_coord, sample_location.z - bias));
+        vec2 texture_coord = sample_location.xy + poisson_disk[i] / texture_size;
+        visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
+    }
+    return visibility;
+}
+
+float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
+
+    // Compute (slope-based) bias
+    float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
+    float bias = clamp(0.001 * tan(light_angle), 0.0, 0.01);
+
+    // Compute sample locations
+    vec4 sample_location = vp * vec4(fragment_position, 1.0);
+    sample_location.xyz /= sample_location.w;
+    sample_location.xyz = sample_location.xyz * 0.5 + 0.5;
+
+    // Early-exit outside of shadow map
+    if (sample_location.x < 0.0
+        || sample_location.x > 1.0
+        || sample_location.y < 0.0
+        || sample_location.y > 1.0
+    ) {
+        return 0.0;
+    }
+
+    // Compute visibility (with poisson sampling and hardware-accelerated PCF)
+    float visibility = 0.0;
+    ivec2 texture_size = textureSize(sampler, 0);
+    for (int i = 0; i < 4; i++){
+        vec2 texture_coord = sample_location.xy + poisson_disk[i] / texture_size;
+        visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
 }
@@ -162,7 +188,7 @@ vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
     }
 
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.vp, light.direction);
+    float visibility = compute_visibility_ortho(light.shadow_sampler, light.vp, light.direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light.direction, light.color);
@@ -194,38 +220,43 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
 
 vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
-    // Compute fragment-to-light direction
+    // Compute fragment-to-light vectors
     vec3 light_direction = normalize(light.position - fragment_position);
+    float light_distance = distance(light.position, fragment_position);
+    light_distance += 1.0; // Adjust for distance to unit sphere
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
         return vec3(0.0);
     }
 
+    // Exit when fragment is behind light
+    if (dot(fragment_position - light.position, light.direction) < 0.0) {
+        return vec3(0.0);
+    }
+
     // Normalize light strength to adhere to cone surface
-    float light_distance = distance(light.position, fragment_position);
-    light_distance += 1.0; // Adjust for distance to unit sphere
     float light_strength = light.intensity / (2.0 * PI * light_distance * light_distance) / (1.0 - cos(light.angle));
 
     // Create cone effect
     vec3 vector = fragment_position - light.position;
-    vec3 projection = vector * dot(normalize(vector), light.direction);
+    vec3 projection = light.direction * dot(vector, light.direction);
     float distance = distance(vector, projection);
-    float radius = length(projection) * tan(light.angle / 2.0f);
+    float radius = length(projection) * tan(light.angle);
     light_strength *= 1.0 - distance / radius;
 
-    // Additional normalization to deal with linear fall off towards edge of spot light
+    // Compensate for light loss due to linear fall-off
     light_strength *= 3.0;
 
     // Shadow
-    float visibility = compute_visibility(light.shadow, light.vp, -light_direction);
+    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
     vec3 specular_color = compute_specular_color(normal, light_direction, light.color);
 
     // Compute combined color
-    return light_strength /** visibility */ * (diffuse_color + specular_color);
+    return light_strength * visibility * (diffuse_color + specular_color);
 }
 
 vec3 compute_light_color(vec3 normal) {
