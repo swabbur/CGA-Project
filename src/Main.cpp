@@ -54,7 +54,7 @@ int main() {
     spot_light.position = glm::vec3(0.25f, 2.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
-    spot_light.intensity = 5.0f;
+    spot_light.intensity = 8.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl", "shaders/debug_fragment.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
@@ -160,7 +160,7 @@ int main() {
                 for (Instance & instance : instances) {
 
                     // Set MVP matrix
-                    glm::mat4 light_mvp = spot_light.get_projection(1.0f, 10.0f)
+                    glm::mat4 light_mvp = spot_light.get_projection(0.1f, 10.0f)
                                           * spot_light.get_view()
                                           * instance.get_transformation();
                     shadow_program.set_mat4("mvp", light_mvp);
@@ -211,7 +211,7 @@ int main() {
             shadow_map_2.texture.bind(5);
             program.set_sampler("spot_light.shadow_sampler", 5);
             {
-                glm::mat4 light_vp = spot_light.get_projection(1.0f, 10.0f)
+                glm::mat4 light_vp = spot_light.get_projection(0.1f, 10.0f)
                                      * spot_light.get_view();
                 program.set_mat4("spot_light.vp", light_vp);
             }

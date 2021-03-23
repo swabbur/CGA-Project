@@ -5,9 +5,6 @@
 SpotLight::SpotLight() : color(), direction(), position(), angle(), intensity() {}
 
 glm::mat4 SpotLight::get_projection(float near, float far) const {
-
-    // TODO: verify that angle is correct here, may need to be multiplied by 2.
-
     return glm::perspective(2.0f * angle, 1.0f, near, far);
 }
 
