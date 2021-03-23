@@ -115,7 +115,7 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
     float bias = clamp(0.001 * tan(light_angle), 0.0, 0.01);
 
-    // Compute visibility
+    // Compute sample locations
     vec4 sample_location = vp * vec4(fragment_position, 1.0);
     sample_location.xyz /= sample_location.w;
     sample_location.xyz = sample_location.xyz * 0.5 + 0.5;
@@ -249,7 +249,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     light_strength *= 3.0;
 
     // Shadow
-    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light.direction);
+    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
