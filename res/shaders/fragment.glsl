@@ -134,7 +134,7 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     ivec2 texture_size = textureSize(sampler, 0);
     for (int i = 0; i < 4; i++){
         vec2 texture_coord = sample_location.xy + poisson_disk[i] / texture_size;
-        visibility += 0.25 * texture(spot_light.shadow_sampler, vec3(texture_coord, sample_location.z - bias));
+        visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
 }
