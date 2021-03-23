@@ -243,7 +243,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     vec3 projection = light.direction * dot(vector, light.direction);
     float distance = distance(vector, projection);
     float radius = length(projection) * tan(light.angle);
-    light_strength *= 1.0 - distance / radius;
+    light_strength *= max(0.0, 1.0 - distance / radius);
 
     // Compensate for light loss due to linear fall-off
     light_strength *= 3.0;
