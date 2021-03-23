@@ -60,6 +60,7 @@ int main() {
 
     std::vector<Instance*> player_instances = { &instances[1],  &instances[2] };
     Player player(player_instances, glm::vec2(-0.2f, -0.4f));
+    float walk_speed = 0.3f;
 
     bool move_player = false;
 
@@ -115,6 +116,7 @@ int main() {
 
             // Check collision
             if (move_player) {
+                normalized *= walk_speed;
                 player.movable.update_active_instance(1);
                 for (int i = 0; i < instances[0].get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
                     if (i == 0) { continue; } // We don't want to collide with the floor
