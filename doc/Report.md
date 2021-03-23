@@ -2,20 +2,17 @@
 
 ## Features
 
-- Graphics
-    - Material
-        - Diffuse/specular textures
-        - Normal/bump mapping
-    - Shading
-        - Normalized Blinn-Phong shading
-    - Lighting
-        - Directional
-        - Point (without shadows)
-        - Spot
-    - Shadows
-        - Slope-based bias
-        - Percentage Closer Filtering
-        - Poisson sampling
-- Other
-    - AABB collision detection
-    - 3D models
+|Category|Name                     |Author(s)     |
+|--------|-------------------------|--------------|
+|Graphics|Diffuse/Specular textures|Wessel        |
+|        |Normal/bump mapping      |Arnoud        |
+|        |Normalized Blinn-Phong   |Wessel        |
+|        |Lighting                 |Wessel        |
+|        |Directional light shadows|Wessel        |
+|        |Spot light shadows       |Andor / Wessel|
+|        |Slope-based bias         |Wessel        |
+|        |PCF                      |Wessel        |
+|        |Poisson sampling         |Wessel        |
+|Modeling|Player character         |Andor         |
+|        |3D models                |Arnoud        |
+|Logic   |AABB collision detection |Andor         |
