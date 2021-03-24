@@ -7,7 +7,7 @@
 
 class Instance {
 
-	std::vector<Model> models;
+	std::vector<std::reference_wrapper<Model>> models;
 
 public:
 
@@ -16,9 +16,9 @@ public:
 	bool animated;
 	bool visible = true;
 
-	explicit Instance(std::string const path, int start, int end, std::string suffix, Cache<std::string, Model>& model_cache);
+	explicit Instance(std::string const & path, int start, int end, std::string const & suffix, Cache<std::string, Model>& model_cache);
 
-	explicit Instance(std::string path, Cache<std::string, Model>& model_cache);
+	explicit Instance(std::string const & path, Cache<std::string, Model>& model_cache);
 
 	Instance(Instance &&) = default;
 
