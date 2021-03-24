@@ -15,6 +15,7 @@ public:
 	glm::vec2 rotation;
 	bool animated;
 	bool visible = true;
+	bool xrayable;
 
 	explicit Instance(std::string const & path, int start, int end, std::string const & suffix, Cache<std::string, Model>& model_cache);
 

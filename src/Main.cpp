@@ -47,6 +47,8 @@ int main() {
     instances.emplace_back("models/player/Human_standing.fbx", models);
     instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
 
+    instances[0].xrayable = true;
+
     instances[1].position = glm::vec3(-0.2f, 0.1f, -0.4f);
     instances[2].position = glm::vec3(-0.2f, 0.1f, -0.4f);
 
@@ -239,9 +241,8 @@ int main() {
 
                 // Render instances
                 shadow_program.bind();
-                //for (Instance& instance : instances) {
-                Instance& instance = instances[0];
-                    if (instance.visible) {
+                for (Instance& instance : instances) {
+                    if (instance.visible && instance.xrayable) {
 
                         // Set MVP matrix
                         glm::mat4 light_mvp = camera.get_projection_matrix()
@@ -254,7 +255,7 @@ int main() {
                             shape.mesh.draw();
                         }
                     }
-                //}
+                }
             }
         }
 
@@ -320,20 +321,23 @@ int main() {
             for (Instance & instance : instances) {
                 if (instance.visible) {
 
-                // Set transformation matrices
-                glm::mat4 position_transformation = instance.get_transformation();
-                glm::mat3 normal_transformation = glm::inverseTranspose(glm::mat3(position_transformation));
-                program.set_mat4("position_transformation", position_transformation);
-                program.set_mat3("normal_transformation", normal_transformation);
+                    // Set x-ray variables per instance
+                    program.set_bool("xrayable", instance.xrayable);
 
-                // Set camera MVP
-                glm::mat4 mvp = camera.get_projection_matrix()
-                                * camera.get_view_matrix()
-                                * instance.get_transformation();
-                program.set_mat4("mvp", mvp);
+                    // Set transformation matrices
+                    glm::mat4 position_transformation = instance.get_transformation();
+                    glm::mat3 normal_transformation = glm::inverseTranspose(glm::mat3(position_transformation));
+                    program.set_mat4("position_transformation", position_transformation);
+                    program.set_mat3("normal_transformation", normal_transformation);
 
-                // Render shapes
-                for (Shape const & shape : instance.get_model(animation_frame).shapes) {
+                    // Set camera MVP
+                    glm::mat4 mvp = camera.get_projection_matrix()
+                                    * camera.get_view_matrix()
+                                    * instance.get_transformation();
+                    program.set_mat4("mvp", mvp);
+
+                    // Render shapes
+                    for (Shape const & shape : instance.get_model(animation_frame).shapes) {
 
                         // Set material properties
                         if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {

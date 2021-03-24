@@ -1,14 +1,14 @@
 #include <graphics/Instance.hpp>
 #include <glm/gtx/transform.hpp>
 
-Instance::Instance(std::string const & path, int start, int end, std::string const & suffix, Cache<std::string, Model>& model_cache) : position(0.0f), rotation(0.0f), animated(true) {
+Instance::Instance(std::string const & path, int start, int end, std::string const & suffix, Cache<std::string, Model>& model_cache) : position(0.0f), rotation(0.0f), animated(true), xrayable(false) {
 	for (int i = start; i < end; i++) {
 		std::string final_path = path + std::to_string(i) + suffix;
 		models.push_back(model_cache.get(final_path));
 	}
 }
 
-Instance::Instance(std::string const & path, Cache<std::string, Model> & model_cache) : position(0.0f), rotation(0.0f), animated(false) {
+Instance::Instance(std::string const & path, Cache<std::string, Model> & model_cache) : position(0.0f), rotation(0.0f), animated(false), xrayable(false) {
 	models.push_back(model_cache.get(path));
 }
 

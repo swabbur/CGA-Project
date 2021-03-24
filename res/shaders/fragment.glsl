@@ -68,6 +68,7 @@ uniform PointLight point_light;
 uniform SpotLight spot_light;
 uniform XrayLight xray_light;
 uniform Material material;
+uniform bool xrayable;
 
 // Inputs
 layout(location = 0) in vec3 fragment_position;
@@ -314,7 +315,7 @@ vec3 compute_xray(XrayLight light) {
     // Shadow
     float visibility = compute_first_layer_perspective(light.shadow_sampler, light.vp, light_direction);
 
-    if (visibility > 0.5) {
+    if (visibility > 0.5 && xrayable) {
         discard;
     }
 
