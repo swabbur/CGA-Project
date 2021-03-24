@@ -141,6 +141,15 @@ int main() {
             player.activate_instance(0);
         }
 
+        // Activate toon shading
+        bool toon_shading_active;
+        if (mouse.is_down(1)) {
+            toon_shading_active = true;
+        }
+        else {
+            toon_shading_active = false;
+        }
+
         // Update camera
         glm::vec2 player_position = player.get_position();
         glm::vec2 player_direction = player.get_direction();
@@ -306,7 +315,7 @@ int main() {
                 if (instance.visible) {
 
                     // Set x-ray variables per instance
-                    program.set_bool("xrayable", instance.xrayable);
+                    program.set_bool("xrayable", (instance.xrayable & toon_shading_active));
 
                     // Set transformation matrices
                     glm::mat4 position_transformation = instance.get_transformation();
