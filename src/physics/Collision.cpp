@@ -1,8 +1,7 @@
 #include <physics/Collision.hpp>
-#include <iostream>
 
-float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance)
-{
+float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance) {
+
 	// Set up preliminary values
 	AABB const & aabb1 = o1.get_mesh().get_AABB();
 	AABB const & aabb2 = o2.get_mesh().get_AABB();
