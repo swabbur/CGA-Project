@@ -28,7 +28,6 @@ glm::mat4 Camera::get_rotation_matrix() const {
     glm::mat4 x_rotation_matrix = glm::rotate(glm::mat4(1.0f), -rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 y_rotation_matrix = glm::rotate(glm::mat4(1.0f), -rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     return y_rotation_matrix * x_rotation_matrix;
-
 }
 
 void Camera::set_aspect_ratio(float new_aspect_ratio) {

@@ -28,6 +28,14 @@ struct SpotLight {
     mat4 vp;
 };
 
+struct XrayLight {
+    vec3 position;
+    vec3 direction;
+    float angle;
+    sampler2DShadow shadow_sampler;
+    mat4 vp;
+};
+
 struct Component {
     bool textured;
     sampler2D sampler;
@@ -58,6 +66,7 @@ uniform Camera camera;
 uniform DirectionalLight directional_light;
 uniform PointLight point_light;
 uniform SpotLight spot_light;
+uniform XrayLight xray_light;
 uniform Material material;
 
 // Inputs
@@ -259,6 +268,25 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     return light_strength * visibility * (diffuse_color + specular_color);
 }
 
+vec3 compute_xray(XrayLight light) {
+    // Compute fragment-to-light vectors
+    vec3 light_direction = normalize(light.position - fragment_position);
+    float light_distance = distance(light.position, fragment_position);
+    light_distance += 1.0; // Adjust for distance to unit sphere
+
+    // Exit when fragment is behind light
+    if (dot(fragment_position - light.position, light.direction) < 0.0) {
+        return vec3(0.0);
+    }
+
+    // Exit if position is outside cone
+    if (length(cross(light.direction, fragment_position - light.position)) > tan(light.angle) * dot(light.direction, fragment_position - light.position)) {
+        return vec3(0.0);
+    }
+
+    discard;
+}
+
 vec3 compute_light_color(vec3 normal) {
     vec3 color;
     color += compute_directional_light_color(normal, directional_light);
@@ -268,6 +296,9 @@ vec3 compute_light_color(vec3 normal) {
 }
 
 void main() {
+
+    // Compute xray visibility
+    vec3 toon = compute_xray(xray_light);
 
     // Compute normal
     vec3 normal = compute_normal();

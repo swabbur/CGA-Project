@@ -67,6 +67,7 @@ int main() {
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl", "shaders/debug_fragment.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
+    ShadowMap shadow_map_3 = ShadowMap::create(2048);
 
     std::vector<Instance*> player_instances = { &instances[1],  &instances[2] };
     Player player(player_instances, glm::vec2(-0.2f, -0.4f));
@@ -228,6 +229,32 @@ int main() {
                     }
                 }
             }
+
+            // Render x-ray light's shadow map
+            {
+                // Prepare framebuffer
+                shadow_map_3.framebuffer.bind();
+                context.set_view_port(0, 0, shadow_map_3.size, shadow_map_3.size);
+                context.clear();
+
+                // Render instances
+                shadow_program.bind();
+                for (Instance& instance : instances) {
+                    if (instance.visible) {
+
+                        // Set MVP matrix
+                        glm::mat4 light_mvp = camera.get_projection_matrix()
+                            * camera.get_view_matrix()
+                            * instance.get_transformation();
+                        shadow_program.set_mat4("mvp", light_mvp);
+
+                        // Render shapes
+                        for (Shape const& shape : instance.get_model(animation_frame).shapes) {
+                            shape.mesh.draw();
+                        }
+                    }
+                }
+            }
         }
 
         // Render scene
@@ -271,6 +298,20 @@ int main() {
                 glm::mat4 light_vp = spot_light.get_projection(0.1f, 10.0f)
                                      * spot_light.get_view();
                 program.set_mat4("spot_light.vp", light_vp);
+            }
+
+            program.set_vec3("xray_light.position", camera.get_position());
+            {
+                glm::vec4 mouse_position(mouse.get_x()/window.get_width(), mouse.get_y()/window.get_height());
+                program.set_vec3("xray_light.direction", glm::vec3(camera.get_rotation_matrix() * glm::vec4(0.0f, 0.0f, -1.0f, 1.0f)));
+            }
+            program.set_float("xray_light.angle", spot_light.angle);
+            shadow_map_3.texture.bind(6);
+            program.set_sampler("xray_light.shadow_sampler", 6);
+            {
+                glm::mat4 light_vp = camera.get_projection_matrix()
+                    * camera.get_view_matrix();
+                program.set_mat4("xray_light.vp", light_vp);
             }
 
             // Render instances
