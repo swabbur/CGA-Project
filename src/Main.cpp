@@ -1,6 +1,7 @@
 #include <devices/DeviceManager.hpp>
-#include <glm/glm.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/glm.hpp>
 #include <graphics/lights/DirectionalLight.hpp>
 #include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
@@ -10,16 +11,14 @@
 #include <graphics/Program.hpp>
 #include <graphics/ShadowMap.hpp>
 #include <graphics/Texture.hpp>
+#include <objects/Player.hpp>
+#include <physics/Collision.hpp>
 #include <util/Cache.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
-#include <physics/Collision.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <objects/Player.hpp>
-#include <iostream>
-#include <glm/gtc/matrix_inverse.hpp>
 #include <objects/Maze.hpp>
 
 int main() {
@@ -40,25 +39,10 @@ int main() {
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
     Camera camera(glm::vec3(), 4.0f * glm::vec3(0.0f, 1.0f, 1.0f));
 
-    std::vector<Instance> instances;
-    Cache<std::string, Model> models(Model::load);
-    instances.emplace_back("models/scene.fbx", models);
-    instances.emplace_back("models/player/Human_standing.fbx", models);
-    instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
-
-    Maze::generate(instances, models);
-
-    std::set<int> collision_exceptions = {1, 2};
-
-    instances[1].position = glm::vec3(-0.2f, 0.1f, -0.4f);
-    instances[2].position = glm::vec3(-0.2f, 0.1f, -0.4f);
-
-    Timer timer;
-
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
-    directional_light.intensity = 2.0f;
+    directional_light.intensity = 3.0f;
 
     SpotLight spot_light;
     spot_light.color = glm::vec3(1.0f);
@@ -71,9 +55,23 @@ int main() {
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
 
-    std::vector<Instance*> player_instances = { &instances[1],  &instances[2] };
-    Player player(player_instances, glm::vec2(-0.2f, -0.4f));
-    float walk_speed = 3.0f;
+    std::vector<Instance> instances;
+    Cache<std::string, Model> models(Model::load);
+    instances.emplace_back("models/scene.fbx", models);
+    instances.emplace_back("models/player/Human_standing.fbx", models);
+    instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
+
+    Maze::generate(instances, models);
+
+    std::set<int> collision_exceptions = {1, 2};
+
+    std::vector<std::reference_wrapper<Instance>> player_instances = {
+            instances[1],
+            instances[2]
+    };
+    Player player(player_instances, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
+
+    Timer timer;
 
     while (!window.is_closed()) {
 
@@ -88,14 +86,14 @@ int main() {
         }
 
         // Update player
-        glm::vec3 direction(0.0f);
+        glm::vec2 direction(0.0f);
 
         if (keyboard.is_down(GLFW_KEY_W)) {
-            direction.z -= 1.0f;
+            direction.y -= 1.0f;
         }
 
         if (keyboard.is_down(GLFW_KEY_S)) {
-            direction.z += 1.0f;
+            direction.y += 1.0f;
         }
 
         if (keyboard.is_down(GLFW_KEY_A)) {
@@ -106,42 +104,43 @@ int main() {
             direction.x += 1.0f;
         }
 
-        if (keyboard.is_down(GLFW_KEY_SPACE)) {
-            direction.y += 1.0f;
-        }
-
-        if (keyboard.is_down(GLFW_KEY_LEFT_SHIFT)) {
-            direction.y -= 1.0f;
-        }
-
         if (glm::dot(direction, direction) != 0.0f) {
 
-            glm::vec3 normalized = timer.get_delta() * glm::normalize(direction);
+            // Normalize direction
+            direction = glm::normalize(direction);
 
-            // Check collision
-            normalized *= walk_speed;
-            player.movable.update_active_instance(1);
+            // Compute translation
+            glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
 
+            // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
                 if (collision_exceptions.contains(j)) continue;
                 Instance* instance = &instances[j];
-                for (int i = 0; i < instance->get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
-                    Shape const& shape = instance->get_model(0).shapes[i];
-                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.get_instance().get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(instance->position[0], instance->position[2]), glm::vec2(normalized.x, normalized.z));
-                    normalized.x = collided_direction.x;
-                    normalized.z = collided_direction.y;
+                for (Shape const & shape : instance->get_model(0).shapes) {
+                    // Adjust for collision
+                    Shape const &colliding_shape = player.get_instance().get_model(0).shapes[0];
+                    translation = Collision::resolve_collision(colliding_shape,
+                                                               shape,
+                                                               player.get_position(),
+                                                               glm::vec2(instance->position[0], instance->position[2]),
+                                                               translation);
                 }
             }
-            player.movable.move(glm::vec2(normalized.x, normalized.z));
-            player.movable.set_direction(glm::vec2(direction.x, direction.z));
+
+            // Update the player
+            player.activate_instance(1);
+            player.move(translation);
+            player.turn(direction);
 
         } else {
-            player.movable.update_active_instance(0);
+
+            // Update the player
+            player.activate_instance(0);
         }
 
         // Update camera
-        glm::vec2 player_position = player.movable.get_position();
-        glm::vec2 player_direction = player.movable.get_direction();
+        glm::vec2 player_position = player.get_position();
+        glm::vec2 player_direction = player.get_direction();
         camera.focus(glm::vec3(player_position.x, 0.0f, player_position.y));
         camera.set_aspect_ratio(window.get_aspect_ratio());
 
@@ -177,7 +176,7 @@ int main() {
                         shadow_program.set_mat4("mvp", light_mvp);
 
                         // Render shapes
-                        for (Shape const& shape : instance.get_model(animation_frame).shapes) {
+                        for (Shape const & shape : instance.get_model(animation_frame).shapes) {
                             shape.mesh.draw();
                         }
                     }
@@ -203,7 +202,7 @@ int main() {
                         shadow_program.set_mat4("mvp", light_mvp);
 
                         // Render shapes
-                        for (Shape const& shape : instance.get_model(animation_frame).shapes) {
+                        for (Shape const & shape : instance.get_model(animation_frame).shapes) {
                             shape.mesh.draw();
                         }
                     }
@@ -258,20 +257,20 @@ int main() {
             for (Instance & instance : instances) {
                 if (instance.visible) {
 
-                // Set transformation matrices
-                glm::mat4 position_transformation = instance.get_transformation();
-                glm::mat3 normal_transformation = glm::inverseTranspose(glm::mat3(position_transformation));
-                program.set_mat4("position_transformation", position_transformation);
-                program.set_mat3("normal_transformation", normal_transformation);
+                    // Set transformation matrices
+                    glm::mat4 position_transformation = instance.get_transformation();
+                    glm::mat3 normal_transformation = glm::inverseTranspose(glm::mat3(position_transformation));
+                    program.set_mat4("position_transformation", position_transformation);
+                    program.set_mat3("normal_transformation", normal_transformation);
 
-                // Set camera MVP
-                glm::mat4 mvp = camera.get_projection_matrix()
-                                * camera.get_view_matrix()
-                                * instance.get_transformation();
-                program.set_mat4("mvp", mvp);
+                    // Set camera MVP
+                    glm::mat4 mvp = camera.get_projection_matrix()
+                                    * camera.get_view_matrix()
+                                    * instance.get_transformation();
+                    program.set_mat4("mvp", mvp);
 
-                // Render shapes
-                for (Shape const & shape : instance.get_model(animation_frame).shapes) {
+                    // Render shapes
+                    for (Shape const & shape : instance.get_model(animation_frame).shapes) {
 
                         // Set material properties
                         if (auto texture = std::get_if<Texture>(&shape.material.ambient)) {
