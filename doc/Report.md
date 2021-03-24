@@ -25,6 +25,7 @@
 |        |* Level design           |Arnoud        |
 |General |Framework                |Wessel        |
 |        |Model loader             |Wessel        |
+|        |Gamepad support          |Wessel        |
 
 ## References
 
