@@ -14,5 +14,5 @@ public:
 
     [[nodiscard]] glm::mat4 get_projection_matrix(float width, float height, float near, float far) const;
 
-    [[nodiscard]] glm::mat4 get_view_matrix() const;
+    [[nodiscard]] glm::mat4 get_view_matrix(glm::vec3 center) const;
 };

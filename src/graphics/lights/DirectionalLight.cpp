@@ -8,6 +8,6 @@ glm::mat4 DirectionalLight::get_projection_matrix(float width, float height, flo
     return glm::ortho(-width, width, -height, height, near, far);
 }
 
-glm::mat4 DirectionalLight::get_view_matrix() const {
-    return glm::lookAt(direction, glm::vec3(), glm::vec3(0.0f, 1.0f, 0.0f));
+glm::mat4 DirectionalLight::get_view_matrix(glm::vec3 center) const {
+    return glm::lookAt(center + direction, center, glm::vec3(0.0f, 1.0f, 0.0f));
 }
