@@ -273,6 +273,6 @@ void main() {
     vec3 normal = compute_normal();
 
     // Compute color
-    out_color += compute_light_color(normal);
+    out_color = compute_light_color(normal);
     out_color = clamp(out_color, 0.0, 1.0);
 }
