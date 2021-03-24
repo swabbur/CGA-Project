@@ -62,6 +62,7 @@ int main() {
     instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
 
     instances[0].xrayable = true;
+    Texture toon_map = Texture::load("textures/toon_map.png");
 
     std::vector<std::reference_wrapper<Instance>> player_instances = {
             instances[1],
@@ -295,6 +296,10 @@ int main() {
                 program.set_sampler("xray_light.shadow_sampler", 6);
                 program.set_mat4("xray_light.vp", light_vp);
             }
+
+            // Set xray properties
+            toon_map.bind(7);
+            program.set_sampler("toon_map", 7);
 
             // Render instances
             for (Instance & instance : instances) {

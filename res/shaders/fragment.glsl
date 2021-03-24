@@ -69,6 +69,7 @@ uniform SpotLight spot_light;
 uniform XrayLight xray_light;
 uniform Material material;
 uniform bool xrayable;
+uniform sampler2D toon_map;
 
 // Inputs
 layout(location = 0) in vec3 fragment_position;
@@ -175,11 +176,32 @@ float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 lig
     return visibility;
 }
 
-vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
+float compute_diffuse(vec3 normal, vec3 light_direction) {
 
     // Compute (normalized Lambertian) diffuse strength
     float normalization_factor = 1.0 / PI;
     float diffuse_strength = normalization_factor * max(0.0, dot(normal, light_direction));
+
+    return diffuse_strength;
+}
+
+float compute_specular(vec3 normal, vec3 light_direction) {
+
+    // Compute half vector
+    vec3 view_direction = normalize(camera.position - fragment_position);
+    vec3 half_vector = normalize(light_direction + view_direction);
+
+    // Compute (normalized Blinn-Phong) specular strength
+    float n = 4.0 * material.shininess;
+    float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
+    float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
+
+    return specular_strength;
+}
+
+vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
+    
+    float diffuse_strength = compute_diffuse(normal, light_direction);
 
     // Compute material diffuse color
     vec3 material_color;
@@ -195,15 +217,8 @@ vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) 
 
 vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color) {
 
-    // Compute half vector
-    vec3 view_direction = normalize(camera.position - fragment_position);
-    vec3 half_vector = normalize(light_direction + view_direction);
-
-    // Compute (normalized Blinn-Phong) specular strength
-    float n = 4.0 * material.shininess;
-    float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
-    float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
-
+    float specular_strength = compute_specular(normal, light_direction);
+    
     // Compute specular material color
     vec3 material_color;
     if (material.specular.textured) {
@@ -254,7 +269,7 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
     return light_strength * (diffuse_color + specular_color);
 }
 
-vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
+float compute_spot_light_cone(vec3 normal, SpotLight light) {
 
     // Compute fragment-to-light vectors
     vec3 light_direction = normalize(light.position - fragment_position);
@@ -263,12 +278,12 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
-        return vec3(0.0);
+        return 0.0;
     }
 
     // Exit when fragment is behind light
     if (dot(fragment_position - light.position, light.direction) < 0.0) {
-        return vec3(0.0);
+        return 0.0;
     }
 
     // Normalize light strength to adhere to cone surface
@@ -283,6 +298,21 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
     // Compensate for light loss due to linear fall-off
     light_strength *= 3.0;
+
+    return light_strength;
+}
+
+vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
+
+    float light_strength = compute_spot_light_cone(normal, light);
+
+    // Early-exit when no light strength
+    if (light_strength <= 0.0) {
+        return vec3(0.0);
+    }
+    
+    // Compute fragment-to-light vectors
+    vec3 light_direction = normalize(light.position - fragment_position);
 
     // Shadow
     float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction);
@@ -328,9 +358,37 @@ vec3 compute_light_color(vec3 normal) {
     return color;
 }
 
+float compute_diffuse_strength(vec3 normal) {
+    float intensity;
+    float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
+    intensity += compute_diffuse(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    intensity += compute_diffuse(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
+    intensity += compute_diffuse(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility;
+    return intensity;
+}
+
+float compute_specular_strength(vec3 normal) {
+    float intensity;
+    float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
+    intensity += compute_specular(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    intensity += compute_specular(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
+    intensity += compute_specular(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility;
+    return intensity;
+}
+
 vec3 compute_toon(vec3 normal) {
     
-    return vec3(0.0);
+    float diffuse = compute_diffuse_strength(normal);
+    float specular = compute_specular_strength(normal);
+    
+    float intensity = clamp(diffuse + specular, 0.001, 0.999);
+    float eye_distance = length(fragment_position - camera.position);
+
+    vec4 toon_color = texture(toon_map, vec2(1-intensity,eye_distance));
+
+    return vec3(toon_color);
 }
 
 void main() {
@@ -343,10 +401,10 @@ void main() {
 
     // Compute color
     if (toon) {
-        out_color += compute_toon(normal);
+        out_color = compute_toon(normal);
     }
     else {
-        out_color += compute_light_color(normal);
+        out_color = compute_light_color(normal);
     }
     out_color = clamp(out_color, 0.0, 1.0);
 }
