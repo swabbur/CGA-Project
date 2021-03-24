@@ -13,8 +13,8 @@
 |        |Slope-based bias         |Wessel        |
 |        |PCF                      |Wessel        |
 |        |Poisson sampling         |Wessel        |
-|        |* X-ray vision           |Andor         |
-|        |* Toon shading           |Andor / Arnoud|
+|        |X-ray vision             |Andor         |
+|        |Toon shading             |Andor         |
 |        |* Reflections            |_             |
 |Modeling|Player character         |Andor         |
 |        |3D models                |Arnoud        |
