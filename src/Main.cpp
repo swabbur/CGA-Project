@@ -1,6 +1,7 @@
 #include <devices/DeviceManager.hpp>
-#include <glm/glm.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/glm.hpp>
 #include <graphics/lights/DirectionalLight.hpp>
 #include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
@@ -10,16 +11,14 @@
 #include <graphics/Program.hpp>
 #include <graphics/ShadowMap.hpp>
 #include <graphics/Texture.hpp>
+#include <objects/Player.hpp>
+#include <physics/Collision.hpp>
 #include <util/Cache.hpp>
 #include <util/Camera.hpp>
 #include <util/Timer.hpp>
-#include <physics/Collision.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <objects/Player.hpp>
-#include <iostream>
-#include <glm/gtc/matrix_inverse.hpp>
 
 int main() {
 
@@ -53,7 +52,7 @@ int main() {
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
-    directional_light.intensity = 2.0f;
+    directional_light.intensity = 3.0f;
 
     SpotLight spot_light;
     spot_light.color = glm::vec3(1.0f);
