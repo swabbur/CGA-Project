@@ -11,14 +11,20 @@ class Instance {
 
 public:
 
+    static Instance create(Cache<std::string, Model> & cache,
+                           std::string const & path,
+                           int start,
+                           int end,
+                           std::string const & suffix);
+
 	glm::vec3 position;
 	glm::vec2 rotation;
-	bool animated;
-	bool visible = true;
+	bool visible;
+	bool xrayable;
 
-	explicit Instance(std::string const & path, int start, int end, std::string const & suffix, Cache<std::string, Model>& model_cache);
+	explicit Instance(std::vector<std::reference_wrapper<Model>> models);
 
-	explicit Instance(std::string const & path, Cache<std::string, Model>& model_cache);
+	explicit Instance(Model & model);
 
 	Instance(Instance &&) = default;
 

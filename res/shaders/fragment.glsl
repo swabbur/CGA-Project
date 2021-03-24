@@ -28,6 +28,14 @@ struct SpotLight {
     mat4 vp;
 };
 
+struct XrayLight {
+    vec3 position;
+    vec3 direction;
+    float angle;
+    sampler2DShadow shadow_sampler;
+    mat4 vp;
+};
+
 struct Component {
     bool textured;
     sampler2D sampler;
@@ -58,7 +66,10 @@ uniform Camera camera;
 uniform DirectionalLight directional_light;
 uniform PointLight point_light;
 uniform SpotLight spot_light;
+uniform XrayLight xray_light;
 uniform Material material;
+uniform bool xrayable;
+uniform sampler2D toon_map;
 
 // Inputs
 layout(location = 0) in vec3 fragment_position;
@@ -139,11 +150,58 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     return visibility;
 }
 
-vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
+float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
+
+    // Compute (slope-based) bias
+    float light_angle = 1 - dot(fragment_normal, light_direction);
+    float pixel_size = 0.5/textureSize(sampler, 0).x;
+    float bias = clamp(pixel_size * tan(light_angle), pixel_size, 0.01);
+
+    // Compute sample locations
+    vec4 sample_location = vp * vec4(fragment_position, 1.0);
+    sample_location.xyz /= sample_location.w;
+    sample_location.xyz = sample_location.xyz * 0.5 + 0.5;
+
+    // Early-exit outside of shadow map
+    if (sample_location.x < 0.0
+        || sample_location.x > 1.0
+        || sample_location.y < 0.0
+        || sample_location.y > 1.0
+    ) {
+        return 0.0;
+    }
+
+    // Compute visibility
+    float visibility = texture(sampler, vec3(sample_location.xy, sample_location.z - bias*sample_location.z));
+    return visibility;
+}
+
+float compute_diffuse(vec3 normal, vec3 light_direction) {
 
     // Compute (normalized Lambertian) diffuse strength
     float normalization_factor = 1.0 / PI;
     float diffuse_strength = normalization_factor * max(0.0, dot(normal, light_direction));
+
+    return diffuse_strength;
+}
+
+float compute_specular(vec3 normal, vec3 light_direction) {
+
+    // Compute half vector
+    vec3 view_direction = normalize(camera.position - fragment_position);
+    vec3 half_vector = normalize(light_direction + view_direction);
+
+    // Compute (normalized Blinn-Phong) specular strength
+    float n = 4.0 * material.shininess;
+    float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
+    float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
+
+    return clamp(specular_strength, 0.0, 1.0);
+}
+
+vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
+    
+    float diffuse_strength = compute_diffuse(normal, light_direction);
 
     // Compute material diffuse color
     vec3 material_color;
@@ -159,15 +217,8 @@ vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) 
 
 vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color) {
 
-    // Compute half vector
-    vec3 view_direction = normalize(camera.position - fragment_position);
-    vec3 half_vector = normalize(light_direction + view_direction);
-
-    // Compute (normalized Blinn-Phong) specular strength
-    float n = 4.0 * material.shininess;
-    float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
-    float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
-
+    float specular_strength = compute_specular(normal, light_direction);
+    
     // Compute specular material color
     vec3 material_color;
     if (material.specular.textured) {
@@ -218,7 +269,7 @@ vec3 compute_point_light_color(vec3 normal, PointLight light) {
     return light_strength * (diffuse_color + specular_color);
 }
 
-vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
+float compute_spot_light_cone(vec3 normal, SpotLight light) {
 
     // Compute fragment-to-light vectors
     vec3 light_direction = normalize(light.position - fragment_position);
@@ -227,12 +278,12 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 
     // Early-exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
-        return vec3(0.0);
+        return 0.0;
     }
 
     // Exit when fragment is behind light
     if (dot(fragment_position - light.position, light.direction) < 0.0) {
-        return vec3(0.0);
+        return 0.0;
     }
 
     // Normalize light strength to adhere to cone surface
@@ -248,6 +299,21 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     // Compensate for light loss due to linear fall-off
     light_strength *= 3.0;
 
+    return light_strength;
+}
+
+vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
+
+    float light_strength = compute_spot_light_cone(normal, light);
+
+    // Early-exit when no light strength
+    if (light_strength <= 0.0) {
+        return vec3(0.0);
+    }
+    
+    // Compute fragment-to-light vectors
+    vec3 light_direction = normalize(light.position - fragment_position);
+
     // Shadow
     float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction);
 
@@ -259,6 +325,31 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     return light_strength * visibility * (diffuse_color + specular_color);
 }
 
+bool compute_xray(XrayLight light) {
+    // Compute fragment-to-light vectors
+    vec3 light_direction = normalize(light.position - fragment_position);
+    float light_distance = distance(light.position, fragment_position);
+    light_distance += 1.0; // Adjust for distance to unit sphere
+
+    // Exit when fragment is behind light
+    if (dot(fragment_position - light.position, light.direction) < 0.0) {
+        return false;
+    }
+
+    // Exit if position is outside cone
+    if (length(cross(light.direction, fragment_position - light.position)) > tan(light.angle) * dot(light.direction, fragment_position - light.position)) {
+        return false;
+    }
+    
+    // Shadow
+    float visibility = compute_first_layer_perspective(light.shadow_sampler, light.vp, light_direction);
+
+    if (visibility > 0.5 && xrayable) {
+        discard;
+    }
+    return visibility <= 0.5;
+}
+
 vec3 compute_light_color(vec3 normal) {
     vec3 color;
     color += compute_directional_light_color(normal, directional_light);
@@ -267,12 +358,71 @@ vec3 compute_light_color(vec3 normal) {
     return color;
 }
 
+float compute_diffuse_strength(vec3 normal) {
+    float intensity = 0.0;
+
+    float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
+    if (directional_visibility > 0.0) {
+        intensity += compute_diffuse(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    }
+
+    //intensity += compute_diffuse(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+
+    float spot_cone = compute_spot_light_cone(normal, spot_light);
+    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
+    if (spot_cone > 0.0 && spot_visibility > 0.0) {
+        intensity += compute_diffuse(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
+    }
+
+    return intensity;
+}
+
+float compute_specular_strength(vec3 normal) {
+    float intensity = 0.0;
+
+    float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
+    if (directional_visibility > 0.0) {
+        intensity += compute_specular(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    }
+
+    //intensity += compute_specular(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+
+    float spot_cone = compute_spot_light_cone(normal, spot_light);
+    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
+    if (spot_cone > 0.0 && spot_visibility > 0.0) {
+        intensity += compute_specular(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
+    }
+
+    return intensity;
+}
+
+vec3 compute_toon(vec3 normal) {
+    
+    float diffuse = compute_diffuse_strength(normal);
+    float specular = compute_specular_strength(normal);
+    
+    float intensity = clamp(diffuse + specular, 0.001, 0.999);
+    float eye_distance = clamp(length(fragment_position - camera.position) - 0.914, 0.001, 0.999);
+
+    vec4 toon_color = texture(toon_map, vec2(1-intensity,eye_distance));
+
+    return vec3(toon_color);
+}
+
 void main() {
+
+    // Compute xray visibility
+    bool toon = compute_xray(xray_light);
 
     // Compute normal
     vec3 normal = compute_normal();
 
     // Compute color
-    out_color += compute_light_color(normal);
+    if (toon) {
+        out_color = compute_toon(normal);
+    }
+    else {
+        out_color = compute_light_color(normal);
+    }
     out_color = clamp(out_color, 0.0, 1.0);
 }

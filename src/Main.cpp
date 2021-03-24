@@ -1,4 +1,5 @@
 #include <devices/DeviceManager.hpp>
+#include <devices/Gamepad.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/glm.hpp>
@@ -11,6 +12,7 @@
 #include <graphics/Program.hpp>
 #include <graphics/ShadowMap.hpp>
 #include <graphics/Texture.hpp>
+#include <objects/Maze.hpp>
 #include <objects/Player.hpp>
 #include <physics/Collision.hpp>
 #include <util/Cache.hpp>
@@ -19,7 +21,6 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <objects/Maze.hpp>
 
 int main() {
 
@@ -27,6 +28,7 @@ int main() {
     Window & window = device_manager.get_window();
     Keyboard & keyboard = device_manager.get_keyboard();
     Mouse & mouse = device_manager.get_mouse();
+    Gamepad gamepad(0);
 
     Context context(window);
     context.set_clear_color(0.5f, 0.5f, 0.5f);
@@ -54,24 +56,26 @@ int main() {
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
+    ShadowMap shadow_map_3 = ShadowMap::create(2048);
+
+    Cache<std::string, Model> models(Model::load);
 
     std::vector<Instance> instances;
-    Cache<std::string, Model> models(Model::load);
-    instances.emplace_back("models/scene.fbx", models);
-    instances.emplace_back("models/player/Human_standing.fbx", models);
-    instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
+    instances.emplace_back(models.get("models/scene.fbx"));
+    instances.emplace_back(models.get("models/player/Human_standing.fbx"));
+    instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
 
     Maze::generate(instances, models);
 
+    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
+
     std::set<int> collision_exceptions = {1, 2};
 
-    std::vector<std::reference_wrapper<Instance>> player_instances = {
-            instances[1],
-            instances[2]
-    };
-    Player player(player_instances, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
+    instances[0].xrayable = true;
+    Texture toon_map = Texture::load("textures/toon_map.png");
 
     Timer timer;
+    float animation_progress = 0.0f;
 
     while (!window.is_closed()) {
 
@@ -79,6 +83,7 @@ int main() {
         keyboard.poll();
         mouse.poll();
         window.poll();
+        gamepad.poll();
 
         // Exit on ESC press
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
@@ -104,10 +109,20 @@ int main() {
             direction.x += 1.0f;
         }
 
-        if (glm::dot(direction, direction) != 0.0f) {
-
-            // Normalize direction
+        // Normalize keyboard-based direction
+        if (glm::length(direction) != 0.0f) {
             direction = glm::normalize(direction);
+        }
+
+        if (gamepad.is_connected()) {
+            direction.x += gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_X);
+            direction.y += gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_Y);
+        }
+
+        if (glm::length(direction) > 0.1f) {
+
+            // Update walking animation
+            animation_progress += glm::length(direction) * timer.get_delta();
 
             // Compute translation
             glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
@@ -140,6 +155,15 @@ int main() {
             player.activate_instance(0);
         }
 
+        // Activate toon shading
+        bool toon_shading_active;
+        if (mouse.is_down(1)) {
+            toon_shading_active = true;
+        }
+        else {
+            toon_shading_active = false;
+        }
+
         // Update camera
         glm::vec2 player_position = player.get_position();
         glm::vec2 player_direction = player.get_direction();
@@ -152,7 +176,7 @@ int main() {
 
         // Select animation frame
         // Animation plays at 30 frames per second
-        int animation_frame = glm::floor(30 * timer.get_time());
+        int animation_frame = glm::floor(30 * animation_progress);
 
         // Render shadow maps
         {
@@ -210,6 +234,32 @@ int main() {
                     }
                 }
             }
+
+            // Render x-ray light's shadow map
+            {
+                // Prepare framebuffer
+                shadow_map_3.framebuffer.bind();
+                context.set_view_port(0, 0, shadow_map_3.size, shadow_map_3.size);
+                context.clear();
+
+                // Render instances
+                shadow_program.bind();
+                for (Instance& instance : instances) {
+                    if (instance.visible && instance.xrayable) {
+
+                        // Set MVP matrix
+                        glm::mat4 light_mvp = camera.get_projection_matrix()
+                            * camera.get_view_matrix()
+                            * instance.get_transformation();
+                        shadow_program.set_mat4("mvp", light_mvp);
+
+                        // Render shapes
+                        for (Shape const& shape : instance.get_model(animation_frame).shapes) {
+                            shape.mesh.draw();
+                        }
+                    }
+                }
+            }
         }
 
         // Render scene
@@ -255,9 +305,31 @@ int main() {
                 program.set_mat4("spot_light.vp", light_vp);
             }
 
+            program.set_vec3("xray_light.position", camera.get_position());
+            {
+                glm::mat4 light_vp = camera.get_projection_matrix()
+                    * camera.get_view_matrix();
+                glm::vec4 mouse_position(mouse.get_x()/window.get_width()*2.0f-1.0f, 1.0f-mouse.get_y()/window.get_height()*2.0f, 1.0, 1.0);
+                glm::mat4 inverse_vp = glm::inverse(light_vp);
+                glm::vec4 mouse_world_position = inverse_vp * mouse_position;
+
+                program.set_vec3("xray_light.direction", glm::vec3(mouse_world_position) / mouse_world_position.w - camera.get_position());
+                program.set_float("xray_light.angle", spot_light.angle/4.0f);
+                shadow_map_3.texture.bind(6);
+                program.set_sampler("xray_light.shadow_sampler", 6);
+                program.set_mat4("xray_light.vp", light_vp);
+            }
+
+            // Set xray properties
+            toon_map.bind(7);
+            program.set_sampler("toon_map", 7);
+
             // Render instances
             for (Instance & instance : instances) {
                 if (instance.visible) {
+
+                    // Set x-ray variables per instance
+                    program.set_bool("xrayable", (instance.xrayable & toon_shading_active));
 
                     // Set transformation matrices
                     glm::mat4 position_transformation = instance.get_transformation();

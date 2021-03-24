@@ -1,16 +1,27 @@
 #include <graphics/Instance.hpp>
 #include <glm/gtx/transform.hpp>
+#include <utility>
 
-Instance::Instance(std::string const & path, int start, int end, std::string const & suffix, Cache<std::string, Model>& model_cache) : position(0.0f), rotation(0.0f), animated(true) {
-	for (int i = start; i < end; i++) {
-		std::string final_path = path + std::to_string(i) + suffix;
-		models.emplace_back(model_cache.get(final_path));
-	}
+Instance Instance::create(Cache<std::string, Model> & cache,
+                       std::string const & path,
+                       int start,
+                       int end,
+                       std::string const & suffix) {
+
+    std::vector<std::reference_wrapper<Model>> models;
+    models.reserve(end - start);
+    for (int index = start; index < end; index++) {
+        std::string final_path = path + std::to_string(index) + suffix;
+        Model & model = cache.get(final_path);
+        models.emplace_back(model);
+    }
+    return Instance(models);
 }
 
-Instance::Instance(std::string const & path, Cache<std::string, Model> & model_cache) : position(0.0f), rotation(0.0f), animated(false) {
-	models.emplace_back(model_cache.get(path));
-}
+Instance::Instance(std::vector<std::reference_wrapper<Model>> models) :
+    models(std::move(models)), position(0.0f), rotation(0.0f), visible(true), xrayable(false)  {}
+
+Instance::Instance(Model & model) : Instance(std::vector<std::reference_wrapper<Model>>{model}) {}
 
 Instance::~Instance() = default;
 
@@ -23,10 +34,8 @@ glm::mat4 Instance::get_transformation() const {
 }
 
 Model& Instance::get_model(int index) {
-	if (animated) {
-		return models[index % models.size()];
-	}
-	else {
-		return models[0];
-	}
+    if (models.size() > 1) {
+        return models[index % models.size()];
+    }
+	return models[0];
 }
