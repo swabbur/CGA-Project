@@ -40,3 +40,7 @@ Instance& Movable::get_instance() {
 glm::vec2 Movable::get_position() {
 	return position;
 }
+
+glm::vec2 Movable::get_direction() {
+    return direction;
+}
