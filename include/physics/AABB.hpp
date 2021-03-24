@@ -19,4 +19,6 @@ public:
 
     float get_height() const;
 
+    AABB flip();
+
 };

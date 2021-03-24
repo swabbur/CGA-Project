@@ -123,6 +123,8 @@ int main() {
                                                                shape,
                                                                player.get_position(),
                                                                glm::vec2(instance->position[0], instance->position[2]),
+                                                               player.get_direction(),
+                                                               glm::vec2(cos(instance->rotation[1]), sin(instance->rotation[1])),
                                                                translation);
                 }
             }
