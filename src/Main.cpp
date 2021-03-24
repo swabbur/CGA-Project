@@ -20,6 +20,7 @@
 #include <objects/Player.hpp>
 #include <iostream>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <objects/Maze.hpp>
 
 int main() {
 
@@ -37,13 +38,15 @@ int main() {
 
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Camera camera(glm::vec3(), glm::vec3(0.0f, 1.0f, 1.0f));
+    Camera camera(glm::vec3(), 4.0f * glm::vec3(0.0f, 1.0f, 1.0f));
 
     std::vector<Instance> instances;
     Cache<std::string, Model> models(Model::load);
     instances.emplace_back("models/scene.fbx", models);
     instances.emplace_back("models/player/Human_standing.fbx", models);
     instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
+
+    Maze::generate(instances, models);
 
     instances[1].position = glm::vec3(-0.2f, 0.1f, -0.4f);
     instances[2].position = glm::vec3(-0.2f, 0.1f, -0.4f);
