@@ -359,22 +359,40 @@ vec3 compute_light_color(vec3 normal) {
 }
 
 float compute_diffuse_strength(vec3 normal) {
-    float intensity;
+    float intensity = 0.0;
+
     float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
-    intensity += compute_diffuse(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
-    intensity += compute_diffuse(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+    if (directional_visibility > 0.0) {
+        intensity += compute_diffuse(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    }
+
+    //intensity += compute_diffuse(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+
+    float spot_cone = compute_spot_light_cone(normal, spot_light);
     float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
-    intensity += compute_diffuse(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility;
+    if (spot_cone > 0.0 && spot_visibility > 0.0) {
+        intensity += compute_diffuse(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
+    }
+
     return intensity;
 }
 
 float compute_specular_strength(vec3 normal) {
-    float intensity;
+    float intensity = 0.0;
+
     float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
-    intensity += compute_specular(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
-    intensity += compute_specular(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+    if (directional_visibility > 0.0) {
+        intensity += compute_specular(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    }
+
+    //intensity += compute_specular(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
+
+    float spot_cone = compute_spot_light_cone(normal, spot_light);
     float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
-    intensity += compute_specular(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility;
+    if (spot_cone > 0.0 && spot_visibility > 0.0) {
+        intensity += compute_specular(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
+    }
+
     return intensity;
 }
 
@@ -384,7 +402,7 @@ vec3 compute_toon(vec3 normal) {
     float specular = compute_specular_strength(normal);
     
     float intensity = clamp(diffuse + specular, 0.001, 0.999);
-    float eye_distance = length(fragment_position - camera.position);
+    float eye_distance = clamp(length(fragment_position - camera.position) - 0.914, 0.001, 0.999);
 
     vec4 toon_color = texture(toon_map, vec2(1-intensity,eye_distance));
 
