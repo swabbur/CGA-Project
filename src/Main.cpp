@@ -239,7 +239,8 @@ int main() {
 
                 // Render instances
                 shadow_program.bind();
-                for (Instance& instance : instances) {
+                //for (Instance& instance : instances) {
+                Instance& instance = instances[0];
                     if (instance.visible) {
 
                         // Set MVP matrix
@@ -253,7 +254,7 @@ int main() {
                             shape.mesh.draw();
                         }
                     }
-                }
+                //}
             }
         }
 
@@ -302,15 +303,16 @@ int main() {
 
             program.set_vec3("xray_light.position", camera.get_position());
             {
-                glm::vec4 mouse_position(mouse.get_x()/window.get_width(), mouse.get_y()/window.get_height());
-                program.set_vec3("xray_light.direction", glm::vec3(camera.get_rotation_matrix() * glm::vec4(0.0f, 0.0f, -1.0f, 1.0f)));
-            }
-            program.set_float("xray_light.angle", spot_light.angle);
-            shadow_map_3.texture.bind(6);
-            program.set_sampler("xray_light.shadow_sampler", 6);
-            {
                 glm::mat4 light_vp = camera.get_projection_matrix()
                     * camera.get_view_matrix();
+                glm::vec4 mouse_position(mouse.get_x()/window.get_width()*2.0f-1.0f, 1.0f-mouse.get_y()/window.get_height()*2.0f, 1.0, 1.0);
+                glm::mat4 inverse_vp = glm::inverse(light_vp);
+                glm::vec4 mouse_world_position = inverse_vp * mouse_position;
+
+                program.set_vec3("xray_light.direction", glm::vec3(mouse_world_position) / mouse_world_position.w - camera.get_position());
+                program.set_float("xray_light.angle", spot_light.angle/4.0f);
+                shadow_map_3.texture.bind(6);
+                program.set_sampler("xray_light.shadow_sampler", 6);
                 program.set_mat4("xray_light.vp", light_vp);
             }
 

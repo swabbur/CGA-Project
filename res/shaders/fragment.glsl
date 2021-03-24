@@ -148,6 +148,33 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     return visibility;
 }
 
+float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
+
+    // Compute (slope-based) bias
+    float light_angle = 1 - dot(fragment_normal, light_direction);
+    float pixel_size = 0.5/textureSize(sampler, 0).x;
+    float bias = clamp(pixel_size * tan(light_angle), pixel_size, 0.01);
+
+    // Compute sample locations
+    vec4 sample_location = vp * vec4(fragment_position, 1.0);
+    sample_location.xyz /= sample_location.w;
+    sample_location.xyz = sample_location.xyz * 0.5 + 0.5;
+
+    // Early-exit outside of shadow map
+    if (sample_location.x < 0.0
+        || sample_location.x > 1.0
+        || sample_location.y < 0.0
+        || sample_location.y > 1.0
+    ) {
+        return 0.0;
+    }
+
+    // Compute visibility
+    float visibility_near = texture(sampler, vec3(sample_location.xy, sample_location.z - bias*sample_location.z));
+    float visibility_far = texture(sampler, vec3(sample_location.xy, sample_location.z + bias*sample_location.z));
+    return abs(visibility_near - visibility_far);
+}
+
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
 
     // Compute (normalized Lambertian) diffuse strength
@@ -283,8 +310,15 @@ vec3 compute_xray(XrayLight light) {
     if (length(cross(light.direction, fragment_position - light.position)) > tan(light.angle) * dot(light.direction, fragment_position - light.position)) {
         return vec3(0.0);
     }
+    
+    // Shadow
+    float visibility = compute_first_layer_perspective(light.shadow_sampler, light.vp, light_direction);
 
-    discard;
+    if (visibility > 0.5) {
+        discard;
+    }
+
+    return vec3(0.0);
 }
 
 vec3 compute_light_color(vec3 normal) {

@@ -14,7 +14,7 @@ endif()
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/conan.cmake")
 conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_CURRENT_LIST_DIR})
 
-# Find Conan packages
+# Find Conan packages''
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 set(PACKAGES
