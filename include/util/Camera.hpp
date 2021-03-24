@@ -28,6 +28,8 @@ public:
 
     void move(glm::vec3 const & position_delta);
 
+    void move_orthogonal(glm::vec3 const& position_delta);
+
     void turn(glm::vec2 const & rotation);
 
     void rotate(glm::vec2 const & rotation_delta);

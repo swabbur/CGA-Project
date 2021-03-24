@@ -124,8 +124,11 @@ Mesh parse_mesh(aiMesh const * mesh) {
         vertices.push_back(vertex);
     }
 
+    // Parse AABB
+    AABB const & aabb = AABB(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z));
+
     // Create mesh
-    return Mesh::create(indices, vertices, textured);
+    return Mesh::create(indices, vertices, textured, aabb);
 }
 
 Model Model::load(std::string const & path) {
@@ -136,7 +139,8 @@ Model Model::load(std::string const & path) {
                                               aiProcess_GenSmoothNormals
                                               | aiProcess_Triangulate
                                               | aiProcess_RemoveRedundantMaterials
-                                              | aiProcess_PreTransformVertices);
+                                              | aiProcess_PreTransformVertices
+                                              | aiProcess_GenBoundingBoxes);
     if (scene == nullptr || scene->mRootNode == nullptr || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
         throw std::runtime_error("Could not load model: " + path);
     }

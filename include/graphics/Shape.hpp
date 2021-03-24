@@ -13,4 +13,6 @@ public:
     Mesh const & mesh;
 
     Shape(Material const & material, Mesh const & mesh);
+
+    Mesh const & get_mesh() const;
 };

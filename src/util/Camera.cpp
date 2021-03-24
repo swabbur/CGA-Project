@@ -44,6 +44,10 @@ void Camera::move(glm::vec3 const & position_delta) {
     position += glm::vec3(glm::vec4(position_delta, 1.0f) * y_rotation_matrix);
 }
 
+void Camera::move_orthogonal(glm::vec3 const& position_delta) {
+    position += position_delta;
+}
+
 void Camera::turn(glm::vec2 const & new_rotation) {
     rotation = new_rotation;
     rotation.x = glm::clamp(rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
