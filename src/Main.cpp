@@ -1,4 +1,5 @@
 #include <devices/DeviceManager.hpp>
+#include <devices/Gamepad.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/glm.hpp>
@@ -19,6 +20,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 int main() {
 
@@ -26,6 +28,7 @@ int main() {
     Window & window = device_manager.get_window();
     Keyboard & keyboard = device_manager.get_keyboard();
     Mouse & mouse = device_manager.get_mouse();
+    Gamepad gamepad(0);
 
     Context context(window);
     context.set_clear_color(0.5f, 0.5f, 0.5f);
@@ -64,6 +67,7 @@ int main() {
     Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
 
     Timer timer;
+    float animation_progress = 0.0f;
 
     while (!window.is_closed()) {
 
@@ -71,6 +75,7 @@ int main() {
         keyboard.poll();
         mouse.poll();
         window.poll();
+        gamepad.poll();
 
         // Exit on ESC press
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
@@ -96,10 +101,20 @@ int main() {
             direction.x += 1.0f;
         }
 
-        if (glm::dot(direction, direction) != 0.0f) {
-
-            // Normalize direction
+        // Normalize keyboard-based direction
+        if (glm::length(direction) != 0.0f) {
             direction = glm::normalize(direction);
+        }
+
+        if (gamepad.is_connected()) {
+            direction.x += gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_X);
+            direction.y += gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_Y);
+        }
+
+        if (glm::length(direction) > 0.1f) {
+
+            // Update walking animation
+            animation_progress += glm::length(direction) * timer.get_delta();
 
             // Compute translation
             glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
@@ -146,7 +161,7 @@ int main() {
 
         // Select animation frame
         // Animation plays at 30 frames per second
-        int animation_frame = glm::floor(30 * timer.get_time());
+        int animation_frame = glm::floor(30 * animation_progress);
 
         // Render shadow maps
         {
