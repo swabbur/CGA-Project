@@ -12,6 +12,7 @@
 #include <graphics/Program.hpp>
 #include <graphics/ShadowMap.hpp>
 #include <graphics/Texture.hpp>
+#include <objects/Maze.hpp>
 #include <objects/Player.hpp>
 #include <physics/Collision.hpp>
 #include <util/Cache.hpp>
@@ -20,7 +21,6 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 int main() {
 
@@ -39,7 +39,7 @@ int main() {
 
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Camera camera(glm::vec3(), glm::vec3(0.0f, 1.0f, 1.0f));
+    Camera camera(glm::vec3(), 4.0f * glm::vec3(0.0f, 1.0f, 1.0f));
 
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
@@ -48,10 +48,10 @@ int main() {
 
     SpotLight spot_light;
     spot_light.color = glm::vec3(1.0f);
-    spot_light.position = glm::vec3(0.25f, 2.0f, 0.0f);
+    spot_light.position = glm::vec3(1.0f, 8.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
-    spot_light.intensity = 5.0f;
+    spot_light.intensity = 15.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
@@ -65,9 +65,12 @@ int main() {
     instances.emplace_back(models.get("models/player/Human_standing.fbx"));
     instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
+    Maze::generate(instances, models);
 
-    instances[0].xrayable = true;
+    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 1.2f);
+
+    std::set<int> collision_exceptions = {1, 2};
+
     Texture toon_map = Texture::load("textures/toon_map.png");
 
     Timer timer;
@@ -124,22 +127,20 @@ int main() {
             glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
 
             // Check for collisions
-            bool skip = true;
-            for (Shape const & shape : instances[0].get_model(0).shapes) {
-
-                // Skip the floor instance, no collision test required.
-                if (skip) {
-                    skip = false;
-                    continue;
+            for (int j = 0; j < instances.size(); j++) {
+                if (collision_exceptions.contains(j)) continue;
+                Instance* instance = &instances[j];
+                for (Shape const & shape : instance->get_model(0).shapes) {
+                    // Adjust for collision
+                    Shape const &colliding_shape = player.get_instance().get_model(0).shapes[0];
+                    translation = Collision::resolve_collision(colliding_shape,
+                                                               shape,
+                                                               player.get_position(),
+                                                               glm::vec2(instance->position[0], instance->position[2]),
+                                                               player.get_direction(),
+                                                               glm::vec2(cos(instance->rotation[1]), sin(instance->rotation[1])),
+                                                               translation);
                 }
-
-                // Adjust for collision
-                Shape const & colliding_shape = player.get_instance().get_model(0).shapes[0];
-                translation = Collision::resolve_collision(colliding_shape,
-                                                              shape,
-                                                              player.get_position(),
-                                                              glm::vec2(),
-                                                              translation);
             }
 
             // Update the player
@@ -169,8 +170,8 @@ int main() {
         camera.set_aspect_ratio(window.get_aspect_ratio());
 
         // Update light
-        spot_light.position = glm::vec3(player_position.x, 0.25f, player_position.y);
         spot_light.direction = glm::normalize(glm::vec3(player_direction.x, -0.25f, player_direction.y));
+        spot_light.position = glm::vec3(player_position.x, 0.8f, player_position.y) + spot_light.direction * 0.1f;
 
         // Select animation frame
         // Animation plays at 30 frames per second

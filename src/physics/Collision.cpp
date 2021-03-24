@@ -1,14 +1,26 @@
 #include <physics/Collision.hpp>
 
-float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance) {
-
+float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 d1, glm::vec2 d2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance) {
 	// Set up preliminary values
-	AABB const & aabb1 = o1.get_mesh().get_AABB();
-	AABB const & aabb2 = o2.get_mesh().get_AABB();
+	AABB aabb1 = AABB(o1.get_mesh().get_AABB());
+	AABB aabb2 = AABB(o2.get_mesh().get_AABB());
+
+	if (std::abs(d1[0]) < std::abs(d1[1])) {
+	    aabb1 = aabb1.flip();
+	}
+    if (std::abs(d2[0]) < std::abs(d2[1])) {
+        aabb2 = aabb2.flip();
+    }
+
 	glm::vec2 pos1 = aabb1.get_minima() + position1;
 	glm::vec2 pos2 = aabb2.get_minima() + position2;
 	glm::vec2 size1 = aabb1.get_maxima() - aabb1.get_minima();
 	glm::vec2 size2 = aabb2.get_maxima() - aabb2.get_minima();
+
+	// Don't collide with floors
+	if (aabb1.get_height() < .001 || aabb2.get_height() < .001) {
+	    return 1.0f;
+	}
 
 	// Calculate Shape 1's entry distance
 	collision_distance = pos2 - pos1;
@@ -60,16 +72,16 @@ float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 positi
 	return max_entry_time;
 }
 
-glm::vec2 Collision::resolve_collision(Shape const& o1, Shape const& o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 delta_position) {
+glm::vec2 Collision::resolve_collision(Shape const& o1, Shape const& o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 d1, glm::vec2 d2, glm::vec2 delta_position) {
 
 	glm::vec2 collision_direction(0.0f);
 	glm::vec2 collision_distance(0.0f);
-	float collision_time = swept_AABB(o1, o2, position1, position2, delta_position, collision_direction, collision_distance);
+	float collision_time = swept_AABB(o1, o2, position1, position2, d1, d2, delta_position, collision_direction, collision_distance);
 
 	if (collision_time >= 1.0f) {
 		return delta_position;
 	}
-	
+
 	glm::vec2 other_direction = glm::vec2(1.0f, 1.0f) - collision_direction;
 	glm::vec2 final_delta_position = (collision_direction * (collision_distance + glm::vec2((glm::dot(collision_distance, collision_direction)>0.0f?-1.0f:1.0f)*1e-6))) + (other_direction * delta_position);
 
