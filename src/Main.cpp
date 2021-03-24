@@ -59,12 +59,8 @@ int main() {
     std::vector<Instance> instances;
     instances.emplace_back(models.get("models/scene.fbx"));
     instances.emplace_back(models.get("models/player/Human_standing.fbx"));
-    instances.emplace_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
+    instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
 
-    std::vector<std::reference_wrapper<Instance>> player_instances = {
-            instances[1],
-            instances[2]
-    };
     Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
 
     Timer timer;
