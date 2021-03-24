@@ -48,6 +48,8 @@ int main() {
 
     Maze::generate(instances, models);
 
+    std::set<int> collision_exceptions = {1, 2};
+
     instances[1].position = glm::vec3(-0.2f, 0.1f, -0.4f);
     instances[2].position = glm::vec3(-0.2f, 0.1f, -0.4f);
 
@@ -71,7 +73,7 @@ int main() {
 
     std::vector<Instance*> player_instances = { &instances[1],  &instances[2] };
     Player player(player_instances, glm::vec2(-0.2f, -0.4f));
-    float walk_speed = 0.3f;
+    float walk_speed = 3.0f;
 
     while (!window.is_closed()) {
 
@@ -119,12 +121,16 @@ int main() {
             // Check collision
             normalized *= walk_speed;
             player.movable.update_active_instance(1);
-            for (int i = 0; i < instances[0].get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
-                if (i == 0) { continue; } // We don't want to collide with the floor
-                Shape const& shape = instances[0].get_model(0).shapes[i];
-                glm::vec2 collided_direction = Collision::resolve_collision(player.movable.get_instance().get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
-                normalized.x = collided_direction.x;
-                normalized.z = collided_direction.y;
+
+            for (int j = 0; j < instances.size(); j++) {
+                if (collision_exceptions.contains(j)) continue;
+                Instance* instance = &instances[j];
+                for (int i = 0; i < instance->get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
+                    Shape const& shape = instance->get_model(0).shapes[i];
+                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.get_instance().get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(instance->position[0], instance->position[2]), glm::vec2(normalized.x, normalized.z));
+                    normalized.x = collided_direction.x;
+                    normalized.z = collided_direction.y;
+                }
             }
             player.movable.move(glm::vec2(normalized.x, normalized.z));
             player.movable.set_direction(glm::vec2(direction.x, direction.z));

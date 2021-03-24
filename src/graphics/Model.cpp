@@ -125,7 +125,7 @@ Mesh parse_mesh(aiMesh const * mesh) {
     }
 
     // Parse AABB
-    AABB const & aabb = AABB(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z));
+    AABB const & aabb = AABB(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z), mesh->mAABB.mMax.y - mesh->mAABB.mMin.y);
 
     // Create mesh
     return Mesh::create(indices, vertices, textured, aabb);

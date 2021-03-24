@@ -1,7 +1,6 @@
 #include <physics/Collision.hpp>
 
 float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance) {
-
 	// Set up preliminary values
 	AABB const & aabb1 = o1.get_mesh().get_AABB();
 	AABB const & aabb2 = o2.get_mesh().get_AABB();
@@ -9,6 +8,11 @@ float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 positi
 	glm::vec2 pos2 = aabb2.get_minima() + position2;
 	glm::vec2 size1 = aabb1.get_maxima() - aabb1.get_minima();
 	glm::vec2 size2 = aabb2.get_maxima() - aabb2.get_minima();
+
+	// Don't collide with floors
+	if (aabb1.get_height() < .001 || aabb2.get_height() < .001) {
+	    return 1.0f;
+	}
 
 	// Calculate Shape 1's entry distance
 	collision_distance = pos2 - pos1;
