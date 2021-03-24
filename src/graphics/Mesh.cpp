@@ -20,6 +20,9 @@ Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex>
     glVertexArrayVertexBuffer(vao, 0, vbo, offsetof(Vertex, position), sizeof(Vertex));
     glVertexArrayVertexBuffer(vao, 1, vbo, offsetof(Vertex, normal), sizeof(Vertex));
     glVertexArrayVertexBuffer(vao, 2, vbo, offsetof(Vertex, texture_coordinates), sizeof(Vertex));
+    glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, false, 0);
+    glVertexArrayAttribFormat(vao, 1, 3, GL_FLOAT, false, 0);
+    glVertexArrayAttribFormat(vao, 2, 2, GL_FLOAT, false, 0);
     glEnableVertexArrayAttrib(vao, 0);
     glEnableVertexArrayAttrib(vao, 1);
     glEnableVertexArrayAttrib(vao, 2);
