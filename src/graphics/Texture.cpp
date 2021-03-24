@@ -1,4 +1,5 @@
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 #include <graphics/Texture.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -16,6 +17,9 @@ Texture Texture::load(std::string const & path) {
         throw std::runtime_error("Could not load texture: " + path);
     }
 
+    float size = std::min(width, height);
+    int levels = std::max(1, static_cast<int>(glm::log2(size)));
+
     GLuint handle;
     glCreateTextures(GL_TEXTURE_2D, 1, &handle);
 
@@ -23,12 +27,11 @@ Texture Texture::load(std::string const & path) {
     glTextureParameteri(handle, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glGenerateTextureMipmap(handle);
-
-    glTextureStorage2D(handle, 1, GL_RGBA8, width, height);
+    glTextureStorage2D(handle, levels, GL_RGBA8, width, height);
     glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateTextureMipmap(handle);
 
     stbi_image_free(data);
 
