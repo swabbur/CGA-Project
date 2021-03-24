@@ -171,9 +171,8 @@ float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 lig
     }
 
     // Compute visibility
-    float visibility_near = texture(sampler, vec3(sample_location.xy, sample_location.z - bias*sample_location.z));
-    float visibility_far = texture(sampler, vec3(sample_location.xy, sample_location.z + bias*sample_location.z));
-    return abs(visibility_near - visibility_far);
+    float visibility = texture(sampler, vec3(sample_location.xy, sample_location.z - bias*sample_location.z));
+    return visibility;
 }
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
@@ -296,7 +295,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     return light_strength * visibility * (diffuse_color + specular_color);
 }
 
-vec3 compute_xray(XrayLight light) {
+bool compute_xray(XrayLight light) {
     // Compute fragment-to-light vectors
     vec3 light_direction = normalize(light.position - fragment_position);
     float light_distance = distance(light.position, fragment_position);
@@ -304,12 +303,12 @@ vec3 compute_xray(XrayLight light) {
 
     // Exit when fragment is behind light
     if (dot(fragment_position - light.position, light.direction) < 0.0) {
-        return vec3(0.0);
+        return false;
     }
 
     // Exit if position is outside cone
     if (length(cross(light.direction, fragment_position - light.position)) > tan(light.angle) * dot(light.direction, fragment_position - light.position)) {
-        return vec3(0.0);
+        return false;
     }
     
     // Shadow
@@ -318,8 +317,7 @@ vec3 compute_xray(XrayLight light) {
     if (visibility > 0.5 && xrayable) {
         discard;
     }
-
-    return vec3(0.0);
+    return visibility <= 0.5;
 }
 
 vec3 compute_light_color(vec3 normal) {
@@ -330,15 +328,25 @@ vec3 compute_light_color(vec3 normal) {
     return color;
 }
 
+vec3 compute_toon(vec3 normal) {
+    
+    return vec3(0.0);
+}
+
 void main() {
 
     // Compute xray visibility
-    vec3 toon = compute_xray(xray_light);
+    bool toon = compute_xray(xray_light);
 
     // Compute normal
     vec3 normal = compute_normal();
 
     // Compute color
-    out_color += compute_light_color(normal);
+    if (toon) {
+        out_color += compute_toon(normal);
+    }
+    else {
+        out_color += compute_light_color(normal);
+    }
     out_color = clamp(out_color, 0.0, 1.0);
 }
