@@ -196,7 +196,7 @@ float compute_specular(vec3 normal, vec3 light_direction) {
     float normalization_factor = ((n + 2.0) + (n + 4.0)) / (8.0 * PI * (pow(2, -n / 2.0) + n));
     float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
 
-    return specular_strength;
+    return clamp(specular_strength, 0.0, 1.0);
 }
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
