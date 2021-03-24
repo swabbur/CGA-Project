@@ -1,4 +1,4 @@
-#include <objects\Movable.hpp>
+#include <objects/Movable.hpp>
 #include <cmath>
 
 Movable::Movable(Instance& instance, glm::vec2 position) : position(position), direction(glm::vec2(0.0f, 1.0f)) {

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include "../graphics/Instance.hpp"
+
+#include <glm/glm.hpp>
 
 class Movable {
 

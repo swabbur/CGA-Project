@@ -1,5 +1,4 @@
-#include "..\..\include\physics\AABB.hpp"
-#include <iostream>
+#include <physics/AABB.hpp>
 
 AABB::AABB(glm::vec2 min, glm::vec2 max) : minima(min), maxima(max) {}
 
