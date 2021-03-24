@@ -48,10 +48,10 @@ int main() {
 
     SpotLight spot_light;
     spot_light.color = glm::vec3(1.0f);
-    spot_light.position = glm::vec3(0.25f, 2.0f, 0.0f);
+    spot_light.position = glm::vec3(1.0f, 8.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
-    spot_light.intensity = 5.0f;
+    spot_light.intensity = 15.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
@@ -67,11 +67,10 @@ int main() {
 
     Maze::generate(instances, models);
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
+    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 1.2f);
 
     std::set<int> collision_exceptions = {1, 2};
 
-    instances[0].xrayable = true;
     Texture toon_map = Texture::load("textures/toon_map.png");
 
     Timer timer;
@@ -171,8 +170,8 @@ int main() {
         camera.set_aspect_ratio(window.get_aspect_ratio());
 
         // Update light
-        spot_light.position = glm::vec3(player_position.x, 0.25f, player_position.y);
         spot_light.direction = glm::normalize(glm::vec3(player_direction.x, -0.25f, player_direction.y));
+        spot_light.position = glm::vec3(player_position.x, 0.8f, player_position.y) + spot_light.direction * 0.1f;
 
         // Select animation frame
         // Animation plays at 30 frames per second

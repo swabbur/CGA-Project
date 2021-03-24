@@ -29,5 +29,6 @@ void Maze::generate(std::vector<Instance> &instances, Cache<std::string, struct 
         if (coordinate.first % 2 == 0) {
             instance->rotation[1] = glm::half_pi<float>();
         }
+        instance->xrayable = true;
     }
 }
