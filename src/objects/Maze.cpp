@@ -1,4 +1,5 @@
 #include <objects/Maze.hpp>
+#include <glm/gtc/constants.hpp>
 
 void Maze::generate(std::vector<Instance> &instances, Cache<std::string, struct Model> &cache) {
     std::vector<std::pair<short, short>> positions = {
@@ -26,7 +27,7 @@ void Maze::generate(std::vector<Instance> &instances, Cache<std::string, struct 
         Instance* instance = &instances[instances.size() - 1];
         instance->position = glm::vec3((float)coordinate.first - 8, 0, (float)coordinate.second - 8);
         if (coordinate.first % 2 == 0) {
-            instance->rotation[1] = M_PI / 2;
+            instance->rotation[1] = glm::half_pi<float>();
         }
     }
 }
