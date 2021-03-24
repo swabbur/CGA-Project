@@ -54,17 +54,18 @@ int main() {
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
 
-    std::vector<Instance> instances;
     Cache<std::string, Model> models(Model::load);
-    instances.emplace_back("models/scene.fbx", models);
-    instances.emplace_back("models/player/Human_standing.fbx", models);
-    instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
+
+    std::vector<Instance> instances;
+    instances.emplace_back(models.get("models/scene.fbx"));
+    instances.emplace_back(models.get("models/player/Human_standing.fbx"));
+    instances.emplace_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
 
     std::vector<std::reference_wrapper<Instance>> player_instances = {
             instances[1],
             instances[2]
     };
-    Player player(player_instances, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
+    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 0.3f);
 
     Timer timer;
 

@@ -10,10 +10,9 @@ class AABB {
 public:
 
     AABB(glm::vec2 min, glm::vec2 max);
-    AABB(AABB const & aabb);
 
-    glm::vec2 get_minima() const;
+    [[nodiscard]] glm::vec2 get_minima() const;
 
-    glm::vec2 get_maxima() const;
+    [[nodiscard]] glm::vec2 get_maxima() const;
 
 };
