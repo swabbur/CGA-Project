@@ -28,4 +28,6 @@ public:
 	Instance& get_instance();
 
 	glm::vec2 get_position();
+
+	glm::vec2 get_direction();
 };

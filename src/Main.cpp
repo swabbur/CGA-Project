@@ -37,12 +37,10 @@ int main() {
 
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Camera camera;
-    camera.turn(glm::vec2(0.407407, -1.42222));
-    camera.place(glm::vec3(1.5, 0.75, 0.5));
+    Camera camera(glm::vec3(), glm::vec3(0.0f, 1.0f, 1.0f));
 
-    Cache<std::string, Model> models(Model::load);
     std::vector<Instance> instances;
+    Cache<std::string, Model> models(Model::load);
     instances.emplace_back("models/scene.fbx", models);
     instances.emplace_back("models/player/Human_standing.fbx", models);
     instances.emplace_back("models/player/Human_walking_", 1, 31, ".fbx", models);
@@ -64,15 +62,13 @@ int main() {
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
     spot_light.intensity = 5.0f;
 
-    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl", "shaders/debug_fragment.glsl" });
+    Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
 
     std::vector<Instance*> player_instances = { &instances[1],  &instances[2] };
     Player player(player_instances, glm::vec2(-0.2f, -0.4f));
     float walk_speed = 0.3f;
-
-    bool move_player = false;
 
     while (!window.is_closed()) {
 
@@ -86,14 +82,7 @@ int main() {
             break;
         }
 
-        // Toggle camera/player movement
-        if (keyboard.is_pressed(GLFW_KEY_C)) {
-            move_player = !move_player;
-        }
-
-        // Update camera
-        camera.set_aspect_ratio(window.get_aspect_ratio());
-
+        // Update player
         glm::vec3 direction(0.0f);
 
         if (keyboard.is_down(GLFW_KEY_W)) {
@@ -120,59 +109,42 @@ int main() {
             direction.y -= 1.0f;
         }
 
-
         if (glm::dot(direction, direction) != 0.0f) {
+
             glm::vec3 normalized = timer.get_delta() * glm::normalize(direction);
 
             // Check collision
-            if (move_player) {
-                normalized *= walk_speed;
-                player.movable.update_active_instance(1);
-                for (int i = 0; i < instances[0].get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
-                    if (i == 0) { continue; } // We don't want to collide with the floor
-                    Shape const& shape = instances[0].get_model(0).shapes[i];
-                    glm::vec2 collided_direction = Collision::resolve_collision(player.movable.get_instance().get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
-                    normalized.x = collided_direction.x;
-                    normalized.z = collided_direction.y;
-                }
-                camera.move_orthogonal(normalized);
-                player.movable.move(glm::vec2(normalized.x, normalized.z));
-                player.movable.set_direction(glm::vec2(direction.x, direction.z));
+            normalized *= walk_speed;
+            player.movable.update_active_instance(1);
+            for (int i = 0; i < instances[0].get_model(0).shapes.size(); i++) {// Shape const& shape : entities[0].scene.shapes) {
+                if (i == 0) { continue; } // We don't want to collide with the floor
+                Shape const& shape = instances[0].get_model(0).shapes[i];
+                glm::vec2 collided_direction = Collision::resolve_collision(player.movable.get_instance().get_model(0).shapes[0], shape, player.movable.get_position(), glm::vec2(0.0f), glm::vec2(normalized.x, normalized.z));
+                normalized.x = collided_direction.x;
+                normalized.z = collided_direction.y;
             }
-            else {
-                camera.move(normalized);
-            }
-        }
-        else if (move_player) {
+            player.movable.move(glm::vec2(normalized.x, normalized.z));
+            player.movable.set_direction(glm::vec2(direction.x, direction.z));
+
+        } else {
             player.movable.update_active_instance(0);
         }
 
-        if (mouse.is_down(GLFW_MOUSE_BUTTON_LEFT)) {
-            float scale = std::min(window.get_width(), window.get_height()) / 2.0f;
-            camera.rotate(glm::vec2(mouse.get_dy(), mouse.get_dx()) / scale);
-        }
+        // Update camera
+        glm::vec2 player_position = player.movable.get_position();
+        glm::vec2 player_direction = player.movable.get_direction();
+        camera.focus(glm::vec3(player_position.x, 0.0f, player_position.y));
+        camera.set_aspect_ratio(window.get_aspect_ratio());
 
         // Update light
-        if (keyboard.is_down(GLFW_KEY_UP)) {
-            spot_light.position.y += timer.get_delta();
-        }
+        spot_light.position = glm::vec3(player_position.x, 0.25f, player_position.y);
+        spot_light.direction = glm::normalize(glm::vec3(player_direction.x, -0.25f, player_direction.y));
 
-        if (keyboard.is_down(GLFW_KEY_DOWN)) {
-            spot_light.position.y -= timer.get_delta();
-        }
-
-        if (keyboard.is_pressed(GLFW_KEY_L)) {
-            glm::mat4 rotation_matrix = camera.get_rotation_matrix();
-            glm::vec3 camera_direction = rotation_matrix * glm::vec4(0.0f, 0.0f, -1.0f, 1.0f);
-            spot_light.position = camera.get_position();
-            spot_light.direction = camera_direction;
-        }
+        // Select animation frame
+        // Animation plays at 30 frames per second
+        int animation_frame = glm::floor(30 * timer.get_time());
 
         // Render shadow maps
-
-        int animation_frame = timer.get_time() * 30; // Animation plays at 30 frames per second
-
-        // Render shadow map
         {
             // Set context options
             context.set_multisampling(false);
@@ -216,8 +188,8 @@ int main() {
                     if (instance.visible) {
 
                         // Set MVP matrix
-                        glm::mat4 light_mvp = spot_light.get_projection(0.1f, 10.0f)
-                            * spot_light.get_view()
+                        glm::mat4 light_mvp = spot_light.get_projection_matrix(0.1f, 10.0f)
+                            * spot_light.get_view_matrix()
                             * instance.get_transformation();
                         shadow_program.set_mat4("mvp", light_mvp);
 
@@ -268,8 +240,8 @@ int main() {
             shadow_map_2.texture.bind(5);
             program.set_sampler("spot_light.shadow_sampler", 5);
             {
-                glm::mat4 light_vp = spot_light.get_projection(0.1f, 10.0f)
-                                     * spot_light.get_view();
+                glm::mat4 light_vp = spot_light.get_projection_matrix(0.1f, 10.0f)
+                                     * spot_light.get_view_matrix();
                 program.set_mat4("spot_light.vp", light_vp);
             }
 

@@ -13,4 +13,3 @@ public:
 
 	Player(std::vector<Instance*> instances, glm::vec2 position);
 };
-

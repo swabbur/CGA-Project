@@ -4,11 +4,11 @@
 
 SpotLight::SpotLight() : color(), direction(), position(), angle(), intensity() {}
 
-glm::mat4 SpotLight::get_projection(float near, float far) const {
+glm::mat4 SpotLight::get_projection_matrix(float near, float far) const {
     return glm::perspective(2.0f * angle, 1.0f, near, far);
 }
 
-glm::mat4 SpotLight::get_view() const {
+glm::mat4 SpotLight::get_view_matrix() const {
 
     // TODO: Properly compute up vector.
 

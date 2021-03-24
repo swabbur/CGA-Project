@@ -14,7 +14,7 @@ public:
 
     SpotLight();
 
-    [[nodiscard]] glm::mat4 get_projection(float near, float far) const;
+    [[nodiscard]] glm::mat4 get_projection_matrix(float near, float far) const;
 
-    [[nodiscard]] glm::mat4 get_view() const;
+    [[nodiscard]] glm::mat4 get_view_matrix() const;
 };
