@@ -26,6 +26,8 @@ struct SpotLight {
     float intensity;
     sampler2DShadow shadow_sampler;
     mat4 vp;
+    float near;
+    float far;
 };
 
 struct XrayLight {
@@ -34,6 +36,8 @@ struct XrayLight {
     float angle;
     sampler2DShadow shadow_sampler;
     mat4 vp;
+    float near;
+    float far;
 };
 
 struct Component {
@@ -82,6 +86,34 @@ layout(location = 2) in vec2 fragment_texture_coord;
 // Outputs
 layout(location = 0) out vec3 out_color;
 
+float linearize_depth(float depth, float near, float far) {
+    float z = 2.0 * depth - 1.0;
+    return 2.0 * near * far / (far + near - z * (far - near));
+}
+
+float delinearize_depth(float depth, float near, float far) {
+    float z = -((2.0 * near * far / depth) - far - near) / (far - near);
+    return (z + 1.0) * 0.5;
+}
+
+float compute_bias_normalized(vec3 normal, vec3 light_direction, sampler2DShadow sampler, float depth) {
+    float light_angle = acos(max(0.0, dot(normal, light_direction)));
+    float sqrt2 = 1.414;
+    float half_pixel_size = sqrt2 / textureSize(sampler, 0).x;
+    return half_pixel_size * tan(light_angle);
+}
+
+float compute_bias(vec3 normal, vec3 light_direction, sampler2DShadow sampler, float depth,  float near, float far) {
+    float normalized_bias = compute_bias_normalized(normal, light_direction, sampler, depth);
+    float linearized_depth = linearize_depth(depth, near, far);
+    float epsilon = 0.001 * linearized_depth;
+    float optimal_bias = normalized_bias * linearized_depth;
+
+    float new_depth = linearized_depth - (epsilon + optimal_bias);
+    float delinearized_new_depth = delinearize_depth(new_depth, near, far);
+    return abs(depth - delinearized_new_depth);
+}
+
 vec3 compute_normal() {
 
     vec3 normal = normalize(fragment_normal);
@@ -108,15 +140,14 @@ vec3 compute_normal() {
 
 float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
 
-    // Compute (slope-based) bias
-    float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
-    float bias = clamp(0.001 * tan(light_angle), 0.0, 0.01);
-
     // Compute sample location
     vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
     if (sample_location.x < 0.0 || sample_location.x > 1.0 || sample_location.y < 0.0 || sample_location.y > 1.0) {
         return 1.0;
     }
+
+    // Compute bias
+    float bias = compute_bias_normalized(fragment_normal, light_direction, sampler, sample_location.z) + 0.001;
 
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
@@ -128,11 +159,7 @@ float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_dire
     return visibility;
 }
 
-float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
-
-    // Compute (slope-based) bias
-    float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
-    float bias = clamp(0.001 * tan(light_angle), 0.0, 0.01);
+float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction, float near, float far) {
 
     // Compute sample locations
     vec4 sample_location = vp * vec4(fragment_position, 1.0);
@@ -144,6 +171,9 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
         return 0.0;
     }
 
+    // Compute bias
+    float bias = compute_bias(fragment_normal, light_direction, sampler, sample_location.z, near, far);
+
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
     ivec2 texture_size = textureSize(sampler, 0);
@@ -154,12 +184,7 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     return visibility;
 }
 
-float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
-
-    // Compute (slope-based) bias
-    float light_angle = 1 - dot(fragment_normal, light_direction);
-    float pixel_size = 0.5/textureSize(sampler, 0).x;
-    float bias = clamp(pixel_size * tan(light_angle), pixel_size, 0.01);
+float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction, float near, float far) {
 
     // Compute sample locations
     vec4 sample_location = vp * vec4(fragment_position, 1.0);
@@ -174,9 +199,10 @@ float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 lig
     ) {
         return 0.0;
     }
+    float bias = compute_bias(fragment_normal, light_direction, sampler, sample_location.z, near, far);
 
     // Compute visibility
-    float visibility = texture(sampler, vec3(sample_location.xy, sample_location.z - bias*sample_location.z));
+    float visibility = texture(sampler, vec3(sample_location.xy, sample_location.z - bias));
     return visibility;
 }
 
@@ -332,7 +358,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
     vec3 light_direction = normalize(light.position - fragment_position);
 
     // Shadow
-    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction);
+    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction, light.near, light.far);
 
     // Compute individual colors
     vec3 diffuse_color = compute_diffuse_color(normal, light_direction, light.color);
@@ -359,7 +385,7 @@ bool compute_xray(XrayLight light) {
     }
     
     // Shadow
-    float visibility = compute_first_layer_perspective(light.shadow_sampler, light.vp, light_direction);
+    float visibility = compute_first_layer_perspective(light.shadow_sampler, light.vp, light_direction, light.near, light.far);
 
     if (visibility > 0.5 && xrayable) {
         discard;
@@ -386,7 +412,7 @@ float compute_diffuse_strength(vec3 normal) {
     //intensity += compute_diffuse(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
 
     float spot_cone = compute_spot_light_cone(normal, spot_light);
-    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
+    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position), spot_light.near, spot_light.far);
     if (spot_cone > 0.0 && spot_visibility > 0.0) {
         intensity += compute_diffuse(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
     }
@@ -405,7 +431,7 @@ float compute_specular_strength(vec3 normal) {
     //intensity += compute_specular(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
 
     float spot_cone = compute_spot_light_cone(normal, spot_light);
-    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position));
+    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position), spot_light.near, spot_light.far);
     if (spot_cone > 0.0 && spot_visibility > 0.0) {
         intensity += compute_specular(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
     }

@@ -53,7 +53,7 @@ int main() {
     spot_light.position = glm::vec3(1.0f, 8.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
-    spot_light.intensity = 12.0f;
+    spot_light.intensity = 120.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(4096);
@@ -337,6 +337,8 @@ int main() {
                                      * spot_light.get_view_matrix();
                 program.set_mat4("spot_light.vp", light_vp);
             }
+            program.set_float("spot_light.near", 0.1f);
+            program.set_float("spot_light.far", 10.0f);
 
             program.set_vec3("xray_light.position", camera.get_position());
             {
@@ -352,6 +354,8 @@ int main() {
                 program.set_sampler("xray_light.shadow_sampler", 6);
                 program.set_mat4("xray_light.vp", light_vp);
             }
+            program.set_float("xray_light.near", 0.01f);
+            program.set_float("xray_light.far", 100.0f);
 
             // Set xray properties
             toon_map.bind(7);
