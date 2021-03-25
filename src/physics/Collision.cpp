@@ -3,28 +3,28 @@
 
 float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 d1, glm::vec2 d2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance, bool rotation_invariant1) {
 	// Set up preliminary values
-	AABB aabb1 = AABB(o1.get_AABB());
-	AABB aabb2 = AABB(o2.get_AABB());
+	BoundingBox bounding_box1(o1.get_bounding_box());
+	BoundingBox bounding_box2(o2.get_bounding_box());
 
 	if (rotation_invariant1) {
-		float minima = std::min(aabb1.get_minima().x, aabb1.get_minima().y);
-		float maxima = std::max(aabb1.get_maxima().x, aabb1.get_maxima().y);
-		aabb1 = AABB(glm::vec2(minima), glm::vec2(maxima), aabb1.get_height());
+		float minima = std::min(bounding_box1.get_minima().x, bounding_box1.get_minima().y);
+		float maxima = std::max(bounding_box1.get_maxima().x, bounding_box1.get_maxima().y);
+		bounding_box1 = BoundingBox(glm::vec2(minima), glm::vec2(maxima), bounding_box1.get_height());
 	}
 	else if (std::abs(d1[0]) < std::abs(d1[1])) {
-	    aabb1 = aabb1.flip();
+	    bounding_box1 = bounding_box1.flip();
 	}
     if (std::abs(d2[0]) < std::abs(d2[1])) {
-        aabb2 = aabb2.flip();
+        bounding_box2 = bounding_box2.flip();
     }
 
-	glm::vec2 pos1 = aabb1.get_minima() + position1;
-	glm::vec2 pos2 = aabb2.get_minima() + position2;
-	glm::vec2 size1 = aabb1.get_maxima() - aabb1.get_minima();
-	glm::vec2 size2 = aabb2.get_maxima() - aabb2.get_minima();
+	glm::vec2 pos1 = bounding_box1.get_minima() + position1;
+	glm::vec2 pos2 = bounding_box2.get_minima() + position2;
+	glm::vec2 size1 = bounding_box1.get_maxima() - bounding_box1.get_minima();
+	glm::vec2 size2 = bounding_box2.get_maxima() - bounding_box2.get_minima();
 
 	// Don't collide with floors
-	/*if (aabb1.get_height() < .001 || aabb2.get_height() < .001) {
+	/*if (bounding_box1.get_height() < .001 || bounding_box2.get_height() < .001) {
 	    return 1.0f;
 	}*/
 
@@ -92,7 +92,7 @@ glm::vec2 Collision::resolve_collision(Shape const& o1, Shape const& o2, glm::ve
 	}
 
 	glm::vec2 other_direction = glm::vec2(1.0f, 1.0f) - collision_direction;
-	glm::vec2 final_delta_position = (collision_direction * (collision_distance + (glm::normalize(collision_distance * collision_direction) * glm::vec2(1e-2)))) + (other_direction * delta_position);
+	glm::vec2 final_delta_position = (collision_direction * (collision_distance + (glm::normalize(collision_distance * collision_direction) * glm::vec2(1e-4)))) + (other_direction * delta_position);
 
 	return final_delta_position;
 }

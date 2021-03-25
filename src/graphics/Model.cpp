@@ -128,11 +128,11 @@ Mesh parse_mesh(aiMesh const * mesh) {
     return Mesh::create(indices, vertices, textured);
 }
 
-AABB parse_AABB(aiMesh const* mesh) {
-    // Parse AABB
-    AABB aabb(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z), mesh->mAABB.mMax.y - mesh->mAABB.mMin.y);
+BoundingBox parse_bounding_box(aiMesh const* mesh) {
+    // Parse bounding box
+    BoundingBox bounding_box(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z), mesh->mAABB.mMax.y - mesh->mAABB.mMin.y);
 
-    return aabb;
+    return bounding_box;
 }
 
 Model Model::load(std::string const & path) {
@@ -161,8 +161,8 @@ Model Model::load(std::string const & path) {
     // Parse meshes
     std::vector<Mesh> meshes;
     meshes.reserve(scene->mNumMeshes);
-    std::vector<AABB> aabbs;
-    aabbs.reserve(scene->mNumMeshes);
+    std::vector<BoundingBox> bounding_boxes;
+    bounding_boxes.reserve(scene->mNumMeshes);
     std::vector<unsigned int> mesh_material_indices;
     mesh_material_indices.reserve(scene->mNumMeshes);
     for (unsigned int index = 0; index < scene->mNumMeshes; index++) {
@@ -170,8 +170,8 @@ Model Model::load(std::string const & path) {
         Mesh mesh = parse_mesh(assimp_mesh);
         meshes.push_back(std::move(mesh));
         mesh_material_indices.push_back(assimp_mesh->mMaterialIndex);
-        AABB aabb = parse_AABB(assimp_mesh);
-        aabbs.push_back(std::move(aabb));
+        BoundingBox bounding_box = parse_bounding_box(assimp_mesh);
+        bounding_boxes.push_back(std::move(bounding_box));
     }
 
     // Parse nodes
@@ -187,8 +187,8 @@ Model Model::load(std::string const & path) {
             unsigned int material_index = mesh_material_indices[mesh_index];
             Material & material = materials[material_index];
             Mesh & mesh = meshes[mesh_index];
-            AABB& aabb = aabbs[mesh_index];
-            shapes.emplace_back(material, mesh, aabb);
+            BoundingBox& bounding_box = bounding_boxes[mesh_index];
+            shapes.emplace_back(material, mesh, bounding_box);
         }
 
         for (unsigned index = 0; index < node->mNumChildren; index++) {
