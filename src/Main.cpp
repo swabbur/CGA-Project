@@ -21,6 +21,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 int main() {
 
@@ -64,8 +65,14 @@ int main() {
     instances.emplace_back(models.get("models/scene.fbx"));
     instances.emplace_back(models.get("models/player/Human_standing.fbx"));
     instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
-
+    instances.emplace_back(models.get("models/key.fbx"));
+    instances.emplace_back(models.get("models/pedestal.dae"));
     Maze::generate(instances, models);
+
+    Instance & key = instances[3];
+    key.position = glm::vec3(2.5f, 1.0f, 3.0f);
+    Instance & pedestal = instances[4];
+    pedestal.position = glm::vec3(2.5f, 0.0f, 3.0f);
 
     Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 1.2f);
 
@@ -87,6 +94,21 @@ int main() {
         // Exit on ESC press
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
             break;
+        }
+
+        // Animate key
+        float offset = 0.075f * glm::cos(glm::half_pi<float>() * timer.get_time());
+        key.position = glm::vec3(2.5f, 1.0f + offset, 3.0f);
+        key.rotation = glm::vec2(0.0f, glm::half_pi<float>() * timer.get_time());
+
+        // Pick-up key
+        glm::vec2 key_position = glm::vec2(key.position.x, key.position.z);
+        if (glm::distance(key_position, player.get_position()) < 0.75f) {
+            if (keyboard.is_pressed(GLFW_KEY_SPACE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_A)) {
+                key.visible = false;
+            } else if (keyboard.is_pressed(GLFW_KEY_R) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_B)) {
+                key.visible = true;
+            }
         }
 
         // Update player
