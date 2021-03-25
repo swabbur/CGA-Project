@@ -13,6 +13,8 @@ class Mouse {
         std::set<int> down;
         float x;
         float y;
+        float scroll_x;
+        float scroll_y;
     };
 
     void * handle;
@@ -23,6 +25,7 @@ class Mouse {
     float dx;
     float dy;
     bool moved;
+    bool scrolled;
 
     Mouse();
 
@@ -33,6 +36,8 @@ class Mouse {
     void release(int button);
 
     void move(float x, float y);
+
+    void scroll(float x, float y);
 
 public:
 
@@ -58,6 +63,12 @@ public:
     [[nodiscard]] float get_dy() const;
 
     [[nodiscard]] bool is_moved() const;
+
+    [[nodiscard]] float get_scroll_x() const;
+
+    [[nodiscard]] float get_scroll_y() const;
+
+    [[nodiscard]] bool is_scrolled() const;
 
     void poll();
 };

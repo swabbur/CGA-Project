@@ -41,7 +41,7 @@ int main() {
 
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Camera camera(glm::vec3(), 4.0f * glm::vec3(0.0f, 1.0f, 1.0f));
+    Camera camera(glm::vec3(), glm::vec3(0.0f, 1.0f, 1.0f));
 
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
@@ -72,6 +72,7 @@ int main() {
 
     Instance & key = instances[3];
     key.position = glm::vec3(2.5f, 1.0f, 3.0f);
+
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(2.5f, 0.0f, 3.0f);
 
@@ -139,7 +140,9 @@ int main() {
             direction.y += gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_Y);
         }
 
-        if (glm::length(direction) > 0.1f) {
+        if (glm::length(direction) > 0.15f) {
+
+            player.activate_instance(1);
 
             // Update walking animation
             animation_progress += glm::length(direction) * timer.get_delta();
@@ -187,8 +190,16 @@ int main() {
         // Update camera
         glm::vec2 player_position = player.get_position();
         glm::vec2 player_direction = player.get_direction();
-        camera.focus(glm::vec3(player_position.x, 0.0f, player_position.y));
+        camera.focus(glm::vec3(player_position.x, 1.0f, player_position.y));
         camera.set_aspect_ratio(window.get_aspect_ratio());
+
+        if (mouse.is_scrolled()) {
+            camera.zoom(-0.5f * mouse.get_scroll_y());
+        }
+
+        if (glm::abs(gamepad.get_axis(4)) > 0.15f) {
+            camera.zoom(1.5f * gamepad.get_axis(4) * timer.get_delta());
+        }
 
         // Update light
         spot_light.direction = glm::normalize(glm::vec3(player_direction.x, -0.25f, player_direction.y));
