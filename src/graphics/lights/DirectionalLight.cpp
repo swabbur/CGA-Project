@@ -9,5 +9,6 @@ glm::mat4 DirectionalLight::get_projection_matrix(float width, float height, flo
 }
 
 glm::mat4 DirectionalLight::get_view_matrix(glm::vec3 center) const {
-    return glm::lookAt(center + direction, center, glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::vec3 rounded = glm::round(center);
+    return glm::lookAt(rounded + direction, rounded, glm::vec3(0.0f, 1.0f, 0.0f));
 }
