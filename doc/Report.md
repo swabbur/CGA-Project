@@ -5,6 +5,7 @@
 |Category|Name                     |Author(s)     |
 |--------|-------------------------|--------------|
 |Graphics|Diffuse/Specular textures|Wessel        |
+|        |Mipmapping               |Andor / Wessel|
 |        |Normal mapping           |Arnoud        |
 |        |Lighting                 |Wessel        |
 |        |Normalized Blinn-Phong   |Wessel        |
@@ -17,12 +18,12 @@
 |        |Toon shading             |Andor         |
 |        |* Reflections            |_             |
 |Modeling|Player character         |Andor         |
-|        |3D models                |Arnoud        |
+|        |Maze models              |Arnoud        |
 |        |* Hierarchical model     |Arnoud        |
 |        |* Key model              |Wessel        |
 |Logic   |AABB collision detection |Andor         |
+|        |Level design             |Arnoud        |
 |        |* Gates and keys         |Arnoud        |
-|        |* Level design           |Arnoud        |
 |General |Framework                |Wessel        |
 |        |Model loader             |Wessel        |
 |        |Gamepad support          |Wessel        |
