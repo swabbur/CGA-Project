@@ -22,6 +22,7 @@
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <algorithm>
 
 int main() {
 
@@ -76,7 +77,7 @@ int main() {
 
     Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 1.2f);
 
-    std::set<int> collision_exceptions = {1, 2};
+    std::set<int> collision_exceptions = {0, 1, 2};
 
     Texture toon_map = Texture::load("textures/toon_map.png");
 
@@ -145,6 +146,7 @@ int main() {
 
             // Compute translation
             glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
+            player.activate_instance(1);
 
             // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
@@ -164,7 +166,6 @@ int main() {
             }
 
             // Update the player
-            player.activate_instance(1);
             player.move(translation);
             player.turn(direction);
 
