@@ -2,32 +2,34 @@
 
 ## Features
 
-|Category|Name                     |Author(s)     |
-|--------|-------------------------|--------------|
-|Graphics|Diffuse/Specular textures|Wessel        |
-|        |Mipmapping               |Andor / Wessel|
-|        |Anisotropic filtering    |Wessel        |
-|        |Normal mapping           |Arnoud        |
-|        |Lighting                 |Wessel        |
-|        |Normalized Blinn-Phong   |Wessel        |
-|        |Directional light shadows|Wessel        |
-|        |Spot light shadows       |Andor / Wessel|
-|        |Slope-based bias         |Wessel        |
-|        |PCF                      |Wessel        |
-|        |Poisson sampling         |Wessel        |
-|        |X-ray vision             |Andor         |
-|        |Toon shading             |Andor         |
-|        |* Reflections            |_             |
-|Modeling|Player character         |Andor         |
-|        |Maze models              |Arnoud        |
-|        |* Hierarchical model     |Arnoud        |
-|        |* Key model              |Wessel        |
-|Logic   |AABB collision detection |Andor         |
-|        |Level design             |Arnoud        |
-|        |* Gates and keys         |Arnoud        |
-|General |Framework                |Wessel        |
-|        |Model loader             |Wessel        |
-|        |Gamepad support          |Wessel        |
+| Category | Name                      | Author(s)      |
+| -------- | ------------------------- | -------------- |
+| Graphics | Diffuse/Specular textures | Wessel         |
+|          | Mipmapping                | Andor / Wessel |
+|          | Anisotropic filtering     | Wessel         |
+|          | Normal mapping            | Arnoud         |
+|          | Lighting                  | Wessel         |
+|          | Normalized Blinn-Phong    | Wessel         |
+|          | Directional light shadows | Wessel         |
+|          | Spot light shadows        | Andor / Wessel |
+|          | Slope-based bias          | Wessel         |
+|          | PCF                       | Wessel         |
+|          | Poisson sampling          | Wessel         |
+|          | X-ray vision              | Andor          |
+|          | Toon shading              | Andor          |
+|          | *Height map               | _              |
+|          | *SSAO                     | _              |
+|          | * Reflections             | _              |
+| Modeling | Player character          | Andor          |
+|          | Maze models               | Arnoud         |
+|          | * Hierarchical model      | Arnoud         |
+|          | * Key model               | Wessel         |
+| Logic    | AABB collision detection  | Andor          |
+|          | Level design              | Arnoud         |
+|          | * Gates and keys          | Arnoud         |
+| General  | Framework                 | Wessel         |
+|          | Model loader              | Wessel         |
+|          | Gamepad support           | Wessel         |
 
 ## References
 
