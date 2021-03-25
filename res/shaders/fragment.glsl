@@ -52,9 +52,11 @@ struct Material {
 };
 
 // Constants
-float PI = 3.14159;
+const float AMBIENT_STRENGTH = 0.15;
 
-vec2 poisson_disk[4] = vec2[](
+const float PI = 3.14159;
+
+const vec2 POISSON_DISK[4] = vec2[](
     vec2(-0.94201624, -0.39906216),
     vec2(0.94558609, -0.76890725),
     vec2(-0.094184101, -0.92938870),
@@ -114,7 +116,7 @@ float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_dire
     vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
     ivec2 texture_size = textureSize(sampler, 0);
     for (int i = 0; i < 4; i++){
-        vec2 texture_coord = sample_location.xy + poisson_disk[i] / texture_size;
+        vec2 texture_coord = sample_location.xy + POISSON_DISK[i] / texture_size;
         visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
@@ -144,7 +146,7 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     float visibility = 0.0;
     ivec2 texture_size = textureSize(sampler, 0);
     for (int i = 0; i < 4; i++){
-        vec2 texture_coord = sample_location.xy + poisson_disk[i] / texture_size;
+        vec2 texture_coord = sample_location.xy + POISSON_DISK[i] / texture_size;
         visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
@@ -197,6 +199,19 @@ float compute_specular(vec3 normal, vec3 light_direction) {
     float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
 
     return clamp(specular_strength, 0.0, 1.0);
+}
+
+vec3 compute_ambient_color() {
+
+    // Compute material diffuse color
+    vec3 material_color;
+    if (material.diffuse.textured) {
+        material_color = vec3(texture(material.diffuse.sampler, fragment_texture_coord));
+    } else {
+        material_color = material.diffuse.color;
+    }
+
+    return AMBIENT_STRENGTH * material_color;
 }
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
@@ -420,9 +435,8 @@ void main() {
     // Compute color
     if (toon) {
         out_color = compute_toon(normal);
-    }
-    else {
-        out_color = compute_light_color(normal);
+    } else {
+        out_color = compute_ambient_color() + compute_light_color(normal);
     }
     out_color = clamp(out_color, 0.0, 1.0);
 }
