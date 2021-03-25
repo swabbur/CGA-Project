@@ -8,6 +8,8 @@
 
 class Instance {
 
+    bool moved;
+
     std::vector<std::reference_wrapper<Model>> models;
 
     std::optional<std::reference_wrapper<Instance>> parent;
@@ -35,7 +37,9 @@ public:
 	bool visible;
 	bool xrayable;
 
-	Instance(Instance &&) = default;
+	Instance(Instance const &) = delete;
+
+	Instance(Instance && instance) noexcept;
 
 	~Instance();
 

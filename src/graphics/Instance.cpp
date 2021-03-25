@@ -35,10 +35,15 @@ Instance Instance::create_static(Model &model) {
 }
 
 Instance::Instance(std::vector<std::reference_wrapper<Model>> models, Instance & parent) :
-    models(std::move(models)), position(0.0f), rotation(0.0f), visible(true), xrayable(false), parent(parent) {}
+    models(std::move(models)), position(0.0f), rotation(0.0f), visible(true), xrayable(false), parent(parent), moved(false) {}
 
 Instance::Instance(std::vector<std::reference_wrapper<Model>> models) :
-        models(std::move(models)), position(0.0f), rotation(0.0f), visible(true), xrayable(false), parent(std::nullopt) {}
+    models(std::move(models)), position(0.0f), rotation(0.0f), visible(true), xrayable(false), parent(std::nullopt), moved(false) {}
+
+Instance::Instance(Instance &&instance) noexcept :
+    models(std::move(instance.models)), position(instance.position), rotation(instance.rotation), visible(instance.visible), xrayable(instance.xrayable), parent(instance.parent), moved(false) {
+    instance.moved = true;
+}
 
 Instance::~Instance() = default;
 
@@ -49,6 +54,9 @@ glm::mat4 Instance::get_transformation() const {
 	model_matrix = glm::rotate(model_matrix, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	if (parent.has_value()) {
+	    if (parent.value().get().moved) {
+	        throw std::runtime_error("Accessing moved instance");
+	    }
 	    return parent.value().get().get_transformation() * model_matrix;
 	}
 

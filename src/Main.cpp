@@ -75,10 +75,6 @@ int main() {
 //    Maze::generate(instances, models);
     Gate::generate(instances, models);
 
-//    shadow_program.bind();
-//    instances[5].get_model(0).shapes[0].mesh.draw();
-//    std::cout << glm::to_string(instances[6].get_transformation()) << std::endl;
-
     Instance & key = instances[3];
     key.position = glm::vec3(2.5f, 1.0f, 3.0f);
 
