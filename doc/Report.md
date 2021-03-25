@@ -6,6 +6,7 @@
 |--------|-------------------------|--------------|
 |Graphics|Diffuse/Specular textures|Wessel        |
 |        |Mipmapping               |Andor / Wessel|
+|        |Anisotropic filtering    |Wessel        |
 |        |Normal mapping           |Arnoud        |
 |        |Lighting                 |Wessel        |
 |        |Normalized Blinn-Phong   |Wessel        |

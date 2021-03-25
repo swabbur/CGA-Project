@@ -4,6 +4,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stdexcept>
+#include <iostream>
 
 Texture Texture::load(std::string const & path) {
 
@@ -17,9 +18,6 @@ Texture Texture::load(std::string const & path) {
         throw std::runtime_error("Could not load texture: " + path);
     }
 
-    float size = std::min(width, height);
-    int levels = std::max(1, static_cast<int>(glm::log2(size)));
-
     GLuint handle;
     glCreateTextures(GL_TEXTURE_2D, 1, &handle);
 
@@ -28,6 +26,15 @@ Texture Texture::load(std::string const & path) {
 
     glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if (glewIsExtensionSupported("GL_EXT_texture_filter_anisotropic")) {
+        float anisotropy = 16.0f;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &anisotropy);
+        glTextureParameterf(handle, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+    }
+
+    float size = std::min(width, height);
+    int levels = std::max(1, static_cast<int>(glm::log2(size)));
 
     glTextureStorage2D(handle, levels, GL_RGBA8, width, height);
     glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
