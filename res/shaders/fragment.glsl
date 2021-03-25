@@ -71,6 +71,7 @@ uniform SpotLight spot_light;
 uniform XrayLight xray_light;
 uniform Material material;
 uniform bool xrayable;
+uniform bool toon_enabled;
 uniform sampler2D toon_map;
 
 // Inputs
@@ -428,7 +429,10 @@ vec3 compute_toon(vec3 normal) {
 void main() {
 
     // Compute xray visibility
-    bool toon = compute_xray(xray_light);
+    bool toon = toon_enabled;
+    if (toon) {
+        toon = compute_xray(xray_light);
+    }
 
     // Compute normal
     vec3 normal = compute_normal();

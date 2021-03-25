@@ -344,13 +344,14 @@ int main() {
             // Set xray properties
             toon_map.bind(7);
             program.set_sampler("toon_map", 7);
+            program.set_bool("toon_enabled", toon_shading_active);
 
             // Render instances
             for (Instance & instance : instances) {
                 if (instance.visible) {
 
                     // Set x-ray variables per instance
-                    program.set_bool("xrayable", (instance.xrayable & toon_shading_active));
+                    program.set_bool("xrayable", (instance.xrayable));
 
                     // Set transformation matrices
                     glm::mat4 position_transformation = instance.get_transformation();
