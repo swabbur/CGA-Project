@@ -221,8 +221,8 @@ int main() {
             camera.zoom(-0.5f * mouse.get_scroll_y());
         }
 
-        if (glm::abs(gamepad.get_axis(4)) > 0.15f) {
-            camera.zoom(1.5f * gamepad.get_axis(4) * timer.get_delta());
+        if (glm::abs(gamepad.get_axis(GLFW_GAMEPAD_AXIS_RIGHT_Y)) > 0.15f) {
+            camera.zoom(1.5f * gamepad.get_axis(GLFW_GAMEPAD_AXIS_RIGHT_Y) * timer.get_delta());
         }
 
         // Update light
