@@ -195,8 +195,9 @@ int main() {
                     if (instance.visible) {
 
                         // Set MVP matrix
-                        glm::mat4 light_mvp = directional_light.get_projection_matrix(5.0f, 5.0f, -5.0f, 10.0f)
-                            * directional_light.get_view_matrix()
+                        glm::vec2 position = player.get_position();
+                        glm::mat4 light_mvp = directional_light.get_projection_matrix(20.0f, 10.0f, -10.0f, 30.0f)
+                            * directional_light.get_view_matrix(glm::vec3(position.x, 0.0f, position.y))
                             * instance.get_transformation();
                         shadow_program.set_mat4("mvp", light_mvp);
 
@@ -284,8 +285,9 @@ int main() {
             shadow_map_1.texture.bind(4);
             program.set_sampler("directional_light.shadow_sampler", 4);
             {
-                glm::mat4 light_vp = directional_light.get_projection_matrix(5.0f, 5.0f, -5.0f, 10.0f)
-                                     * directional_light.get_view_matrix();
+                glm::vec2 position = player.get_position();
+                glm::mat4 light_vp = directional_light.get_projection_matrix(20.0f, 10.0f, -10.0f, 30.0f)
+                                     * directional_light.get_view_matrix(glm::vec3(position.x, 0.0f, position.y));
                 glm::mat4 sampling_adjustment = glm::scale(glm::translate(glm::vec3(0.5f)), glm::vec3(0.5f));
                 glm::mat4 adjusted_light_vp = sampling_adjustment * light_vp;
                 program.set_mat4("directional_light.vp", adjusted_light_vp);
