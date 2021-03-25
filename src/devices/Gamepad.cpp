@@ -1,9 +1,12 @@
-#include <devices/Gamepad.hpp>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
+#include <devices/Gamepad.hpp>
+#include <util/Files.hpp>
 
-Gamepad::Gamepad(unsigned int index) : index(index), connected(false), axes{}, pressed(), released(), down() {}
+Gamepad::Gamepad(unsigned int index) : index(index), connected(false), axes{}, pressed(), released(), down() {
+    std::string const database = Files::read_text("config/gamecontrollerdb.txt");
+    glfwUpdateGamepadMappings(database.c_str());
+}
 
 bool Gamepad::is_connected() const {
     return connected;
@@ -34,19 +37,20 @@ void Gamepad::poll() {
     pressed.clear();
     released.clear();
 
-    connected = glfwJoystickPresent(GLFW_JOYSTICK_1 + index);
+    connected = glfwJoystickIsGamepad(GLFW_JOYSTICK_1 + index);
     if (connected) {
 
+        GLFWgamepadstate state;
+        glfwGetGamepadState(GLFW_JOYSTICK_1 + index, &state);
+
         int axis_count = 6;
-        float const * axis_states = glfwGetJoystickAxes(GLFW_JOYSTICK_1 + index, &axis_count);
         for (int axis = 0; axis < axis_count; axis++) {
-            axes.insert_or_assign(axis, axis_states[axis]);
+            axes.insert_or_assign(axis, state.axes[axis]);
         }
 
         int button_count = 15;
-        unsigned char const * button_states = glfwGetJoystickButtons(GLFW_JOYSTICK_1 + index, &button_count);
         for (int button = 0; button < button_count; button++) {
-            switch (button_states[button]) {
+            switch (state.buttons[button]) {
 
                 case GLFW_PRESS:
                     if (down.insert(button).second) {

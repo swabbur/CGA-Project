@@ -18,16 +18,23 @@
 |          | Poisson sampling          | Wessel         |
 |          | X-ray vision              | Andor          |
 |          | Toon shading              | Andor          |
+<<<<<<< HEAD
 |          | * Height map              | _              |
 |          | * SSAO                    | _              |
+=======
+|          | 2D icons                  | Wessel         |
+|          | * Height map              | _              |
+>>>>>>> e7f16ec6d23b08701e3d6abc62a4a4be5021d109
 |          | * Reflections             | _              |
 | Modeling | Player character          | Andor          |
-|          | Maze models               | Arnoud         |
+|          | House model               | Arnoud         |
+|          | Wall model                | Arnoud         |
+|          | Key model                 | Wessel         |
+|          | Pedestal model            | Wessel         |
 |          | * Hierarchical model      | Arnoud         |
-|          | * Key model               | Wessel         |
 | Logic    | AABB collision detection  | Andor          |
 |          | Level design              | Arnoud         |
-|          | * Gates and keys          | Arnoud         |
+|          | * Gates and keys          | Arnoud / Wessel|
 | General  | Framework                 | Wessel         |
 |          | Model loader              | Wessel         |
 |          | Gamepad support           | Wessel         |

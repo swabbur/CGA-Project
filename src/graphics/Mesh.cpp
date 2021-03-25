@@ -4,7 +4,7 @@
 #include <graphics/Mesh.hpp>
 #include <graphics/Vertex.hpp>
 
-Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex> const & vertices, bool textured) {
+Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex<3>> const & vertices, bool textured) {
 
     GLuint ibo;
     glCreateBuffers(1, &ibo);
@@ -12,14 +12,14 @@ Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex>
 
     GLuint vbo;
     glCreateBuffers(1, &vbo);
-    glNamedBufferStorage(vbo, vertices.size() * sizeof(Vertex), vertices.data(), 0);
+    glNamedBufferStorage(vbo, vertices.size() * sizeof(Vertex<3>), vertices.data(), 0);
 
     unsigned int vao;
     glCreateVertexArrays(1, &vao);
     glVertexArrayElementBuffer(vao, ibo);
-    glVertexArrayVertexBuffer(vao, 0, vbo, offsetof(Vertex, position), sizeof(Vertex));
-    glVertexArrayVertexBuffer(vao, 1, vbo, offsetof(Vertex, normal), sizeof(Vertex));
-    glVertexArrayVertexBuffer(vao, 2, vbo, offsetof(Vertex, texture_coordinates), sizeof(Vertex));
+    glVertexArrayVertexBuffer(vao, 0, vbo, offsetof(Vertex<3>, position), sizeof(Vertex<3>));
+    glVertexArrayVertexBuffer(vao, 1, vbo, offsetof(Vertex<3>, normal), sizeof(Vertex<3>));
+    glVertexArrayVertexBuffer(vao, 2, vbo, offsetof(Vertex<3>, texture_coordinates), sizeof(Vertex<3>));
     glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, false, 0);
     glVertexArrayAttribFormat(vao, 1, 3, GL_FLOAT, false, 0);
     glVertexArrayAttribFormat(vao, 2, 2, GL_FLOAT, false, 0);
@@ -30,6 +30,43 @@ Mesh Mesh::create(std::vector<unsigned int> const & indices, std::vector<Vertex>
     unsigned int size = indices.size();
 
     return Mesh(ibo, vbo, vao, size, textured);
+}
+
+Mesh Mesh::quad() {
+
+    std::vector<unsigned int> indices = {
+        0, 1, 2,
+        0, 2, 3
+    };
+
+    std::vector<Vertex<2>> vertices = {
+            Vertex<2>(glm::vec2(-1.0f, 1.0f), glm::vec2(0.0f, 1.0f)),
+            Vertex<2>(glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 0.0f)),
+            Vertex<2>(glm::vec2(1.0f, -1.0f), glm::vec2(1.0f, 0.0f)),
+            Vertex<2>(glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 1.0f)),
+    };
+
+    GLuint ibo;
+    glCreateBuffers(1, &ibo);
+    glNamedBufferStorage(ibo, indices.size() * sizeof(unsigned int), indices.data(), 0);
+
+    GLuint vbo;
+    glCreateBuffers(1, &vbo);
+    glNamedBufferStorage(vbo, vertices.size() * sizeof(Vertex<2>), vertices.data(), 0);
+
+    unsigned int vao;
+    glCreateVertexArrays(1, &vao);
+    glVertexArrayElementBuffer(vao, ibo);
+    glVertexArrayVertexBuffer(vao, 0, vbo, offsetof(Vertex<2>, position), sizeof(Vertex<2>));
+    glVertexArrayVertexBuffer(vao, 1, vbo, offsetof(Vertex<2>, texture_coordinates), sizeof(Vertex<2>));
+    glVertexArrayAttribFormat(vao, 0, 2, GL_FLOAT, false, 0);
+    glVertexArrayAttribFormat(vao, 1, 2, GL_FLOAT, false, 0);
+    glEnableVertexArrayAttrib(vao, 0);
+    glEnableVertexArrayAttrib(vao, 1);
+
+    unsigned int size = indices.size();
+
+    return Mesh(ibo, vbo, vao, size, true);
 }
 
 Mesh::Mesh(unsigned int ibo, unsigned int vbo, unsigned int vao, unsigned int size, bool textured)

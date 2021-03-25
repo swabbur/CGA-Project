@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+template<std::size_t>
 class Vertex;
 
 class Mesh {
@@ -17,7 +18,9 @@ class Mesh {
 
 public:
 
-    static Mesh create(std::vector<unsigned int> const & indices, std::vector<Vertex> const & vertices, bool textured);
+    static Mesh create(std::vector<unsigned int> const & indices, std::vector<Vertex<3>> const & vertices, bool textured);
+
+    static Mesh quad();
 
     Mesh(Mesh const &) = delete;
 

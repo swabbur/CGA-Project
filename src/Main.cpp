@@ -7,6 +7,7 @@
 #include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
+#include <graphics/Icon.hpp>
 #include <graphics/Instance.hpp>
 #include <graphics/Model.hpp>
 #include <graphics/Program.hpp>
@@ -21,8 +22,6 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <iostream>
-#include <algorithm>
 
 int main() {
 
@@ -44,7 +43,7 @@ int main() {
     Camera camera(glm::vec3(), glm::vec3(0.0f, 1.0f, 1.0f));
 
     DirectionalLight directional_light;
-    directional_light.color = glm::vec3(1.0f);
+    directional_light.color = glm::vec3(1.0f, 1.0f, 0.9f);
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
     directional_light.intensity = 2.0f;
 
@@ -53,7 +52,7 @@ int main() {
     spot_light.position = glm::vec3(1.0f, 8.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
-    spot_light.intensity = 120.0f;
+    spot_light.intensity = 10.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(4096);
@@ -82,6 +81,17 @@ int main() {
 
     Texture toon_map = Texture::load("textures/toon_map.png");
 
+    // Initialize 2D elements
+    Program icon_program = Program::load({ "shaders/icon_vertex.glsl", "shaders/icon_fragment.glsl" });
+
+    std::vector<Icon> icons;
+    icons.emplace_back(Icon::load("icons/inventory.png"));
+    icons.emplace_back(Icon::load("icons/key.png"));
+
+    Icon & inventory_icon = icons[0];
+    Icon & key_icon = icons[1];
+
+    // Prepare time tracking
     Timer timer;
     float animation_progress = 0.0f;
 
@@ -96,6 +106,20 @@ int main() {
         // Exit on ESC press
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
             break;
+        }
+
+        // Update icon positions
+        {
+            float aspect_ratio = window.get_aspect_ratio();
+
+            inventory_icon.scale = 0.125f;
+            inventory_icon.position.x = aspect_ratio - 0.25f;
+            inventory_icon.position.y = 0.75f;
+
+            key_icon.scale = 0.125f;
+            key_icon.position.x = aspect_ratio - 0.25f;
+            key_icon.position.y = 0.75f;
+            key_icon.visible = !key.visible;
         }
 
         // Animate key
@@ -197,8 +221,8 @@ int main() {
             camera.zoom(-0.5f * mouse.get_scroll_y());
         }
 
-        if (glm::abs(gamepad.get_axis(4)) > 0.15f) {
-            camera.zoom(1.5f * gamepad.get_axis(4) * timer.get_delta());
+        if (glm::abs(gamepad.get_axis(GLFW_GAMEPAD_AXIS_RIGHT_Y)) > 0.15f) {
+            camera.zoom(1.5f * gamepad.get_axis(GLFW_GAMEPAD_AXIS_RIGHT_Y) * timer.get_delta());
         }
 
         // Update light
@@ -429,6 +453,34 @@ int main() {
                     }
                 }
             }
+        }
+
+        // Render Icons
+        {
+            // Set context options
+            context.set_depth_test(false);
+            context.set_alpha_blending(true);
+
+            // Setup shader program
+            icon_program.bind();
+            icon_program.set_float("aspect_ratio", window.get_aspect_ratio());
+
+            for (Icon & icon : icons) {
+                if (icon.visible) {
+
+                    icon_program.set_float("icon_scale", icon.scale);
+                    icon_program.set_vec2("icon_position", icon.position);
+
+                    icon.texture.bind(7);
+                    icon_program.set_sampler("icon_sampler", 7);
+
+                    icon.mesh.draw();
+                }
+            }
+
+            // Restore context options
+            context.set_depth_test(true);
+            context.set_alpha_blending(false);
         }
 
         // Update window

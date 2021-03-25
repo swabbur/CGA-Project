@@ -56,7 +56,7 @@ struct Material {
 };
 
 // Constants
-const float AMBIENT_STRENGTH = 0.15;
+const float AMBIENT_STRENGTH = 0.25;
 
 const float PI = 3.14159;
 
