@@ -40,7 +40,7 @@ int main() {
 
     Framebuffer framebuffer = Framebuffer::get_default();
     Program program = Program::load({ "shaders/vertex.glsl", "shaders/fragment.glsl" });
-    Camera camera(glm::vec3(), 4.0f * glm::vec3(0.0f, 1.0f, 1.0f));
+    Camera camera(glm::vec3(), glm::vec3(0.0f, 1.0f, 1.0f));
 
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
@@ -71,6 +71,7 @@ int main() {
 
     Instance & key = instances[3];
     key.position = glm::vec3(2.5f, 1.0f, 3.0f);
+
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(2.5f, 0.0f, 3.0f);
 
