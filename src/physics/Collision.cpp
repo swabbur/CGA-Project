@@ -46,13 +46,13 @@ float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 positi
 	}
 	else if (delta_position.x == 0.0f) {
 		bool betweenx = pos1.x < pos2.x+size2.x && pos1.x + size1.x > pos2.x;
-		entry_time = glm::vec2(betweenx ? 0.0f : std::numeric_limits<float>::infinity(), collision_distance.y / delta_position.y);
-		exit_time = glm::vec2(betweenx ? std::numeric_limits<float>::infinity() : 0.0f, exit_distance.y / delta_position.y);
+		entry_time = glm::vec2(betweenx ? -std::numeric_limits<float>::infinity() : std::numeric_limits<float>::infinity(), collision_distance.y / delta_position.y);
+		exit_time = glm::vec2(betweenx ? std::numeric_limits<float>::infinity() : -std::numeric_limits<float>::infinity(), exit_distance.y / delta_position.y);
 	}
 	else if (delta_position.y == 0.0f) {
 		bool betweeny = pos1.y < pos2.y + size2.y && pos1.y + size1.y > pos2.y;
-		entry_time = glm::vec2(collision_distance.x / delta_position.x, betweeny ? 0.0f : std::numeric_limits<float>::infinity());
-		exit_time = glm::vec2(exit_distance.x / delta_position.x, betweeny ? std::numeric_limits<float>::infinity() : 0.0f);
+		entry_time = glm::vec2(collision_distance.x / delta_position.x, betweeny ? -std::numeric_limits<float>::infinity() : std::numeric_limits<float>::infinity());
+		exit_time = glm::vec2(exit_distance.x / delta_position.x, betweeny ? std::numeric_limits<float>::infinity() : -std::numeric_limits<float>::infinity());
 	}
 	else {
 		entry_time = collision_distance / delta_position;
@@ -92,7 +92,7 @@ glm::vec2 Collision::resolve_collision(Shape const& o1, Shape const& o2, glm::ve
 	}
 
 	glm::vec2 other_direction = glm::vec2(1.0f, 1.0f) - collision_direction;
-	glm::vec2 final_delta_position = (collision_direction * (collision_distance - (glm::normalize(collision_distance * collision_direction) * glm::vec2(1e-3)))) + (other_direction * delta_position);
+	glm::vec2 final_delta_position = (collision_direction * (collision_distance + (glm::normalize(collision_distance * collision_direction) * glm::vec2(1e-2)))) + (other_direction * delta_position);
 
 	return final_delta_position;
 }

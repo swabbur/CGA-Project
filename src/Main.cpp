@@ -76,7 +76,7 @@ int main() {
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(2.5f, 0.0f, 3.0f);
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 1.2f);
+    Player player({ instances[1], instances[2] }, glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, -1.0f), 1.2f);
 
     std::set<int> collision_exceptions = {0, 1, 2};
 
