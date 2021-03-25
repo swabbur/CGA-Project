@@ -76,8 +76,6 @@ float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 positi
 		collision_distance.y = exit_distance.y;
 	}
 
-	std::cout << collision_distance.x << " " << collision_distance.y << std::endl;
-
 	collision_direction = (std::abs(collision_distance.x) < std::abs(collision_distance.y) ? glm::vec2(1.0f, 0.0f) : glm::vec2(0.0f, 1.0f));
 
 	return max_entry_time;
