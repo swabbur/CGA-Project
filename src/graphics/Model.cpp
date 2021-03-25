@@ -110,11 +110,11 @@ Mesh parse_mesh(aiMesh const * mesh) {
     }
 
     // Parse vertices
-    std::vector<Vertex> vertices;
+    std::vector<Vertex<3>> vertices;
     vertices.reserve(mesh->mNumVertices);
     bool textured = false;
     for (unsigned j = 0; j < mesh->mNumVertices; j++) {
-        Vertex vertex;
+        Vertex<3> vertex;
         vertex.position = glm::vec4(parse_vector(mesh->mVertices[j]), 1.0f);
         vertex.normal = parse_vector(mesh->mNormals[j]);
         if (mesh->HasTextureCoords(0)) {

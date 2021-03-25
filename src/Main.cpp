@@ -7,6 +7,7 @@
 #include <graphics/lights/SpotLight.hpp>
 #include <graphics/Context.hpp>
 #include <graphics/Framebuffer.hpp>
+#include <graphics/Icon.hpp>
 #include <graphics/Instance.hpp>
 #include <graphics/Model.hpp>
 #include <graphics/Program.hpp>
@@ -21,9 +22,44 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 int main() {
+
+//    DeviceManager device_manager;
+//    Window & window = device_manager.get_window();
+//
+//    Context context(window);
+//    context.set_cull_face(false);
+//    context.set_depth_test(false);
+//    context.set_clear_color(0.5f, 0.5f, 0.5f);
+//    context.set_clear_depth(1.0f);
+//    context.set_multisampling(false);
+//
+//    Program program = Program::load({ "shaders/icon_vertex.glsl", "shaders/icon_fragment.glsl" });
+//    Icon icon = Icon::load("icons/key.png");
+////    icon.scale = 0.5f;
+////    icon.position = glm::vec2(0.25f, 0.0f);
+//
+//    while (!window.is_closed()) {
+//        window.poll();
+//
+//        context.set_view_port(0, 0, window.get_width(), window.get_height());
+//        context.clear();
+//
+//        program.bind();
+//        program.set_float("aspect_ratio", window.get_aspect_ratio());
+//
+//        program.set_float("icon_scale", icon.scale);
+//        program.set_vec2("icon_position", icon.position);
+//        icon.texture.bind(0);
+//        program.set_sampler("icon_sampler", 1);
+//
+//        icon.mesh.draw();
+//
+//        window.swap_buffers();
+//    }
+//
+//    return 0;
 
     DeviceManager device_manager;
     Window & window = device_manager.get_window();
@@ -81,6 +117,17 @@ int main() {
 
     Texture toon_map = Texture::load("textures/toon_map.png");
 
+    // Initialize 2D elements
+    Program icon_program = Program::load({ "shaders/icon_vertex.glsl", "shaders/icon_fragment.glsl" });
+
+    std::vector<Icon> icons;
+    icons.emplace_back(Icon::load("icons/inventory.png"));
+    icons.emplace_back(Icon::load("icons/key.png"));
+
+    Icon & inventory_icon = icons[0];
+    Icon & key_icon = icons[1];
+
+    // Prepare time tracking
     Timer timer;
     float animation_progress = 0.0f;
 
@@ -95,6 +142,20 @@ int main() {
         // Exit on ESC press
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
             break;
+        }
+
+        // Update icon positions
+        {
+            float aspect_ratio = window.get_aspect_ratio();
+
+            inventory_icon.scale = 0.125f;
+            inventory_icon.position.x = aspect_ratio - 0.25f;
+            inventory_icon.position.y = 0.75f;
+
+            key_icon.scale = 0.125f;
+            key_icon.position.x = aspect_ratio - 0.25f;
+            key_icon.position.y = 0.75f;
+            key_icon.visible = !key.visible;
         }
 
         // Animate key
@@ -422,6 +483,34 @@ int main() {
                     }
                 }
             }
+        }
+
+        // Render Icons
+        {
+            // Set context options
+            context.set_depth_test(false);
+            context.set_alpha_blending(true);
+
+            // Setup shader program
+            icon_program.bind();
+            icon_program.set_float("aspect_ratio", window.get_aspect_ratio());
+
+            for (Icon & icon : icons) {
+                if (icon.visible) {
+
+                    icon_program.set_float("icon_scale", icon.scale);
+                    icon_program.set_vec2("icon_position", icon.position);
+
+                    icon.texture.bind(7);
+                    icon_program.set_sampler("icon_sampler", 7);
+
+                    icon.mesh.draw();
+                }
+            }
+
+            // Restore context options
+            context.set_depth_test(true);
+            context.set_alpha_blending(false);
         }
 
         // Update window

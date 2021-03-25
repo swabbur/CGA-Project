@@ -34,6 +34,8 @@ public:
 
     void set_float(std::string const & name, float scalar);
 
+    void set_vec2(std::string const & name, glm::vec2 const & vector);
+
     void set_vec3(std::string const & name, glm::vec3 const & vector);
 
     void set_mat3(std::string const & name, glm::mat3 const& matrix);
