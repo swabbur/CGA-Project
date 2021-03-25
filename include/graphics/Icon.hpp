@@ -3,6 +3,7 @@
 #include "Mesh.hpp"
 #include "Texture.hpp"
 
+#include <glm/glm.hpp>
 #include <string>
 
 class Icon {

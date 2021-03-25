@@ -7,6 +7,7 @@
 #include <iostream>
 
 Texture Texture::load(std::string const & path) {
+    std::cout << "Loading: " << path << std::endl;
 
     int width;
     int height;

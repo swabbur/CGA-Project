@@ -17,6 +17,7 @@ Player::Player(std::vector<std::reference_wrapper<Instance>> const & instances,
 
     Instance & instance = instances[active_instance];
     instance.visible = true;
+    update_active_instance();
 }
 
 Instance & Player::get_instance() const {

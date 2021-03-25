@@ -25,42 +25,6 @@
 
 int main() {
 
-//    DeviceManager device_manager;
-//    Window & window = device_manager.get_window();
-//
-//    Context context(window);
-//    context.set_cull_face(false);
-//    context.set_depth_test(false);
-//    context.set_clear_color(0.5f, 0.5f, 0.5f);
-//    context.set_clear_depth(1.0f);
-//    context.set_multisampling(false);
-//
-//    Program program = Program::load({ "shaders/icon_vertex.glsl", "shaders/icon_fragment.glsl" });
-//    Icon icon = Icon::load("icons/key.png");
-////    icon.scale = 0.5f;
-////    icon.position = glm::vec2(0.25f, 0.0f);
-//
-//    while (!window.is_closed()) {
-//        window.poll();
-//
-//        context.set_view_port(0, 0, window.get_width(), window.get_height());
-//        context.clear();
-//
-//        program.bind();
-//        program.set_float("aspect_ratio", window.get_aspect_ratio());
-//
-//        program.set_float("icon_scale", icon.scale);
-//        program.set_vec2("icon_position", icon.position);
-//        icon.texture.bind(0);
-//        program.set_sampler("icon_sampler", 1);
-//
-//        icon.mesh.draw();
-//
-//        window.swap_buffers();
-//    }
-//
-//    return 0;
-
     DeviceManager device_manager;
     Window & window = device_manager.get_window();
     Keyboard & keyboard = device_manager.get_keyboard();
@@ -111,9 +75,9 @@ int main() {
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(2.5f, 0.0f, 3.0f);
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 1.2f);
+    Player player({ instances[1], instances[2] }, glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, -1.0f), 1.2f);
 
-    std::set<int> collision_exceptions = {1, 2};
+    std::set<int> collision_exceptions = {0, 1, 2};
 
     Texture toon_map = Texture::load("textures/toon_map.png");
 
@@ -209,6 +173,7 @@ int main() {
 
             // Compute translation
             glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
+            player.activate_instance(1);
 
             // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
@@ -415,13 +380,14 @@ int main() {
             // Set xray properties
             toon_map.bind(7);
             program.set_sampler("toon_map", 7);
+            program.set_bool("toon_enabled", toon_shading_active);
 
             // Render instances
             for (Instance & instance : instances) {
                 if (instance.visible) {
 
                     // Set x-ray variables per instance
-                    program.set_bool("xrayable", (instance.xrayable & toon_shading_active));
+                    program.set_bool("xrayable", (instance.xrayable));
 
                     // Set transformation matrices
                     glm::mat4 position_transformation = instance.get_transformation();
