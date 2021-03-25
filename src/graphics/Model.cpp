@@ -124,11 +124,15 @@ Mesh parse_mesh(aiMesh const * mesh) {
         vertices.push_back(vertex);
     }
 
-    // Parse AABB
-    AABB const & aabb = AABB(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z), mesh->mAABB.mMax.y - mesh->mAABB.mMin.y);
-
     // Create mesh
-    return Mesh::create(indices, vertices, textured, aabb);
+    return Mesh::create(indices, vertices, textured);
+}
+
+BoundingBox parse_bounding_box(aiMesh const* mesh) {
+    // Parse bounding box
+    BoundingBox bounding_box(glm::vec2(mesh->mAABB.mMin.x, mesh->mAABB.mMin.z), glm::vec2(mesh->mAABB.mMax.x, mesh->mAABB.mMax.z), mesh->mAABB.mMax.y - mesh->mAABB.mMin.y);
+
+    return bounding_box;
 }
 
 Model Model::load(std::string const & path) {
@@ -157,6 +161,8 @@ Model Model::load(std::string const & path) {
     // Parse meshes
     std::vector<Mesh> meshes;
     meshes.reserve(scene->mNumMeshes);
+    std::vector<BoundingBox> bounding_boxes;
+    bounding_boxes.reserve(scene->mNumMeshes);
     std::vector<unsigned int> mesh_material_indices;
     mesh_material_indices.reserve(scene->mNumMeshes);
     for (unsigned int index = 0; index < scene->mNumMeshes; index++) {
@@ -164,6 +170,8 @@ Model Model::load(std::string const & path) {
         Mesh mesh = parse_mesh(assimp_mesh);
         meshes.push_back(std::move(mesh));
         mesh_material_indices.push_back(assimp_mesh->mMaterialIndex);
+        BoundingBox bounding_box = parse_bounding_box(assimp_mesh);
+        bounding_boxes.push_back(std::move(bounding_box));
     }
 
     // Parse nodes
@@ -179,7 +187,8 @@ Model Model::load(std::string const & path) {
             unsigned int material_index = mesh_material_indices[mesh_index];
             Material & material = materials[material_index];
             Mesh & mesh = meshes[mesh_index];
-            shapes.emplace_back(material, mesh);
+            BoundingBox& bounding_box = bounding_boxes[mesh_index];
+            shapes.emplace_back(material, mesh, bounding_box);
         }
 
         for (unsigned index = 0; index < node->mNumChildren; index++) {

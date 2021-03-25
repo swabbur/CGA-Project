@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-class AABB {
+class BoundingBox {
 
     glm::vec2 minima;
     glm::vec2 maxima;
@@ -10,7 +10,7 @@ class AABB {
 
 public:
 
-    AABB(glm::vec2 min, glm::vec2 max, float height);
+    BoundingBox(glm::vec2 min, glm::vec2 max, float height);
 
     [[nodiscard]] glm::vec2 get_minima() const;
 
@@ -18,6 +18,6 @@ public:
 
     [[nodiscard]] float get_height() const;
 
-    AABB flip();
+    BoundingBox flip();
 
 };

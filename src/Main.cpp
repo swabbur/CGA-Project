@@ -22,6 +22,7 @@
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <algorithm>
 
 int main() {
 
@@ -75,9 +76,9 @@ int main() {
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(2.5f, 0.0f, 3.0f);
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-0.2f, -0.4f), glm::vec2(0.0f, -1.0f), 1.2f);
+    Player player({ instances[1], instances[2] }, glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, -1.0f), 1.2f);
 
-    std::set<int> collision_exceptions = {1, 2};
+    std::set<int> collision_exceptions = {0, 1, 2};
 
     Texture toon_map = Texture::load("textures/toon_map.png");
 
@@ -148,6 +149,7 @@ int main() {
 
             // Compute translation
             glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
+            player.activate_instance(1);
 
             // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
@@ -354,13 +356,14 @@ int main() {
             // Set xray properties
             toon_map.bind(7);
             program.set_sampler("toon_map", 7);
+            program.set_bool("toon_enabled", toon_shading_active);
 
             // Render instances
             for (Instance & instance : instances) {
                 if (instance.visible) {
 
                     // Set x-ray variables per instance
-                    program.set_bool("xrayable", (instance.xrayable & toon_shading_active));
+                    program.set_bool("xrayable", (instance.xrayable));
 
                     // Set transformation matrices
                     glm::mat4 position_transformation = instance.get_transformation();
