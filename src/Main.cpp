@@ -105,9 +105,7 @@ int main() {
         glm::vec2 key_position = glm::vec2(key.position.x, key.position.z);
         if (glm::distance(key_position, player.get_position()) < 0.75f) {
             if (keyboard.is_pressed(GLFW_KEY_SPACE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_A)) {
-                key.visible = false;
-            } else if (keyboard.is_pressed(GLFW_KEY_R) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_B)) {
-                key.visible = true;
+                key.visible = !key.visible;
             }
         }
 
