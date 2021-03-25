@@ -23,6 +23,8 @@
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
 
+void render_instance(glm::mat4 fixed_transformation, glm::mat4 parent_transformation, Program &program, int animation_frame, Instance &instance);
+
 int main() {
 
     DeviceManager device_manager;
@@ -175,6 +177,7 @@ int main() {
             glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
             player.activate_instance(1);
 
+            // TODO: Check collisions with subinstances
             // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
                 if (collision_exceptions.contains(j)) continue;
@@ -249,18 +252,14 @@ int main() {
                 shadow_program.bind();
                 for (Instance & instance : instances) {
                     if (instance.visible) {
-
-                        // Set MVP matrix
                         glm::vec2 position = player.get_position();
-                        glm::mat4 light_mvp = directional_light.get_projection_matrix(20.0f, 10.0f, -10.0f, 30.0f)
-                            * directional_light.get_view_matrix(glm::vec3(position.x, 0.0f, position.y))
-                            * instance.get_transformation();
-                        shadow_program.set_mat4("mvp", light_mvp);
-
-                        // Render shapes
-                        for (Shape const & shape : instance.get_model(animation_frame).shapes) {
-                            shape.mesh.draw();
-                        }
+                        glm::mat4 fixed_transformation = directional_light.get_projection_matrix(20.0f, 10.0f, -10.0f, 30.0f)
+                             * directional_light.get_view_matrix(glm::vec3(position.x, 0.0f, position.y));
+                        render_instance(fixed_transformation,
+                                        glm::mat4(1.0f),
+                                        shadow_program,
+                                        animation_frame,
+                                        instance);
                     }
                 }
             }
@@ -276,17 +275,9 @@ int main() {
                 shadow_program.bind();
                 for (Instance & instance : instances) {
                     if (instance.visible) {
-
-                        // Set MVP matrix
-                        glm::mat4 light_mvp = spot_light.get_projection_matrix(0.1f, 10.0f)
-                            * spot_light.get_view_matrix()
-                            * instance.get_transformation();
-                        shadow_program.set_mat4("mvp", light_mvp);
-
-                        // Render shapes
-                        for (Shape const & shape : instance.get_model(animation_frame).shapes) {
-                            shape.mesh.draw();
-                        }
+                        glm::mat4 fixed_transformation = spot_light.get_projection_matrix(0.1f, 10.0f)
+                            * spot_light.get_view_matrix();
+                        render_instance(fixed_transformation, glm::mat4(1.0f), shadow_program, animation_frame, instance);
                     }
                 }
             }
@@ -302,17 +293,9 @@ int main() {
                 shadow_program.bind();
                 for (Instance& instance : instances) {
                     if (instance.visible && instance.xrayable) {
-
-                        // Set MVP matrix
-                        glm::mat4 light_mvp = camera.get_projection_matrix()
-                            * camera.get_view_matrix()
-                            * instance.get_transformation();
-                        shadow_program.set_mat4("mvp", light_mvp);
-
-                        // Render shapes
-                        for (Shape const& shape : instance.get_model(animation_frame).shapes) {
-                            shape.mesh.draw();
-                        }
+                        glm::mat4 fixed_transformation = camera.get_projection_matrix()
+                            * camera.get_view_matrix();
+                        render_instance(fixed_transformation, glm::mat4(1.0f), shadow_program, animation_frame, instance);
                     }
                 }
             }
@@ -487,4 +470,21 @@ int main() {
     }
 
     return 0;
+}
+
+void render_instance(glm::mat4 fixed_transformation, glm::mat4 parent_transformation, Program &program, int animation_frame,
+                Instance &instance) {
+    // Set MVP matrix
+    glm::mat4 instance_transformation = parent_transformation * instance.get_transformation();
+    glm::mat4 light_mvp = fixed_transformation * instance_transformation;
+    program.set_mat4("mvp", light_mvp);
+
+    // Render shapes
+    for (Shape const &shape : instance.get_model(animation_frame).shapes) {
+        shape.mesh.draw();
+    }
+
+    for (Instance const &child : instance.children) {
+        render_instance(fixed_transformation, instance_transformation, program, animation_frame, instance);
+    }
 }

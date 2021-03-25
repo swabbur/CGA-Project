@@ -22,6 +22,8 @@ public:
 	bool visible;
 	bool xrayable;
 
+    std::vector<Instance> children;
+
 	explicit Instance(std::vector<std::reference_wrapper<Model>> models);
 
 	explicit Instance(Model & model);
