@@ -44,14 +44,14 @@ int main() {
     DirectionalLight directional_light;
     directional_light.color = glm::vec3(1.0f);
     directional_light.direction = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
-    directional_light.intensity = 3.0f;
+    directional_light.intensity = 2.0f;
 
     SpotLight spot_light;
     spot_light.color = glm::vec3(1.0f);
     spot_light.position = glm::vec3(1.0f, 8.0f, 0.0f);
     spot_light.direction = glm::vec3(0.0f, -1.0f, 0.0f);
     spot_light.angle = glm::quarter_pi<float>() / 2.0; // Angle from center vector
-    spot_light.intensity = 15.0f;
+    spot_light.intensity = 12.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
     ShadowMap shadow_map_1 = ShadowMap::create(2048);
