@@ -13,12 +13,13 @@
 |          | Directional light shadows | Wessel         |
 |          | Spot light shadows        | Andor / Wessel |
 |          | Slope-based bias          | Wessel         |
+|          | Depth-based bias          | Andor / Wessel |
 |          | PCF                       | Wessel         |
 |          | Poisson sampling          | Wessel         |
 |          | X-ray vision              | Andor          |
 |          | Toon shading              | Andor          |
-|          | *Height map               | _              |
-|          | *SSAO                     | _              |
+|          | * Height map              | _              |
+|          | * SSAO                    | _              |
 |          | * Reflections             | _              |
 | Modeling | Player character          | Andor          |
 |          | Maze models               | Arnoud         |
