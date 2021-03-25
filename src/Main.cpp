@@ -54,7 +54,7 @@ int main() {
     spot_light.intensity = 12.0f;
 
     Program shadow_program = Program::load({ "shaders/shadow_vertex.glsl" });
-    ShadowMap shadow_map_1 = ShadowMap::create(2048);
+    ShadowMap shadow_map_1 = ShadowMap::create(4096);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
     ShadowMap shadow_map_3 = ShadowMap::create(2048);
 

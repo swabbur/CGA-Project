@@ -111,9 +111,14 @@ float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_dire
     float light_angle = acos(max(0.0, dot(fragment_normal, light_direction)));
     float bias = clamp(0.001 * tan(light_angle), 0.0, 0.01);
 
+    // Compute sample location
+    vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
+    if (sample_location.x < 0.0 || sample_location.x > 1.0 || sample_location.y < 0.0 || sample_location.y > 1.0) {
+        return 1.0;
+    }
+
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
-    vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
     ivec2 texture_size = textureSize(sampler, 0);
     for (int i = 0; i < 4; i++){
         vec2 texture_coord = sample_location.xy + POISSON_DISK[i] / texture_size;
@@ -134,11 +139,7 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     sample_location.xyz = sample_location.xyz * 0.5 + 0.5;
 
     // Early-exit outside of shadow map
-    if (sample_location.x < 0.0
-        || sample_location.x > 1.0
-        || sample_location.y < 0.0
-        || sample_location.y > 1.0
-    ) {
+    if (sample_location.x < 0.0 || sample_location.x > 1.0 || sample_location.y < 0.0 || sample_location.y > 1.0) {
         return 0.0;
     }
 
