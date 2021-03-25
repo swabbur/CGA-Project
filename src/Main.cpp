@@ -62,11 +62,12 @@ int main() {
     Cache<std::string, Model> models(Model::load);
 
     std::vector<Instance> instances;
-    instances.emplace_back(models.get("models/scene.fbx"));
+    instances.emplace_back(models.get("models/floor.fbx"));
     instances.emplace_back(models.get("models/player/Human_standing.fbx"));
     instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
     instances.emplace_back(models.get("models/key.fbx"));
     instances.emplace_back(models.get("models/pedestal.dae"));
+    instances.emplace_back(models.get("models/house.fbx"));
     Maze::generate(instances, models);
 
     Instance & key = instances[3];
