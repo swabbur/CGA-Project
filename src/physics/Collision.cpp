@@ -1,12 +1,17 @@
 #include <physics/Collision.hpp>
 #include <iostream>
 
-float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 d1, glm::vec2 d2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance) {
+float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 d1, glm::vec2 d2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance, bool rotation_invariant1) {
 	// Set up preliminary values
 	AABB aabb1 = AABB(o1.get_AABB());
 	AABB aabb2 = AABB(o2.get_AABB());
 
-	if (std::abs(d1[0]) < std::abs(d1[1])) {
+	if (rotation_invariant1) {
+		float minima = std::min(aabb1.get_minima().x, aabb1.get_minima().y);
+		float maxima = std::max(aabb1.get_maxima().x, aabb1.get_maxima().y);
+		aabb1 = AABB(glm::vec2(minima), glm::vec2(maxima), aabb1.get_height());
+	}
+	else if (std::abs(d1[0]) < std::abs(d1[1])) {
 	    aabb1 = aabb1.flip();
 	}
     if (std::abs(d2[0]) < std::abs(d2[1])) {
@@ -82,7 +87,7 @@ glm::vec2 Collision::resolve_collision(Shape const& o1, Shape const& o2, glm::ve
 
 	glm::vec2 collision_direction(0.0f);
 	glm::vec2 collision_distance(0.0f);
-	float collision_time = swept_AABB(o1, o2, position1, position2, d1, d2, delta_position, collision_direction, collision_distance);
+	float collision_time = swept_AABB(o1, o2, position1, position2, d1, d2, delta_position, collision_direction, collision_distance, true);
 
 	if (collision_time >= 1.0f) {
 		return delta_position;
