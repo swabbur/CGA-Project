@@ -23,7 +23,7 @@ void Maze::generate(std::vector<Instance> &instances, Cache<std::string, struct 
     };
 
     for (std::pair<short, short> const& coordinate : positions) {
-        instances.emplace_back(cache.get("models/wall.fbx"));
+        instances.push_back(Instance::create_static(cache.get("models/wall.fbx")));
         Instance* instance = &instances[instances.size() - 1];
         instance->position = glm::vec3( 8 - (float)coordinate.first, 0, 8 - (float)coordinate.second);
         if (coordinate.first % 2 == 0) {

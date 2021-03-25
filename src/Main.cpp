@@ -22,6 +22,10 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <objects/Gate.hpp>
+#include <iostream>
+
+#include <glm/gtx/string_cast.hpp>
 
 int main() {
 
@@ -62,12 +66,18 @@ int main() {
     Cache<std::string, Model> models(Model::load);
 
     std::vector<Instance> instances;
-    instances.emplace_back(models.get("models/scene.fbx"));
-    instances.emplace_back(models.get("models/player/Human_standing.fbx"));
+    instances.reserve(128);
+    instances.push_back(Instance::create_static(models.get("models/key.fbx")));
+    instances.push_back(Instance::create_static(models.get("models/player/Human_standing.fbx")));
     instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
-    instances.emplace_back(models.get("models/key.fbx"));
-    instances.emplace_back(models.get("models/pedestal.dae"));
-    Maze::generate(instances, models);
+    instances.push_back(Instance::create_static(models.get("models/key.fbx")));
+    instances.push_back(Instance::create_static(models.get("models/pedestal.dae")));
+//    Maze::generate(instances, models);
+    Gate::generate(instances, models);
+
+//    shadow_program.bind();
+//    instances[5].get_model(0).shapes[0].mesh.draw();
+//    std::cout << glm::to_string(instances[6].get_transformation()) << std::endl;
 
     Instance & key = instances[3];
     key.position = glm::vec3(2.5f, 1.0f, 3.0f);
