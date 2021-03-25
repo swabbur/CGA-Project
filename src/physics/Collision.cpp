@@ -3,8 +3,8 @@
 
 float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 d1, glm::vec2 d2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance) {
 	// Set up preliminary values
-	AABB aabb1 = AABB(o1.get_mesh().get_AABB());
-	AABB aabb2 = AABB(o2.get_mesh().get_AABB());
+	AABB aabb1 = AABB(o1.get_AABB());
+	AABB aabb2 = AABB(o2.get_AABB());
 
 	if (std::abs(d1[0]) < std::abs(d1[1])) {
 	    aabb1 = aabb1.flip();
