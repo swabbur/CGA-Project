@@ -69,3 +69,7 @@ Model& Instance::get_model(int index) {
     }
 	return models[0];
 }
+
+int Instance::get_frame_count() const {
+    return models.size();
+}

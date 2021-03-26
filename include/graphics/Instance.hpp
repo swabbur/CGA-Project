@@ -45,6 +45,8 @@ public:
 
 	[[nodiscard]] glm::mat4 get_transformation() const;
 
+    [[nodiscard]] int get_frame_count() const;
+
 	Model & get_model(int index);
 
 };

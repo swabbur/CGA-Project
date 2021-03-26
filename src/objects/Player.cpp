@@ -1,5 +1,6 @@
 #include <objects/Player.hpp>
 #include <cmath>
+#include <iostream>
 
 Player::Player(std::vector<std::reference_wrapper<Instance>> const & instances,
                glm::vec2 position,
@@ -9,7 +10,9 @@ Player::Player(std::vector<std::reference_wrapper<Instance>> const & instances,
     active_instance(0),
     position(position),
     direction(direction),
-    speed(speed)
+    speed(speed),
+    passive_instance(0),
+    max_passive_time(0.0f)
 {
     for (Instance & instance : instances) {
 		instance.visible = false;
@@ -24,6 +27,14 @@ Instance & Player::get_instance() const {
     return instances[active_instance];
 }
 
+int Player::get_passive_instance(int time) {
+    std::cout << time << " < " << max_passive_time << " " << passive_instance << std::endl;
+    if (time > max_passive_time && passive_instance != 0) {
+        passive_instance = 0;
+    }
+    return passive_instance;
+}
+
 glm::vec2 Player::get_position() const {
     return position;
 }
@@ -34,6 +45,11 @@ glm::vec2 Player::get_direction() const {
 
 float Player::get_speed() const {
     return speed;
+}
+
+void Player::set_passive_instance(int index, int time) {
+    passive_instance = index;
+    max_passive_time = instances[index].get().get_frame_count() + time;
 }
 
 void Player::activate_instance(std::size_t index) {
