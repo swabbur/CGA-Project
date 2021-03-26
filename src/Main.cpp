@@ -67,12 +67,13 @@ int main() {
 
     std::vector<Instance> instances;
     instances.reserve(128);
-    instances.push_back(Instance::create_static(models.get("models/key.fbx")));
-    instances.push_back(Instance::create_static(models.get("models/player/Human_standing.fbx")));
+    instances.emplace_back(models.get("models/floor.fbx"));
+    instances.emplace_back(models.get("models/player/Human_standing.fbx"));
     instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
-    instances.push_back(Instance::create_static(models.get("models/key.fbx")));
-    instances.push_back(Instance::create_static(models.get("models/pedestal.dae")));
-//    Maze::generate(instances, models);
+    instances.emplace_back(models.get("models/key.fbx"));
+    instances.emplace_back(models.get("models/pedestal.dae"));
+    instances.emplace_back(models.get("models/house.fbx"));
+    Maze::generate(instances, models);
     Gate::generate(instances, models);
 
     Instance & key = instances[3];
@@ -367,6 +368,8 @@ int main() {
                                      * spot_light.get_view_matrix();
                 program.set_mat4("spot_light.vp", light_vp);
             }
+            program.set_float("spot_light.near", 0.1f);
+            program.set_float("spot_light.far", 10.0f);
 
             program.set_vec3("xray_light.position", camera.get_position());
             {
@@ -382,6 +385,8 @@ int main() {
                 program.set_sampler("xray_light.shadow_sampler", 6);
                 program.set_mat4("xray_light.vp", light_vp);
             }
+            program.set_float("xray_light.near", 0.01f);
+            program.set_float("xray_light.far", 100.0f);
 
             // Set xray properties
             toon_map.bind(7);
