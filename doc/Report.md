@@ -1,5 +1,8 @@
 # Report
 
+The following sections present the features we have implemented, some screenshots of those features, and a small list
+of references we used while implementing the shading and shadows.
+
 ## Features
 
 | Category | Name                      | Author(s)       |
@@ -31,6 +34,32 @@
 | Other    | Framework                 | Wessel          |
 |          | Model loader              | Wessel          |
 |          | Gamepad support           | Wessel          |
+
+## Screenshots
+
+### Spot light shadows + Custom models
+
+![](images/spot_light_shadows_and_custom_models.png)
+
+### Directional shadows
+
+![](images/directional_shadows.png)
+
+### Hierarchical door
+
+![](images/hierarchical_door.png)
+
+### Normal maps
+
+![](images/normal_maps.png)
+
+### X-toon shading
+
+![](images/x-toon_shading.png)
+
+### X-ray vision
+
+![](images/x-ray_vision.png)
 
 ## References
 

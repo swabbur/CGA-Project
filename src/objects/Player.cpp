@@ -1,6 +1,5 @@
 #include <objects/Player.hpp>
 #include <cmath>
-#include <iostream>
 
 Player::Player(std::vector<std::reference_wrapper<Instance>> const & instances,
                glm::vec2 position,
@@ -28,7 +27,6 @@ Instance & Player::get_instance() const {
 }
 
 int Player::get_passive_instance(int time) {
-    std::cout << time << " < " << max_passive_time << " " << passive_instance << std::endl;
     if (time > max_passive_time && passive_instance != 0) {
         passive_instance = 0;
     }
