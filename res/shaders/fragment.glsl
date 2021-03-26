@@ -401,13 +401,12 @@ bool compute_xray(XrayLight light) {
         return false;
     }
 
-    // Shadow
+    // Compute visibility
     float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction, light.near, light.far);
-
     if (visibility > 0.5 && xrayable) {
         discard;
     }
-    return visibility <= 0.5;
+    return true;
 }
 
 // Color computations

@@ -1,6 +1,6 @@
 #include <devices/Mouse.hpp>
 
-Mouse::Mouse() : handle(nullptr), mutex(), latest{}, polled(latest), dx(0.0f), dy(0.0f), moved(false) {}
+Mouse::Mouse() : handle(nullptr), mutex(), latest{}, polled(latest), dx(0.0f), dy(0.0f), moved(false), scrolled(false) {}
 
 Mouse::~Mouse() = default;
 

@@ -1,4 +1,3 @@
-#include <GL/glew.h>
 #include <devices/DeviceManager.hpp>
 #include <devices/Gamepad.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -23,15 +22,14 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 int main() {
 
     DeviceManager device_manager;
     Window & window = device_manager.get_window();
+    Gamepad & gamepad = device_manager.get_gamepad();
     Keyboard & keyboard = device_manager.get_keyboard();
     Mouse & mouse = device_manager.get_mouse();
-    Gamepad gamepad(0);
 
     Context context(window);
     context.set_clear_color(0.5f, 0.5f, 0.5f);
@@ -106,7 +104,7 @@ int main() {
         gamepad.poll();
 
         // Exit on ESC press
-        if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
+        if (keyboard.is_pressed(GLFW_KEY_ESCAPE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_Y)) {
             break;
         }
 

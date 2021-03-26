@@ -21,10 +21,6 @@ glm::vec3 Camera::get_focus_point() const {
     return center;
 }
 
-glm::vec3 Camera::get_direction() const {
-    return -inverse_direction;
-}
-
 void Camera::set_aspect_ratio(float new_aspect_ratio) {
     aspect_ratio = new_aspect_ratio;
 }

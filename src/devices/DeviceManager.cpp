@@ -1,15 +1,14 @@
 #include <devices/DeviceManager.hpp>
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <mutex>
 #include <stdexcept>
 #include <future>
-#include <iostream>
+#include <util/Files.hpp>
 
 std::mutex mutex;
 DeviceManager * device_manager = nullptr;
 
-DeviceManager::DeviceManager() : handle(nullptr), keyboard(), mouse(), window(), running(false), thread() {
+DeviceManager::DeviceManager() : handle(nullptr), gamepad(), keyboard(), mouse(), window(), running(false), thread() {
 
     std::unique_lock<std::mutex> lock(mutex);
     if (device_manager) {
@@ -24,9 +23,12 @@ DeviceManager::DeviceManager() : handle(nullptr), keyboard(), mouse(), window(),
         throw std::runtime_error("Could not initialize GLFW");
     }
 
+    // Update gamepad database
+    std::string const database = Files::read_text("config/gamecontrollerdb.txt");
+    glfwUpdateGamepadMappings(database.c_str());
+
     // Create event-loop
     std::promise<std::string> promise;
-
     running = true;
     thread = std::thread([this, &promise]() {
 
@@ -168,6 +170,10 @@ DeviceManager::~DeviceManager() {
     std::unique_lock<std::mutex> lock(mutex);
     device_manager = nullptr;
     lock.unlock();
+}
+
+Gamepad & DeviceManager::get_gamepad() {
+    return gamepad;
 }
 
 [[nodiscard]] Keyboard & DeviceManager::get_keyboard() {

@@ -23,8 +23,6 @@ public:
 
     [[nodiscard]] glm::vec3 get_focus_point() const;
 
-    [[nodiscard]] glm::vec3 get_direction() const;
-
     void set_aspect_ratio(float new_aspect_ratio);
 
     void focus(glm::vec3 position);

@@ -1,5 +1,4 @@
 #include <devices/Window.hpp>
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 Window::Window() : handle(nullptr), mutex(), latest{}, polled(latest), resized(false) {}

@@ -171,7 +171,7 @@ Model Model::load(std::string const & path) {
         meshes.push_back(std::move(mesh));
         mesh_material_indices.push_back(assimp_mesh->mMaterialIndex);
         BoundingBox bounding_box = parse_bounding_box(assimp_mesh);
-        bounding_boxes.push_back(std::move(bounding_box));
+        bounding_boxes.push_back(bounding_box);
     }
 
     // Parse nodes
