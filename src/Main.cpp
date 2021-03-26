@@ -84,6 +84,8 @@ int main() {
     Instance & key = instances[3];
     key.position = glm::vec3(-1.0f, 1.0f, -3.0f);
 
+    bool game_has_victoriously_been_won_boolean = false;
+
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(-1.0f, 0.0f, -3.0f);
 
@@ -99,9 +101,13 @@ int main() {
     std::vector<Icon> icons;
     icons.emplace_back(Icon::load("icons/inventory.png"));
     icons.emplace_back(Icon::load("icons/key.png"));
+    icons.emplace_back(Icon::load("icons/yay.png"));
 
     Icon & inventory_icon = icons[0];
     Icon & key_icon = icons[1];
+    Icon & yay_icon = icons[2];
+
+    yay_icon.visible = false;
 
     // Prepare time tracking
     Timer timer;
@@ -125,6 +131,13 @@ int main() {
         // Exit on ESC press
         if (keyboard.is_pressed(GLFW_KEY_ESCAPE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_Y)) {
             break;
+        }
+
+        // Show win screen
+        glm::vec2 house_position = glm::vec2(3, -14);
+        if (glm::distance(house_position, player.get_position()) < 3.7f) {
+            game_has_victoriously_been_won_boolean = true;
+            yay_icon.visible = true;
         }
 
         // Update icon positions
@@ -199,6 +212,10 @@ int main() {
         if (gamepad.is_connected()) {
             direction.x += gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_X);
             direction.y += gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_Y);
+        }
+
+        if (game_has_victoriously_been_won_boolean) {
+            direction = glm::vec2();
         }
 
         if (glm::length(direction) > 0.15f) {
