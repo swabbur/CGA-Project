@@ -36,23 +36,23 @@
 
 ### Spot light shadows + Custom models
 
-![](images/custom_models_and_spot_light_shadows.png)
+![](images/spot_light_shadows_and_custom_models.png)
 
 ### Directional shadows
 
-![](images/player_wall_shader.png)
+![](images/directional_shadows.png)
 
 ### Hierarchical door
 
-![](images/point_light_and_normal_map.png)
+![](images/hierarchical_door.png)
 
 ### Normal maps
 
-![](images/spot_light_and_normal_map.png)
+![](images/normal_maps.png)
 
 ### X-toon shading
 
-![](images/toon_shading.png)
+![](images/x-toon_shading.png)
 
 ### X-ray vision
 
