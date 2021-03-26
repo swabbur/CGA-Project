@@ -5,16 +5,23 @@
 
 class Gamepad {
 
-    unsigned int index;
+    friend class DeviceManager;
+
     bool connected;
     std::map<unsigned char, float> axes;
     std::set<unsigned char> pressed;
     std::set<unsigned char> released;
     std::set<unsigned char> down;
 
+    Gamepad();
+
 public:
 
-    explicit Gamepad(unsigned int index);
+    Gamepad(Gamepad const &) = delete;
+
+    Gamepad(Gamepad &&) = delete;
+
+    ~Gamepad();
 
     [[nodiscard]] bool is_connected() const;
 

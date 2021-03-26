@@ -13,24 +13,30 @@
 #include <graphics/Program.hpp>
 #include <graphics/ShadowMap.hpp>
 #include <graphics/Texture.hpp>
+#include <objects/Gate.hpp>
 #include <objects/Maze.hpp>
 #include <objects/Player.hpp>
 #include <physics/Collision.hpp>
 #include <util/Cache.hpp>
 #include <util/Camera.hpp>
+#include <util/Files.hpp>
 #include <util/Timer.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <objects/Gate.hpp>
+#include <iostream>
 
 int main() {
 
+    std::cout << "Creating devices..." << std::endl;
+
     DeviceManager device_manager;
     Window & window = device_manager.get_window();
+    Gamepad & gamepad = device_manager.get_gamepad();
     Keyboard & keyboard = device_manager.get_keyboard();
     Mouse & mouse = device_manager.get_mouse();
-    Gamepad gamepad(0);
+
+    std::cout << "Setting up OpenGL..." << std::endl;
 
     Context context(window);
     context.set_clear_color(0.5f, 0.5f, 0.5f);
@@ -59,6 +65,8 @@ int main() {
     ShadowMap shadow_map_1 = ShadowMap::create(4096);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
     ShadowMap shadow_map_3 = ShadowMap::create(2048);
+
+    std::cout << "Loading resources..." << std::endl;
 
     Cache<std::string, Model> models(Model::load);
 
@@ -99,6 +107,13 @@ int main() {
     Timer timer;
     float animation_progress = 0.0f;
 
+    // Print welcome message
+    std::string const welcome_message = Files::read_text("config/welcome.txt");
+    std::cout << std::endl;
+    std::cout << welcome_message;
+    std::cout << std::endl;
+
+    // Start game loop
     while (!window.is_closed()) {
 
         // Poll events
@@ -108,7 +123,7 @@ int main() {
         gamepad.poll();
 
         // Exit on ESC press
-        if (keyboard.is_pressed(GLFW_KEY_ESCAPE)) {
+        if (keyboard.is_pressed(GLFW_KEY_ESCAPE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_Y)) {
             break;
         }
 
@@ -234,10 +249,10 @@ int main() {
             toon_shading_active = false;
         }
 
-        // Update camera
+        // Update cameras
         glm::vec2 player_position = player.get_position();
         glm::vec2 player_direction = player.get_direction();
-        camera.focus(glm::vec3(player_position.x, 1.0f, player_position.y));
+        camera.focus(glm::vec3(player_position.x, 1.25f, player_position.y));
         camera.set_aspect_ratio(window.get_aspect_ratio());
 
         if (mouse.is_scrolled()) {
@@ -356,6 +371,7 @@ int main() {
 
             // Set camera properties
             program.set_vec3("camera.position", camera.get_position());
+            program.set_vec3("camera.focus_point", camera.get_focus_point());
 
             // Set light properties
             program.set_vec3("directional_light.color", directional_light.color);
@@ -391,7 +407,12 @@ int main() {
             {
                 glm::mat4 light_vp = camera.get_projection_matrix()
                     * camera.get_view_matrix();
-                glm::vec4 mouse_position(mouse.get_x()/window.get_width()*2.0f-1.0f, 1.0f-mouse.get_y()/window.get_height()*2.0f, 1.0, 1.0);
+                auto window_width = static_cast<float>(window.get_width());
+                auto window_height = static_cast<float>(window.get_height());
+                glm::vec4 mouse_position(2.0f * mouse.get_x() / window_width - 1.0f,
+                                         1.0f - 2.0f * mouse.get_y() / window_height,
+                                         1.0,
+                                         1.0);
                 glm::mat4 inverse_vp = glm::inverse(light_vp);
                 glm::vec4 mouse_world_position = inverse_vp * mouse_position;
 
@@ -408,6 +429,7 @@ int main() {
             toon_map.bind(7);
             program.set_sampler("toon_map", 7);
             program.set_bool("toon_enabled", toon_shading_active);
+            program.set_float("toon_threshold", 0.49f);
 
             // Render instances
             for (Instance & instance : instances) {
@@ -512,6 +534,8 @@ int main() {
         // Update timer
         timer.update();
     }
+
+    std::cout << "Game closed" << std::endl;
 
     return 0;
 }

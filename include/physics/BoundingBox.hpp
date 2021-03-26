@@ -18,6 +18,6 @@ public:
 
     [[nodiscard]] float get_height() const;
 
-    BoundingBox flip();
+    [[nodiscard]] BoundingBox flip() const;
 
 };

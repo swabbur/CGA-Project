@@ -14,6 +14,6 @@ float BoundingBox::get_height() const {
     return height;
 }
 
-BoundingBox BoundingBox::flip() {
+BoundingBox BoundingBox::flip() const {
     return BoundingBox(glm::vec2(minima[1], minima[0]), glm::vec2(maxima[1], maxima[0]), height);
 }

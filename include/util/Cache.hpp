@@ -71,10 +71,6 @@ public:
     }
 
     /**
-     *
-     */
-
-    /**
      * Clear the cache, destroying its contained values.
      */
     void clear() {
