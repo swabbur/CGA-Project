@@ -1,0 +1,11 @@
+Welcome!
+
+Goal: Find your way home through the maze!
+Hint: You may need to find a key first.
+
+Controls:
+- X-ray vision: Right mouse button (no gamepad control)
+- Zoom: Scroll wheel (or right analog stick)
+- Interaction: Space bar (or 'A' button)
+- Movement: WASD (or left analog stick)
+- Exit: Escape (or 'Y' button)

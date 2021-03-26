@@ -19,18 +19,24 @@
 #include <physics/Collision.hpp>
 #include <util/Cache.hpp>
 #include <util/Camera.hpp>
+#include <util/Files.hpp>
 #include <util/Timer.hpp>
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 int main() {
+
+    std::cout << "Creating devices..." << std::endl;
 
     DeviceManager device_manager;
     Window & window = device_manager.get_window();
     Gamepad & gamepad = device_manager.get_gamepad();
     Keyboard & keyboard = device_manager.get_keyboard();
     Mouse & mouse = device_manager.get_mouse();
+
+    std::cout << "Setting up OpenGL..." << std::endl;
 
     Context context(window);
     context.set_clear_color(0.5f, 0.5f, 0.5f);
@@ -59,6 +65,8 @@ int main() {
     ShadowMap shadow_map_1 = ShadowMap::create(4096);
     ShadowMap shadow_map_2 = ShadowMap::create(2048);
     ShadowMap shadow_map_3 = ShadowMap::create(2048);
+
+    std::cout << "Loading resources..." << std::endl;
 
     Cache<std::string, Model> models(Model::load);
 
@@ -99,6 +107,13 @@ int main() {
     Timer timer;
     float animation_progress = 0.0f;
 
+    // Print welcome message
+    std::string const welcome_message = Files::read_text("config/welcome.txt");
+    std::cout << std::endl;
+    std::cout << welcome_message;
+    std::cout << std::endl;
+
+    // Start game loop
     while (!window.is_closed()) {
 
         // Poll events
@@ -519,6 +534,8 @@ int main() {
         // Update timer
         timer.update();
     }
+
+    std::cout << "Game closed" << std::endl;
 
     return 0;
 }
