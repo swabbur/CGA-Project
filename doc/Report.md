@@ -23,9 +23,11 @@ of references we used while implementing the shading and shadows.
 |          | Toon shading              | Andor / Wessel  |
 |          | 2D icons                  | Wessel          |
 | Modeling | Player character          | Andor           |
+|          | Animation                 | Andor           |
 |          | House                     | Arnoud          |
 |          | Wall                      | Arnoud          |
 |          | Hierarchical door         | Arnoud          |
+|          | Hierarchical animation    | Arnoud          |
 |          | Key                       | Wessel          |
 |          | Pedestal                  | Wessel          |
 | Logic    | AABB collision detection  | Andor           |
@@ -68,3 +70,5 @@ of references we used while implementing the shading and shadows.
 - [Normalization Article - Fabian Giesen](http://www.farbrausch.de/~fg/stuff/phong.pdf)
 - [Shadow mapping tutorial](http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/)
 - [Adaptive Depth Bias for Shadow Maps](http://jcgt.org/published/0003/04/08/paper-lowres.pdf)
+- [How to Create a Low Poly Character in Blender 2.8](https://youtu.be/Ljl_QFs9xhE)
+- [Mixamo running animation](https://www.mixamo.com/#/?limit=1&page=1&query=running)
