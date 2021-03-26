@@ -13,6 +13,7 @@
 #include <graphics/Program.hpp>
 #include <graphics/ShadowMap.hpp>
 #include <graphics/Texture.hpp>
+#include <objects/Gate.hpp>
 #include <objects/Maze.hpp>
 #include <objects/Player.hpp>
 #include <physics/Collision.hpp>
@@ -22,7 +23,6 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
-#include <objects/Gate.hpp>
 
 int main() {
 
