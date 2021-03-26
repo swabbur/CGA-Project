@@ -1,7 +1,7 @@
 #include <objects/Maze.hpp>
 #include <glm/gtc/constants.hpp>
 
-void Maze::generate(std::vector<Instance> &instances, Cache<std::string, struct Model> &cache) {
+void Maze::generate(Cache<std::string, struct Model> &cache, std::vector<Instance> &instances) {
     std::vector<std::pair<short, short>> positions = {
             {1, 0}, {3, 0}, {5, 0}, {7, 0}, {9, 0}, {11, 0}, {13, 0}, {15, 0},
             {0, 1}, {8, 1}, {16, 1},
@@ -23,8 +23,8 @@ void Maze::generate(std::vector<Instance> &instances, Cache<std::string, struct 
     };
 
     for (std::pair<short, short> const& coordinate : positions) {
-        instances.emplace_back(cache.get("models/wall.fbx"));
-        Instance* instance = &instances[instances.size() - 1];
+        instances.push_back(Instance::create_static(cache.get("models/wall.fbx")));
+        Instance* instance = &instances.back();
         instance->position = glm::vec3( 8 - (float)coordinate.first, 0, 8 - (float)coordinate.second);
         if (coordinate.first % 2 == 0) {
             instance->rotation[1] = glm::half_pi<float>();

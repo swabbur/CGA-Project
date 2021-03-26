@@ -2,12 +2,19 @@
 
 #include "Model.hpp"
 #include "../util/Cache.hpp"
+#include <optional>
 
 #include <glm/glm.hpp>
 
 class Instance {
 
-	std::vector<std::reference_wrapper<Model>> models;
+    bool moved;
+
+    std::vector<std::reference_wrapper<Model>> models;
+
+    Instance(std::vector<std::reference_wrapper<Model>> models, Instance &parent);
+
+    explicit Instance(std::vector<std::reference_wrapper<Model>> models);
 
 public:
 
@@ -17,16 +24,22 @@ public:
                            int end,
                            std::string const & suffix);
 
+    static Instance create_animated(std::vector<std::reference_wrapper<Model>> models);
+
+    static Instance create_static(Model &model, Instance &parent);
+
+    static Instance create_static(Model &model);
+
+    std::optional<std::reference_wrapper<Instance>> parent;
+
 	glm::vec3 position;
 	glm::vec2 rotation;
 	bool visible;
 	bool xrayable;
 
-	explicit Instance(std::vector<std::reference_wrapper<Model>> models);
+	Instance(Instance const &) = delete;
 
-	explicit Instance(Model & model);
-
-	Instance(Instance &&) = default;
+	Instance(Instance && instance) noexcept;
 
 	~Instance();
 

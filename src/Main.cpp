@@ -22,6 +22,7 @@
 
 // Replace this include using Key/Button enum classes
 #include <GLFW/glfw3.h>
+#include <objects/Gate.hpp>
 
 int main() {
 
@@ -62,21 +63,23 @@ int main() {
     Cache<std::string, Model> models(Model::load);
 
     std::vector<Instance> instances;
-    instances.emplace_back(models.get("models/floor.fbx"));
-    instances.emplace_back(models.get("models/player/Human_standing.fbx"));
+    instances.reserve(128);
+    instances.push_back(Instance::create_static(models.get("models/floor.fbx")));
+    instances.push_back(Instance::create_static(models.get("models/player/Human_standing.fbx")));
     instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
-    instances.emplace_back(models.get("models/key.fbx"));
-    instances.emplace_back(models.get("models/pedestal.dae"));
-    instances.emplace_back(models.get("models/house.fbx"));
-    Maze::generate(instances, models);
+    instances.push_back(Instance::create_static(models.get("models/key.fbx")));
+    instances.push_back(Instance::create_static(models.get("models/pedestal.dae")));
+    instances.push_back(Instance::create_static(models.get("models/house.fbx")));
+    Maze::generate(models, instances);
+    std::vector<Gate> gate_parts = Gate::generate(models, instances, glm::vec3(3, 0, 0));
 
     Instance & key = instances[3];
-    key.position = glm::vec3(2.5f, 1.0f, 3.0f);
+    key.position = glm::vec3(-1.0f, 1.0f, -3.0f);
 
     Instance & pedestal = instances[4];
-    pedestal.position = glm::vec3(2.5f, 0.0f, 3.0f);
+    pedestal.position = glm::vec3(-1.0f, 0.0f, -3.0f);
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, -1.0f), 1.2f);
+    Player player({ instances[1], instances[2] }, glm::vec2(-7, 7), glm::vec2(0.0f, -1.0f), 1.2f);
 
     std::set<int> collision_exceptions = {0, 1, 2};
 
@@ -120,12 +123,12 @@ int main() {
             key_icon.scale = 0.125f;
             key_icon.position.x = aspect_ratio - 0.25f;
             key_icon.position.y = 0.75f;
-            key_icon.visible = !key.visible;
+            key_icon.visible = !key.visible && !gate_parts[0].animated && !gate_parts[0].animated;
         }
 
         // Animate key
         float offset = 0.075f * glm::cos(glm::half_pi<float>() * timer.get_time());
-        key.position = glm::vec3(2.5f, 1.0f + offset, 3.0f);
+        key.position = glm::vec3(-1.0f, 1.0f + offset, -3.0f);
         key.rotation = glm::vec2(0.0f, glm::half_pi<float>() * timer.get_time());
 
         // Pick-up key
@@ -133,6 +136,24 @@ int main() {
         if (glm::distance(key_position, player.get_position()) < 0.75f) {
             if (keyboard.is_pressed(GLFW_KEY_SPACE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_A)) {
                 key.visible = !key.visible;
+            }
+        }
+
+        // Animate gate
+        for (Gate & gate : gate_parts) {
+            gate.animate(timer.get_time());
+        }
+
+        // Open gate
+        glm::vec2 gate_position = (glm::vec2(gate_parts[0].part1.position.x, gate_parts[0].part1.position.z)
+                + glm::vec2(gate_parts[1].part1.position.x, gate_parts[1].part1.position.z)) * 0.5f;
+        if (glm::distance(gate_position, player.get_position()) < 0.75f) {
+            if (!key.visible && (keyboard.is_pressed(GLFW_KEY_SPACE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_A))) {
+                for (Gate & gate : gate_parts) {
+                    if (gate.animated) break;
+                    gate.animated = true;
+                    gate.animation_start = timer.get_time();
+                }
             }
         }
 
@@ -179,16 +200,17 @@ int main() {
             // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
                 if (collision_exceptions.contains(j)) continue;
-                Instance* instance = &instances[j];
-                for (Shape const & shape : instance->get_model(0).shapes) {
+                Instance& instance = instances[j];
+                if (instance.parent.has_value()) continue;
+                for (Shape const & shape : instance.get_model(0).shapes) {
                     // Adjust for collision
                     Shape const &colliding_shape = player.get_instance().get_model(0).shapes[0];
                     translation = Collision::resolve_collision(colliding_shape,
                                                                shape,
                                                                player.get_position(),
-                                                               glm::vec2(instance->position[0], instance->position[2]),
+                                                               glm::vec2(instance.position[0], instance.position[2]),
                                                                player.get_direction(),
-                                                               glm::vec2(cos(instance->rotation[1]), sin(instance->rotation[1])),
+                                                               glm::vec2(cos(instance.rotation[1]), sin(instance.rotation[1])),
                                                                translation);
                 }
             }
