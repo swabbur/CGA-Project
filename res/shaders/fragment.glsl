@@ -2,6 +2,7 @@
 
 struct Camera {
     vec3 position;
+    vec3 focus_point;
 };
 
 struct DirectionalLight {
@@ -58,7 +59,9 @@ struct Material {
 // Constants
 const float AMBIENT_STRENGTH = 0.25;
 
-const float PI = 3.14159;
+const float PI = 3.1415926535;
+
+const float SQRT_2 = 1.4142135623;
 
 const vec2 POISSON_DISK[4] = vec2[](
     vec2(-0.94201624, -0.39906216),
@@ -77,6 +80,7 @@ uniform Material material;
 uniform bool xrayable;
 uniform bool toon_enabled;
 uniform sampler2D toon_map;
+uniform float toon_threshold;
 
 // Inputs
 layout(location = 0) in vec3 fragment_position;
@@ -86,6 +90,35 @@ layout(location = 2) in vec2 fragment_texture_coord;
 // Outputs
 layout(location = 0) out vec3 out_color;
 
+// Normals
+vec3 compute_normal() {
+
+    // Check whether a normal map is available
+    vec3 normal = normalize(fragment_normal);
+    if (!material.normal_textured) {
+        return normal;
+    }
+
+    // Derivations of the fragment position
+    vec3 pos_dx = dFdx(fragment_position);
+    vec3 pos_dy = dFdy(fragment_position);
+
+    // Derivations of the texture coordinate
+    vec2 texC_dx = dFdx(fragment_texture_coord);
+    vec2 texC_dy = dFdy(fragment_texture_coord);
+
+    // Compute tangent and bitangent vector
+    vec3 tangent = normalize(texC_dy.y * pos_dx - texC_dx.y * pos_dy);
+    vec3 bitangent = normalize(texC_dx.x * pos_dy - texC_dy.x * pos_dx);
+
+    // Sample normal map
+    vec4 sampled_normal = texture(material.normal_sampler, fragment_texture_coord);
+
+    // Compute final normal
+    return normalize(tangent * (sampled_normal.x - 0.5) + bitangent * (sampled_normal.y - 0.5) + normal * sampled_normal.z);
+}
+
+// Shadows
 float linearize_depth(float depth, float near, float far) {
     float z = 2.0 * depth - 1.0;
     return 2.0 * near * far / (far + near - z * (far - near));
@@ -96,67 +129,55 @@ float delinearize_depth(float depth, float near, float far) {
     return (z + 1.0) * 0.5;
 }
 
-float compute_bias_normalized(vec3 normal, vec3 light_direction, sampler2DShadow sampler, float depth) {
+float compute_sloped_bias(vec3 normal, vec3 light_direction, sampler2DShadow sampler, float depth) {
     float light_angle = acos(max(0.0, dot(normal, light_direction)));
-    float sqrt2 = 1.414;
-    float half_pixel_size = sqrt2 / textureSize(sampler, 0).x;
+    float half_pixel_size = SQRT_2 / textureSize(sampler, 0).x;
     return half_pixel_size * tan(light_angle);
 }
 
-float compute_bias(vec3 normal, vec3 light_direction, sampler2DShadow sampler, float depth,  float near, float far) {
-    float normalized_bias = compute_bias_normalized(normal, light_direction, sampler, depth);
-    float linearized_depth = linearize_depth(depth, near, far);
-    float epsilon = 0.001 * linearized_depth;
-    float optimal_bias = normalized_bias * linearized_depth;
+float compute_adaptive_bias(vec3 normal, vec3 light_direction, sampler2DShadow sampler, float depth,  float near, float far) {
 
-    float new_depth = linearized_depth - (epsilon + optimal_bias);
-    float delinearized_new_depth = delinearize_depth(new_depth, near, far);
-    return abs(depth - delinearized_new_depth);
+    // Compute sloped bias
+    float sloped_bias = compute_sloped_bias(normal, light_direction, sampler, depth);
+
+    // Compute optimal bias
+    float linear_depth = linearize_depth(depth, near, far);
+    float epsilon = 0.001 * linear_depth;
+    float optimal_bias = sloped_bias * linear_depth;
+
+    // Compute adaptive bias
+    float new_linear_depth = linear_depth - (epsilon + optimal_bias);
+    float new_depth = delinearize_depth(new_linear_depth, near, far);
+    return abs(depth - new_depth);
 }
 
-vec3 compute_normal() {
+float compute_visibility(sampler2DShadow sampler, vec4 sample_location, float bias) {
 
-    vec3 normal = normalize(fragment_normal);
-    if (!material.normal_textured) {
-        return normal;
-    }
-
-    // derivations of the fragment position
-    vec3 pos_dx = dFdx(fragment_position);
-    vec3 pos_dy = dFdy(fragment_position);
-
-    // derivations of the texture coordinate
-    vec2 texC_dx = dFdx(fragment_texture_coord);
-    vec2 texC_dy = dFdy(fragment_texture_coord);
-
-    // tangent vector and binormal vector
-    vec3 tangent = normalize(texC_dy.y * pos_dx - texC_dx.y * pos_dy);
-    vec3 bitangent = normalize(texC_dx.x * pos_dy - texC_dy.x * pos_dx);
-
-    vec4 normal_map_value = texture(material.normal_sampler, fragment_texture_coord);
-
-    return normalize(tangent * (normal_map_value.x - 0.5) + bitangent * (normal_map_value.y - 0.5) + normal * normal_map_value.z);
-}
-
-float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
-
-    // Compute sample location
-    vec3 sample_location = vec3(vp * vec4(fragment_position, 1.0));
-    if (sample_location.x < 0.0 || sample_location.x > 1.0 || sample_location.y < 0.0 || sample_location.y > 1.0) {
-        return 1.0;
-    }
-
-    // Compute bias
-    float bias = compute_bias_normalized(fragment_normal, light_direction, sampler, sample_location.z) + 0.001;
+    // Retrieve texture size
+    ivec2 texture_size = textureSize(sampler, 0);
 
     // Compute visibility (with poisson sampling and hardware-accelerated PCF)
     float visibility = 0.0;
-    ivec2 texture_size = textureSize(sampler, 0);
     for (int i = 0; i < 4; i++){
         vec2 texture_coord = sample_location.xy + POISSON_DISK[i] / texture_size;
         visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
     }
     return visibility;
+}
+
+float compute_visibility_ortho(sampler2DShadow sampler, mat4 vp, vec3 light_direction) {
+
+    // Compute sample location
+    vec4 sample_location = vp * vec4(fragment_position, 1.0);
+    if (sample_location.x < 0.0 || sample_location.x > 1.0 || sample_location.y < 0.0 || sample_location.y > 1.0) {
+        return 1.0;
+    }
+
+    // Compute bias
+    float bias = 0.001 + compute_sloped_bias(fragment_normal, light_direction, sampler, sample_location.z);
+
+    // Compute visibility
+    return compute_visibility(sampler, sample_location, bias);
 }
 
 float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction, float near, float far) {
@@ -172,47 +193,41 @@ float compute_visibility_perspective(sampler2DShadow sampler, mat4 vp, vec3 ligh
     }
 
     // Compute bias
-    float bias = compute_bias(fragment_normal, light_direction, sampler, sample_location.z, near, far);
+    float bias = compute_adaptive_bias(fragment_normal, light_direction, sampler, sample_location.z, near, far);
 
-    // Compute visibility (with poisson sampling and hardware-accelerated PCF)
-    float visibility = 0.0;
-    ivec2 texture_size = textureSize(sampler, 0);
-    for (int i = 0; i < 4; i++){
-        vec2 texture_coord = sample_location.xy + POISSON_DISK[i] / texture_size;
-        visibility += 0.25 * texture(sampler, vec3(texture_coord, sample_location.z - bias));
-    }
-    return visibility;
+    // Compute visibility
+    return compute_visibility(sampler, sample_location, bias);
 }
 
+// TODO: Clean this one up
 float compute_first_layer_perspective(sampler2DShadow sampler, mat4 vp, vec3 light_direction, float near, float far) {
 
-    // Compute sample locations
+    // Compute sample location
     vec4 sample_location = vp * vec4(fragment_position, 1.0);
     sample_location.xyz /= sample_location.w;
     sample_location.xyz = sample_location.xyz * 0.5 + 0.5;
 
     // Early-exit outside of shadow map
-    if (sample_location.x < 0.0
-        || sample_location.x > 1.0
-        || sample_location.y < 0.0
-        || sample_location.y > 1.0
-    ) {
+    if (sample_location.x < 0.0 || sample_location.x > 1.0 || sample_location.y < 0.0 || sample_location.y > 1.0) {
         return 0.0;
     }
-    float bias = compute_bias(fragment_normal, light_direction, sampler, sample_location.z, near, far);
+
+    // Compute bias
+    float bias = compute_adaptive_bias(fragment_normal, light_direction, sampler, sample_location.z, near, far);
 
     // Compute visibility
     float visibility = texture(sampler, vec3(sample_location.xy, sample_location.z - bias));
     return visibility;
 }
 
+// Shading computations
 float compute_diffuse(vec3 normal, vec3 light_direction) {
 
-    // Compute (normalized Lambertian) diffuse strength
+    // Compute diffuse (normalized Lambertian) strength
     float normalization_factor = 1.0 / PI;
     float diffuse_strength = normalization_factor * max(0.0, dot(normal, light_direction));
 
-    return diffuse_strength;
+    return clamp(diffuse_strength, 0.0, 1.0);
 }
 
 float compute_specular(vec3 normal, vec3 light_direction) {
@@ -227,19 +242,6 @@ float compute_specular(vec3 normal, vec3 light_direction) {
     float specular_strength = normalization_factor * pow(dot(normal, half_vector), n);
 
     return clamp(specular_strength, 0.0, 1.0);
-}
-
-vec3 compute_ambient_color() {
-
-    // Compute material diffuse color
-    vec3 material_color;
-    if (material.diffuse.textured) {
-        material_color = vec3(texture(material.diffuse.sampler, fragment_texture_coord));
-    } else {
-        material_color = material.diffuse.color;
-    }
-
-    return AMBIENT_STRENGTH * material_color;
 }
 
 vec3 compute_diffuse_color(vec3 normal, vec3 light_direction, vec3 light_color) {
@@ -272,6 +274,20 @@ vec3 compute_specular_color(vec3 normal, vec3 light_direction, vec3 light_color)
 
     // Compute specular color
     return specular_strength * light_color * material_color;
+}
+
+// Light computations
+vec3 compute_ambient_light_color() {
+
+    // Compute material diffuse color
+    vec3 material_color;
+    if (material.diffuse.textured) {
+        material_color = vec3(texture(material.diffuse.sampler, fragment_texture_coord));
+    } else {
+        material_color = material.diffuse.color;
+    }
+
+    return AMBIENT_STRENGTH * material_color;
 }
 
 vec3 compute_directional_light_color(vec3 normal, DirectionalLight light) {
@@ -319,7 +335,7 @@ float compute_spot_light_cone(vec3 normal, SpotLight light) {
     float light_distance = distance(light.position, fragment_position);
     light_distance += 1.0; // Adjust for distance to unit sphere
 
-    // Early-exit when light is behind fragment
+    // Exit when light is behind fragment
     if (dot(normal, light_direction) < 0.0) {
         return 0.0;
     }
@@ -369,6 +385,7 @@ vec3 compute_spot_light_color(vec3 normal, SpotLight light) {
 }
 
 bool compute_xray(XrayLight light) {
+
     // Compute fragment-to-light vectors
     vec3 light_direction = normalize(light.position - fragment_position);
     float light_distance = distance(light.position, fragment_position);
@@ -383,9 +400,9 @@ bool compute_xray(XrayLight light) {
     if (length(cross(light.direction, fragment_position - light.position)) > tan(light.angle) * dot(light.direction, fragment_position - light.position)) {
         return false;
     }
-    
+
     // Shadow
-    float visibility = compute_first_layer_perspective(light.shadow_sampler, light.vp, light_direction, light.near, light.far);
+    float visibility = compute_visibility_perspective(light.shadow_sampler, light.vp, light_direction, light.near, light.far);
 
     if (visibility > 0.5 && xrayable) {
         discard;
@@ -393,81 +410,59 @@ bool compute_xray(XrayLight light) {
     return visibility <= 0.5;
 }
 
-vec3 compute_light_color(vec3 normal) {
+// Color computations
+vec3 compute_blinn_phong_color(vec3 normal) {
     vec3 color;
+    color += compute_ambient_light_color();
     color += compute_directional_light_color(normal, directional_light);
     color += compute_point_light_color(normal, point_light);
     color += compute_spot_light_color(normal, spot_light);
     return color;
 }
 
-float compute_diffuse_strength(vec3 normal) {
-    float intensity = 0.0;
+vec3 compute_toon_color(vec3 normal) {
 
+    // Compute visibility and attenuation of lights
     float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
-    if (directional_visibility > 0.0) {
-        intensity += compute_diffuse(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
-    }
-
-    //intensity += compute_diffuse(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
-
-    float spot_cone = compute_spot_light_cone(normal, spot_light);
     float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position), spot_light.near, spot_light.far);
-    if (spot_cone > 0.0 && spot_visibility > 0.0) {
-        intensity += compute_diffuse(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
-    }
-
-    return intensity;
-}
-
-float compute_specular_strength(vec3 normal) {
-    float intensity = 0.0;
-
-    float directional_visibility = compute_visibility_ortho(directional_light.shadow_sampler, directional_light.vp, directional_light.direction);
-    if (directional_visibility > 0.0) {
-        intensity += compute_specular(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
-    }
-
-    //intensity += compute_specular(normal, normalize(point_light.position - fragment_position)) * point_light.intensity;
-
     float spot_cone = compute_spot_light_cone(normal, spot_light);
-    float spot_visibility = compute_visibility_perspective(spot_light.shadow_sampler, spot_light.vp, normalize(spot_light.position - fragment_position), spot_light.near, spot_light.far);
-    if (spot_cone > 0.0 && spot_visibility > 0.0) {
-        intensity += compute_specular(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
+
+    // Compute diffuse component
+    float diffuse = 0.0f;
+    diffuse += AMBIENT_STRENGTH;
+    diffuse += compute_diffuse(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    diffuse += compute_diffuse(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
+
+    // Compute specular component
+    float specular = 0.0f;
+    specular += compute_specular(normal, directional_light.direction) * directional_light.intensity * directional_visibility;
+    specular += compute_specular(normal, normalize(spot_light.position - fragment_position)) * spot_light.intensity * spot_visibility * spot_cone;
+
+    // Compute diffuse color (X-Toon shading)
+    float center = distance(camera.focus_point, camera.position);
+    float depth = distance(fragment_position, camera.position);
+    float factor = depth / center / 2.0;
+    vec3 diffuse_color = texture(toon_map, vec2(1.0 - clamp(diffuse, 0.001, 0.999), clamp(factor, 0.001, 0.999))).rgb;
+
+    // Compute specular color (highlight)
+    vec3 specular_color = vec3(0.0);
+    if (specular > toon_threshold) {
+        specular_color = vec3(1.0);
     }
 
-    return intensity;
-}
-
-vec3 compute_toon(vec3 normal) {
-    
-    float diffuse = compute_diffuse_strength(normal);
-    float specular = compute_specular_strength(normal);
-    
-    float intensity = clamp(diffuse + specular, 0.001, 0.999);
-    float eye_distance = clamp(length(fragment_position - camera.position) - 0.914, 0.001, 0.999);
-
-    vec4 toon_color = texture(toon_map, vec2(1-intensity,eye_distance));
-
-    return vec3(toon_color);
+    return clamp(diffuse_color + specular_color, 0.0, 1.0);
 }
 
 void main() {
-
-    // Compute xray visibility
-    bool toon = toon_enabled;
-    if (toon) {
-        toon = compute_xray(xray_light);
-    }
 
     // Compute normal
     vec3 normal = compute_normal();
 
     // Compute color
-    if (toon) {
-        out_color = compute_toon(normal);
+    if (toon_enabled && compute_xray(xray_light)) {
+        out_color = compute_toon_color(normal);
     } else {
-        out_color = compute_ambient_color() + compute_light_color(normal);
+        out_color = compute_blinn_phong_color(normal);
     }
     out_color = clamp(out_color, 0.0, 1.0);
 }

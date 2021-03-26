@@ -17,6 +17,10 @@ glm::vec3 Camera::get_position() const {
     return center + inverse_direction * scale;
 }
 
+glm::vec3 Camera::get_focus_point() const {
+    return center;
+}
+
 glm::vec3 Camera::get_direction() const {
     return -inverse_direction;
 }
