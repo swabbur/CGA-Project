@@ -1,5 +1,8 @@
 # Report
 
+The following sections present the features we have implemented, some screenshots of those features, and a small list
+of references we used while implementing the shading and shadows.
+
 ## Features
 
 | Category | Name                      | Author(s)       |
