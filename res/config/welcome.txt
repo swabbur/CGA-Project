@@ -9,3 +9,4 @@ Controls:
 - Interaction: Space bar (or 'A' button)
 - Movement: WASD (or left analog stick)
 - Exit: Escape (or 'Y' button)
+- Run: Left shift (or left trigger)
