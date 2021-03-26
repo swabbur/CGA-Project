@@ -9,8 +9,5 @@ glm::mat4 SpotLight::get_projection_matrix(float near, float far) const {
 }
 
 glm::mat4 SpotLight::get_view_matrix() const {
-
-    // TODO: Properly compute up vector.
-
-    return glm::lookAt(position, position + direction, glm::vec3(1.0f, 0.0f, 0.0f));
+    return glm::lookAt(position, position + direction, glm::vec3(0.0f, 1.0f, 0.0f));
 }

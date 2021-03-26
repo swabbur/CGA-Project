@@ -21,7 +21,7 @@ public:
 
     [[nodiscard]] glm::vec3 get_position() const;
 
-    [[nodiscard]] glm::vec3 get_direction() const;
+    [[nodiscard]] glm::vec3 get_focus_point() const;
 
     void set_aspect_ratio(float new_aspect_ratio);
 

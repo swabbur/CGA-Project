@@ -1,12 +1,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <devices/Gamepad.hpp>
-#include <util/Files.hpp>
 
-Gamepad::Gamepad(unsigned int index) : index(index), connected(false), axes{}, pressed(), released(), down() {
-    std::string const database = Files::read_text("config/gamecontrollerdb.txt");
-    glfwUpdateGamepadMappings(database.c_str());
-}
+Gamepad::Gamepad() : connected(false), axes{}, pressed(), released(), down() {}
+
+Gamepad::~Gamepad() = default;
 
 bool Gamepad::is_connected() const {
     return connected;
@@ -37,11 +35,11 @@ void Gamepad::poll() {
     pressed.clear();
     released.clear();
 
-    connected = glfwJoystickIsGamepad(GLFW_JOYSTICK_1 + index);
+    connected = glfwJoystickIsGamepad(GLFW_JOYSTICK_1);
     if (connected) {
 
         GLFWgamepadstate state;
-        glfwGetGamepadState(GLFW_JOYSTICK_1 + index, &state);
+        glfwGetGamepadState(GLFW_JOYSTICK_1, &state);
 
         int axis_count = 6;
         for (int axis = 0; axis < axis_count; axis++) {

@@ -2,7 +2,8 @@
 #include <iostream>
 
 float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 position1, glm::vec2 position2, glm::vec2 d1, glm::vec2 d2, glm::vec2 delta_position, glm::vec2 & collision_direction, glm::vec2& collision_distance, bool rotation_invariant1) {
-	// Set up preliminary values
+
+    // Set up preliminary values
 	BoundingBox bounding_box1(o1.get_bounding_box());
 	BoundingBox bounding_box2(o2.get_bounding_box());
 
@@ -22,11 +23,6 @@ float Collision::swept_AABB(Shape const & o1, Shape const & o2, glm::vec2 positi
 	glm::vec2 pos2 = bounding_box2.get_minima() + position2;
 	glm::vec2 size1 = bounding_box1.get_maxima() - bounding_box1.get_minima();
 	glm::vec2 size2 = bounding_box2.get_maxima() - bounding_box2.get_minima();
-
-	// Don't collide with floors
-	/*if (bounding_box1.get_height() < .001 || bounding_box2.get_height() < .001) {
-	    return 1.0f;
-	}*/
 
 	// Calculate Shape 1's entry distance
 	collision_distance = pos2 - pos1;

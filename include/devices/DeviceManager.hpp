@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Gamepad.hpp"
 #include "Keyboard.hpp"
 #include "Mouse.hpp"
 #include "Window.hpp"
@@ -14,6 +15,7 @@ class DeviceManager {
     Keyboard keyboard;
     Mouse mouse;
     Window window;
+    Gamepad gamepad;
 
     std::atomic_bool running;
     std::thread thread;
@@ -27,6 +29,8 @@ public:
     DeviceManager(DeviceManager &) = delete;
 
     ~DeviceManager();
+
+    [[nodiscard]] Gamepad & get_gamepad();
 
     [[nodiscard]] Keyboard & get_keyboard();
 
