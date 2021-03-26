@@ -12,6 +12,7 @@ class Player {
 	glm::vec2 position;
 	glm::vec2 direction;
     float speed;
+    float run_speed;
     float max_passive_time;
     int passive_instance;
 
@@ -22,7 +23,8 @@ public:
     Player(std::vector<std::reference_wrapper<Instance>> const & instances,
            glm::vec2 position,
            glm::vec2 direction,
-           float speed);
+           float speed,
+           float run_speed);
 
     [[nodiscard]] Instance & get_instance() const;
 
@@ -33,6 +35,8 @@ public:
     [[nodiscard]] glm::vec2 get_direction() const;
 
 	[[nodiscard]] float get_speed() const;
+
+    [[nodiscard]] float get_run_speed() const;
 
     void set_passive_instance(int index, int time);
 

@@ -79,6 +79,7 @@ int main() {
     instances.push_back(Instance::create_static(models.get("models/pedestal.dae")));                //4
     instances.push_back(Instance::create_static(models.get("models/house.fbx")));                   //5
     instances.push_back(Instance::create(models, "models/player/Human_grabbing_", 1, 60, ".fbx"));  //6
+    instances.push_back(Instance::create(models, "models/player/Human_running_", 1, 23, ".fbx"));   //7
     Maze::generate(models, instances);
     std::vector<Gate> gate_parts = Gate::generate(models, instances, glm::vec3(3, 0, 0));
 
@@ -90,9 +91,9 @@ int main() {
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(-1.0f, 0.0f, -3.0f);
 
-    Player player({ instances[1], instances[2], instances[6] }, glm::vec2(-7, 7), glm::vec2(0.0f, -1.0f), 1.5f);
+    Player player({ instances[1], instances[2], instances[6], instances[7] }, glm::vec2(-7, 7), glm::vec2(0.0f, -1.0f), 1.5f, 2.5f);
 
-    std::set<int> collision_exceptions = {0, 1, 2, 6};
+    std::set<int> collision_exceptions = {0, 1, 2, 6, 7};
 
     Texture toon_map = Texture::load("textures/toon_map.png");
 
@@ -235,13 +236,19 @@ int main() {
 
         if (glm::length(direction) > 0.15f && player.get_passive_instance(animation_frame) == 0) {
 
-            player.activate_instance(1);
-
             // Update walking animation
             animation_progress += glm::length(direction) * timer.get_delta();
 
             // Compute translation
-            glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
+            glm::vec2 translation;
+            if (keyboard.is_down(GLFW_KEY_LEFT_SHIFT) || gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
+                translation = direction * timer.get_delta() * player.get_run_speed();
+                player.activate_instance(3);
+            }
+            else {
+                translation = direction * timer.get_delta() * player.get_speed();
+                player.activate_instance(1);
+            }
 
             // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
