@@ -72,12 +72,14 @@ int main() {
 
     std::vector<Instance> instances;
     instances.reserve(128);
-    instances.push_back(Instance::create_static(models.get("models/floor.fbx")));
-    instances.push_back(Instance::create_static(models.get("models/player/Human_standing.fbx")));
-    instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
-    instances.push_back(Instance::create_static(models.get("models/key.fbx")));
-    instances.push_back(Instance::create_static(models.get("models/pedestal.dae")));
-    instances.push_back(Instance::create_static(models.get("models/house.fbx")));
+    instances.push_back(Instance::create_static(models.get("models/floor.fbx")));                   //0
+    instances.push_back(Instance::create_static(models.get("models/player/Human_standing.fbx")));   //1
+    instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 32, ".fbx"));   //2
+    instances.push_back(Instance::create_static(models.get("models/key.fbx")));                     //3
+    instances.push_back(Instance::create_static(models.get("models/pedestal.dae")));                //4
+    instances.push_back(Instance::create_static(models.get("models/house.fbx")));                   //5
+    instances.push_back(Instance::create(models, "models/player/Human_grabbing_", 1, 60, ".fbx"));  //6
+    instances.push_back(Instance::create(models, "models/player/Human_running_", 1, 23, ".fbx"));   //7
     Maze::generate(models, instances);
     std::vector<Gate> gate_parts = Gate::generate(models, instances, glm::vec3(3, 0, 0));
 
@@ -89,9 +91,9 @@ int main() {
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(-1.0f, 0.0f, -3.0f);
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-7, 7), glm::vec2(0.0f, -1.0f), 1.2f);
+    Player player({ instances[1], instances[2], instances[6], instances[7] }, glm::vec2(-7, 7), glm::vec2(0.0f, -1.0f), 1.5f, 2.5f);
 
-    std::set<int> collision_exceptions = {0, 1, 2};
+    std::set<int> collision_exceptions = {0, 1, 2, 6, 7};
 
     Texture toon_map = Texture::load("textures/toon_map.png");
 
@@ -121,6 +123,10 @@ int main() {
 
     // Start game loop
     while (!window.is_closed()) {
+
+        // Select animation frame
+        // Animation plays at 30 frames per second
+        int animation_frame = glm::floor(30 * animation_progress);
 
         // Poll events
         keyboard.poll();
@@ -164,6 +170,11 @@ int main() {
         if (glm::distance(key_position, player.get_position()) < 0.75f) {
             if (keyboard.is_pressed(GLFW_KEY_SPACE) || gamepad.is_pressed(GLFW_GAMEPAD_BUTTON_A)) {
                 key.visible = !key.visible;
+                animation_progress = 0.0f;
+                animation_frame = 0;
+                player.set_passive_instance(2, 0);
+                glm::vec2 direction(glm::normalize(key_position - player.get_position()));
+                player.turn(direction);
             }
         }
 
@@ -182,6 +193,11 @@ int main() {
                     gate.animated = true;
                     gate.animation_start = timer.get_time();
                 }
+                animation_progress = 0.0f;
+                animation_frame = 0;
+                player.set_passive_instance(2, 0);
+                glm::vec2 direction(glm::normalize(gate_position - player.get_position()));
+                player.turn(direction);
             }
         }
 
@@ -218,16 +234,21 @@ int main() {
             direction = glm::vec2();
         }
 
-        if (glm::length(direction) > 0.15f) {
-
-            player.activate_instance(1);
+        if (glm::length(direction) > 0.15f && player.get_passive_instance(animation_frame) == 0) {
 
             // Update walking animation
             animation_progress += glm::length(direction) * timer.get_delta();
 
             // Compute translation
-            glm::vec2 translation = direction * timer.get_delta() * player.get_speed();
-            player.activate_instance(1);
+            glm::vec2 translation;
+            if (keyboard.is_down(GLFW_KEY_LEFT_SHIFT) || gamepad.get_axis(GLFW_GAMEPAD_AXIS_LEFT_TRIGGER) > 0.0f) {
+                translation = direction * timer.get_delta() * player.get_run_speed();
+                player.activate_instance(3);
+            }
+            else {
+                translation = direction * timer.get_delta() * player.get_speed();
+                player.activate_instance(1);
+            }
 
             // Check for collisions
             for (int j = 0; j < instances.size(); j++) {
@@ -254,7 +275,8 @@ int main() {
         } else {
 
             // Update the player
-            player.activate_instance(0);
+            player.activate_instance(player.get_passive_instance(animation_frame));
+            animation_progress += timer.get_delta();
         }
 
         // Activate toon shading
@@ -283,10 +305,6 @@ int main() {
         // Update light
         spot_light.direction = glm::normalize(glm::vec3(player_direction.x, -0.25f, player_direction.y));
         spot_light.position = glm::vec3(player_position.x, 0.8f, player_position.y) + spot_light.direction * 0.1f;
-
-        // Select animation frame
-        // Animation plays at 30 frames per second
-        int animation_frame = glm::floor(30 * animation_progress);
 
         // Render shadow maps
         {

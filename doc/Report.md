@@ -37,21 +37,21 @@ of references we used while implementing the shading and shadows.
 
 ## Screenshots
 
-### Spot light shadows + Custom models
+### Custom models
 
-![](images/spot_light_shadows_and_custom_models.png)
+![](images/custom_models.png)
+
+### Spot light shadows
+
+![](images/spot_light_shadow.png)
 
 ### Directional shadows
 
 ![](images/directional_shadows.png)
 
-### Hierarchical door
+### Hierarchical door + Normal maps
 
 ![](images/hierarchical_door.png)
-
-### Normal maps
-
-![](images/normal_maps.png)
 
 ### X-toon shading
 
