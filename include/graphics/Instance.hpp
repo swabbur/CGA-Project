@@ -12,8 +12,6 @@ class Instance {
 
     std::vector<std::reference_wrapper<Model>> models;
 
-    std::optional<std::reference_wrapper<Instance>> parent;
-
     Instance(std::vector<std::reference_wrapper<Model>> models, Instance &parent);
 
     explicit Instance(std::vector<std::reference_wrapper<Model>> models);
@@ -31,6 +29,8 @@ public:
     static Instance create_static(Model &model, Instance &parent);
 
     static Instance create_static(Model &model);
+
+    std::optional<std::reference_wrapper<Instance>> parent;
 
 	glm::vec3 position;
 	glm::vec2 rotation;

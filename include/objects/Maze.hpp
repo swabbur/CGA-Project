@@ -6,5 +6,5 @@
 
 class Maze {
 public:
-    static void generate(std::vector<Instance> &, Cache<std::string, struct Model> &);
+    static void generate(Cache<std::string, struct Model> &, std::vector<Instance> &);
 };
