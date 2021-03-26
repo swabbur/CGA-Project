@@ -66,7 +66,7 @@ int main() {
     instances.reserve(128);
     instances.push_back(Instance::create_static(models.get("models/floor.fbx")));
     instances.push_back(Instance::create_static(models.get("models/player/Human_standing.fbx")));
-    instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 31, ".fbx"));
+    instances.push_back(Instance::create(models, "models/player/Human_walking_", 1, 32, ".fbx"));
     instances.push_back(Instance::create_static(models.get("models/key.fbx")));
     instances.push_back(Instance::create_static(models.get("models/pedestal.dae")));
     instances.push_back(Instance::create_static(models.get("models/house.fbx")));
@@ -79,7 +79,7 @@ int main() {
     Instance & pedestal = instances[4];
     pedestal.position = glm::vec3(-1.0f, 0.0f, -3.0f);
 
-    Player player({ instances[1], instances[2] }, glm::vec2(-7, 7), glm::vec2(0.0f, -1.0f), 1.2f);
+    Player player({ instances[1], instances[2] }, glm::vec2(-7, 7), glm::vec2(0.0f, -1.0f), 1.5f);
 
     std::set<int> collision_exceptions = {0, 1, 2};
 
