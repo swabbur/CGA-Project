@@ -32,6 +32,22 @@
 |          | Model loader              | Wessel          |
 |          | Gamepad support           | Wessel          |
 
+## Screenshots
+
+![](images/custom_models_and_spot_light_shadows.png)
+
+![](images/dynamic_shadows.png)
+
+![](images/player_wall_shader.png)
+
+![](images/point_light_and_normal_map.png)
+
+![](images/spot_light_and_normal_map.png)
+
+![](images/toon_shading.png)
+
+![](images/x-ray_vision.png)
+
 ## References
 
 - [Blinn–Phong reflection model](https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_reflection_model)
